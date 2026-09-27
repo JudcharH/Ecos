@@ -66,6 +66,36 @@ revisedAbilities.push({
     source:"sistema-base-v2",
     rules:{Custo:"4 PM Permanentes",Tipo:"Passiva",Condição:"Sem aliados adjacentes",Efeito:"+3 em ataques e +3 na Defesa."}
 });
+[
+    ["golpe-crescente","GOLPE CRESCENTE","hybrid",null,"Ao acertar o mesmo alvo em rodadas consecutivas, recebe +1 dado de dano principal. O bônus termina ao errar ou trocar de alvo."],
+    ["ataque-devastador","ATAQUE DEVASTADOR","active",{type:"pa",value:2},"Realiza um ataque que ignora RD igual a Corpo. Se errar, sofre -3 Defesa até o próximo turno. Limite: 1 vez por rodada."],
+    ["escudo-de-emergencia","ESCUDO DE EMERGÊNCIA","reaction",{type:"pa",value:1},"Ao sofrer um crítico, reduz os dois dados adicionais do crítico para apenas um. Limite: 1 vez por rodada."],
+    ["ultima-barreira","ÚLTIMA BARREIRA","passive",null,"Quando o PV clássico ou Torso chega a 0, recebe RD igual a Corpo contra o próximo dano direcionado ao Coração."],
+    ["posicao-segura","POSIÇÃO SEGURA","passive",null,"Se não tiver se movido no turno, recebe +3 Defesa até o início do próximo turno."],
+    ["interposicao","INTERPOSIÇÃO","reaction",{type:"pa",value:1},"Recebe no lugar de um aliado adjacente um ataque que o atingiria e ainda pode escolher sua própria reação defensiva."],
+    ["ordem-de-ataque","ORDEM DE ATAQUE","active",{type:"pa",value:1},"Um aliado recebe +3 no próximo ataque até o início do seu próximo turno. Usos por cena iguais a Foco."],
+    ["formacao-tatica","FORMAÇÃO TÁTICA","passive",null,"No começo da rodada, escolha dois aliados adjacentes. Ambos recebem +2 Defesa enquanto permanecerem adjacentes."],
+    ["canalizacao-profunda","CANALIZAÇÃO PROFUNDA","active",{type:"pd",value:2},"O próximo ritual recebe +2 na DT ou +1 dado principal de dano ou cura. Limite: 1 vez por rodada."],
+    ["eco-ritualistico","ECO RITUALÍSTICO","hybrid",{type:"pd",value:3},"Após conjurar um ritual, repita seu efeito básico na rodada seguinte com metade dos dados. Limite: 1 vez por cena."],
+    ["mente-oculta","MENTE OCULTA","passive",null,"Recebe +3 para resistir a rituais de Conhecimento e controle mental. Ao vencer, identifica a origem do efeito."],
+    ["convergencia-elemental","CONVERGÊNCIA ELEMENTAL","active",{type:"pd",value:3},"Troca o elemento de um ritual conhecido por outro elemento desbloqueado. Limite: 1 vez por rodada."],
+    ["estancar-ferimento","ESTANCAR FERIMENTO","active",{type:"pa",value:1},"Remove Sangramento de um alvo adjacente e recupera 1d8 + Nexo PV. Limite: 1 vez por alvo por cena."],
+    ["pulso-de-vida","PULSO DE VIDA","active",{type:"mixed",pa:2,pd:3},"Todos os aliados adjacentes recuperam 1d8 + Foco PV. Limite: 1 vez por cena."],
+    ["recuperacao-gradual","RECUPERAÇÃO GRADUAL","passive",null,"Ao receber cura, recupera PV adicional igual a Corpo. Limite: 1 vez por rodada."],
+    ["coracao-resistente","CORAÇÃO RESISTENTE","passive",null,"Aumenta o PV máximo do Coração em valor igual ao nível. Não altera PV clássico ou dos membros."],
+    ["socorro-urgente","SOCORRO URGENTE","reaction",{type:"pa",value:1},"Quando um aliado adjacente tem PV clássico ou Torso zerado, ele recupera 1 PV antes do dano atingir o Coração. Limite: 1 vez por cena."],
+    ["leitura-corporal","LEITURA CORPORAL","passive",null,"Após conversar por pelo menos um minuto, recebe +3 no próximo teste para perceber mentira, medo ou intenção hostil."],
+    ["reconstrucao-dos-fatos","RECONSTRUÇÃO DOS FATOS","active",null,"Refaz um teste de Dedução ou Informação feito ao investigar uma cena e mantém o segundo resultado. Limite: 1 vez por cena."],
+    ["passo-lateral","PASSO LATERAL","reaction",{type:"pa",value:1},"Após uma Esquiva bem-sucedida, move-se uma posição sem provocar Ataque de Oportunidade."],
+    ["avanco-coordenado","AVANÇO COORDENADO","active",{type:"pa",value:1},"Você e um aliado adjacente movem-se uma posição. O aliado não gasta PA."],
+    ["retirada-estrategica","RETIRADA ESTRATÉGICA","reaction",{type:"pa",value:1},"Quando um inimigo entra na sua posição, recue uma posição. Limite: 1 vez por rodada."],
+    ["salto-impulsivo","SALTO IMPULSIVO","active",{type:"pa",value:1},"Move-se duas posições, ignorando uma posição ocupada ou terreno difícil, mas não barreiras completas."],
+    ["cacador-movel","CAÇADOR MÓVEL","passive",null,"Após acertar um ataque, move-se uma posição em direção ao alvo. Limite: 1 vez por rodada e apenas se ainda não se moveu depois do ataque."]
+].forEach(([id,name,abilityType,useCost,description])=>revisedAbilities.push({
+    id,name,abilityType,useCost,description,
+    permanentCost:{type:"pd",value:4},source:"sistema-base-v2",
+    rules:{Custo:"4 PM Permanentes",Tipo:abilityType,Efeito:description}
+}));
 OFFICIAL_ABILITIES.splice(0,OFFICIAL_ABILITIES.length,...revisedAbilities);
 
 function normalizeAbilityId(value){
