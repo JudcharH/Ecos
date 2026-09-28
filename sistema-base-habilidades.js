@@ -96,6 +96,27 @@ revisedAbilities.push({
     permanentCost:{type:"pd",value:4},source:"sistema-base-v2",
     rules:{Custo:"4 PM Permanentes",Tipo:abilityType,Efeito:description}
 }));
+[
+    ["aparar-golpe","APARAR GOLPE","reaction",{type:"pa",value:1},"Ao sofrer um ataque corpo a corpo, role Luta e reduza o dano pelo resultado do dado de treinamento. Limite: 1 vez por rodada."],
+    ["ancorado-corporal","ANCORADO CORPORAL","passive",null,"Recebe +5 contra agarrões, empurrões e quedas. Ao vencer, não pode ser movido nem receber Caído pelo efeito."],
+    ["fortaleza-compartilhada","FORTALEZA COMPARTILHADA","passive",null,"Enquanto estiver adjacente a um aliado, ambos recebem RD 2. O bônus não acumula com outra Fortaleza Compartilhada."],
+    ["guarda-sacrificial","GUARDA SACRIFICIAL","reaction",{type:"pa",value:1},"Quando um aliado adjacente sofrer dano, divida o dano final igualmente entre vocês. Limite: 1 vez por rodada."],
+    ["dominio-de-terreno","DOMÍNIO DE TERRENO","hybrid",null,"Após permanecer uma rodada completa na mesma posição, recebe +3 Defesa e inimigos sofrem -3 em Manobra contra você até sair da posição."],
+    ["ordem-de-reacao","ORDEM DE REAÇÃO","active",{type:"pa",value:1},"Um aliado recupera a reação já utilizada na rodada. Limite: 1 vez por aliado por cena e usos totais iguais a Foco."],
+    ["troca-de-prioridades","TROCA DE PRIORIDADES","active",null,"Troque sua posição na iniciativa com a de um aliado que concorde. A troca dura até o fim do combate. Limite: 1 vez por cena."],
+    ["nao-recue","NÃO RECUE","reaction",{type:"pa",value:1},"Quando um aliado receber Caído, Paralisia, Enfraquecido ou Cansado, ele recebe +5 no primeiro teste para remover ou resistir. Usos por cena iguais a Foco."],
+    ["ordem-de-resistencia","ORDEM DE RESISTÊNCIA","reaction",{type:"pa",value:1},"Quando um aliado falhar em Fortitude, Reflexo, Vontade ou Manobra, permita repetir o teste com +3. Deve manter o segundo resultado. Usos por cena iguais a Foco."],
+    ["comando-de-cobertura","COMANDO DE COBERTURA","reaction",{type:"pa",value:1},"Quando um aliado que possa ouvi-lo for alvo de ataque à distância, ele recebe +4 Defesa contra o ataque. Usos por cena iguais a Foco."],
+    ["reserva-biologica","RESERVA BIOLÓGICA","passive",null,"Quando uma cura ultrapassar seus PV máximos, o excesso vira PV temporário, limitado a Corpo x2. Ativa no máximo 1 vez por rodada."],
+    ["recuperacao-de-emergencia","RECUPERAÇÃO DE EMERGÊNCIA","reaction",{type:"mixed",pa:1,pd:3},"Quando um aliado adjacente sofrer 20 ou mais de dano em um ataque, ele recupera 1d8 + Nexo PV após o dano. Limite: 1 vez por rodada."],
+    ["aura-revigorante","AURA REVIGORANTE","passive",null,"No início de cada rodada, você e aliados adjacentes recebem PV temporário igual a Nexo. Não acumula e permanece somente enquanto estiverem adjacentes."],
+    ["cicatrizacao-de-repouso","CICATRIZAÇÃO DE REPOUSO","passive",null,"Após uma rodada completa sem sofrer dano, recupera Corpo + Nexo PV no início do turno. Em membros, cura o membro natural mais danificado."],
+    ["reserva-medica","RESERVA MÉDICA","hybrid",null,"No início da cena recebe uma reserva de Nexo x4 PV. Durante seu turno, cure aliados adjacentes livremente, sem gastar PA ou PM. Não cura o próprio usuário nem o Coração."]
+].forEach(([id,name,abilityType,useCost,description])=>revisedAbilities.push({
+    id,name,abilityType,useCost,description,
+    permanentCost:{type:"pd",value:4},source:"sistema-base-v2",
+    rules:{Custo:"4 PM Permanentes",Tipo:abilityType,Efeito:description}
+}));
 OFFICIAL_ABILITIES.splice(0,OFFICIAL_ABILITIES.length,...revisedAbilities);
 
 function normalizeAbilityId(value){
