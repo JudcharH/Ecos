@@ -15,7 +15,7 @@
     --text:#FFFFFF;--text2:#CFCFD7;--text3:#8D8D99;--success:#32D27D;--danger:#D84A4A;--warning:#F0B63A;--shadow:0 0 25px rgba(var(--primary-rgb),.15);
 }
 :root[data-theme="sangue"]{--primary:#D83B4D;--primaryLight:#FF7A88;--primary-rgb:216,59,77;--bg:#0B0608;--bg2:#170A0E;--card:#211116;--card2:#2B151C;--border:#57303A}
-:root[data-theme="morte"]{--primary:#B29A38;--primaryLight:#E7D56A;--primary-rgb:178,154,56;--bg:#080806;--bg2:#13120C;--card:#1B1A10;--card2:#242216;--border:#4C4728}
+:root[data-theme="morte"]{--primary:#87909E;--primaryLight:#D8DCE3;--primary-rgb:135,144,158;--bg:#08090B;--bg2:#111318;--card:#191C22;--card2:#22262E;--border:#454B56}
 :root[data-theme="energia"]{--primary:#A642FF;--primaryLight:#65E8FF;--primary-rgb:166,66,255;--bg:#06070D;--bg2:#0D1020;--card:#12152A;--card2:#191D36;--border:#353C68}
 :root[data-theme="conhecimento"]{--primary:#D4A536;--primaryLight:#FFE08A;--primary-rgb:212,165,54;--bg:#0B0906;--bg2:#171207;--card:#211A0C;--card2:#2C2210;--border:#5B4824}
 
