@@ -2357,6 +2357,13 @@ characterAssimilationsState =
         []
     );
 
+    /* Atualiza nomes e regras antigas sem cobrar novamente o custo permanente. */
+    characterAssimilationsState=characterAssimilationsState.map(saved=>{
+        const canonicalId=window.ECO_BLOOD_ASSIMILATION_ALIASES?.[saved.id]||saved.id;
+        const definition=DEFAULT_ASSIMILATIONS.find(item=>item.id===canonicalId);
+        return definition?{...saved,id:definition.id,name:definition.name,description:definition.description,activationCost:structuredCloneSafe(definition.activationCost),activationType:definition.activationType,effects:structuredCloneSafe(definition.effects||{}),active:definition.activationType==="Passiva"?true:Boolean(saved.active)}:saved;
+    });
+
     characterConditionsState =
     structuredCloneSafe(
         editingCharacter.conditions ||
@@ -9015,7 +9022,7 @@ const cards =
 =              ASSIMILAÇÕES DISPONÍVEIS
 ==========================================================*/
 
-const DEFAULT_ASSIMILATIONS = [
+const DEFAULT_ASSIMILATIONS = window.ECO_BLOOD_ASSIMILATIONS || [
 
     {
         id:"presas",
@@ -9702,7 +9709,10 @@ function addAssimilationToCharacter(
         activationType:
             assimilation.activationType,
 
-        active:false,
+        effects:
+            structuredCloneSafe(assimilation.effects || {}),
+
+        active:assimilation.activationType === "Passiva",
 
         acquiredAt:
             Date.now()
@@ -9813,6 +9823,12 @@ function toggleAssimilation(
         characterPA.value =
             currentPA - cost;
 
+    }
+
+    if(type === "pm" || type === "pd"){
+        const currentPM=Number(characterPD?.value)||0;
+        if(currentPM<cost){showCharacterEditorMessage("PM insuficiente",`Você precisa de ${cost} PM para ativar ${assimilation.name}.`);return;}
+        characterPD.value=currentPM-cost;
     }
 
 
@@ -10615,7 +10631,10 @@ function acquireBodyAssimilation(
         activationType:
             assimilation.activationType,
 
-        active:false,
+        effects:
+            structuredCloneSafe(assimilation.effects || {}),
+
+        active:assimilation.activationType === "Passiva",
 
         acquiredAt:
             Date.now()

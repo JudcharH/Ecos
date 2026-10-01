@@ -1,0 +1,16 @@
+import fs from "node:fs";
+import vm from "node:vm";
+import assert from "node:assert/strict";
+const root=new URL("./",import.meta.url),read=name=>fs.readFileSync(new URL(name,root),"utf8");
+const sandbox={window:{}};vm.createContext(sandbox);vm.runInContext(read("assimilacoes-sangue.js"),sandbox);
+const list=sandbox.window.ECO_BLOOD_ASSIMILATIONS;
+assert.equal(list.length,40,"Sangue deve possuir exatamente 40 Assimilações");
+assert.equal(new Set(list.map(item=>item.id)).size,40,"IDs devem ser únicos");
+assert.ok(list.every(item=>item.element==="sangue"&&item.permanentCost?.type==="pv"),"todas precisam pertencer a Sangue e consumir PV permanente");
+assert.ok(list.every(item=>item.name&&item.description&&item.activationType),"todas precisam ter regras completas");
+const expected=["redencao","pungencia","hematopoiese","gula","inveja","ira","orgulho","ganancia","sangue-fervente","mutacao-reativa","contracao-monstruosa","banquete-de-carne","orgaos-redundantes","surto-hematico"];
+const engine=read("mesa-assimilacoes-sangue.js");expected.forEach(id=>assert.ok(engine.includes(id),`sem automação reconhecida: ${id}`));
+for(const hook of ["passTableRound=function","applyPendingDamageToTarget=function","rollQuickAttack=function","rollTableCharacterSkill=function","answerAttackReaction=function"])assert.ok(engine.includes(hook),`gancho ausente: ${hook}`);
+assert.ok(read("editor-ficha.html").includes("assimilacoes-sangue.js"));
+assert.ok(read("mesa.html").includes("mesa-assimilacoes-sangue.js"));
+console.log(JSON.stringify({ok:true,total:list.length,unique:40,automatedHooks:5,aliases:Object.keys(sandbox.window.ECO_BLOOD_ASSIMILATION_ALIASES).length},null,2));
