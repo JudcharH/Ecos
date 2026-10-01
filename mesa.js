@@ -1539,10 +1539,9 @@ function loadMusic(){
     campaignMusicPlayer.src =
         currentTableCampaign.music;
 
-    campaignMusicPlayer.volume =
-        Number(
-            currentTableCampaign.musicVolume
-        ) || .5;
+    campaignMusicPlayer.volume = window.ECO_SETTINGS
+        ? window.ECO_SETTINGS.effectiveMusicVolume(Number(currentTableCampaign.musicVolume ?? .5))
+        : Number(currentTableCampaign.musicVolume) || .5;
 
 }
 
@@ -4002,8 +4001,9 @@ function openMusicPanel(){
 
                 if(campaignMusicPlayer){
 
-                    campaignMusicPlayer.volume =
-                        value;
+                    campaignMusicPlayer.volume = window.ECO_SETTINGS
+                        ? window.ECO_SETTINGS.effectiveMusicVolume(value)
+                        : value;
 
                 }
 
