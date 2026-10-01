@@ -9022,7 +9022,9 @@ const cards =
 =              ASSIMILAÇÕES DISPONÍVEIS
 ==========================================================*/
 
-const DEFAULT_ASSIMILATIONS = window.ECO_BLOOD_ASSIMILATIONS || [
+const DEFAULT_ASSIMILATIONS = window.ECO_BLOOD_ASSIMILATIONS && window.ECO_DEATH_ASSIMILATIONS
+    ? [...window.ECO_BLOOD_ASSIMILATIONS,...window.ECO_DEATH_ASSIMILATIONS]
+    : [
 
     {
         id:"presas",

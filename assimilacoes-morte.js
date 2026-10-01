@@ -1,0 +1,47 @@
+/* ECO — Biblioteca oficial de Assimilações de Morte */
+(function(){"use strict";
+const P=(id,name,cost,type,use,description)=>({id,name,element:"morte",permanentCost:{type:"pv",value:cost},activationType:type,activationCost:use?{type:use[0],value:use[1]}:null,active:type==="Passiva",description});
+window.ECO_DEATH_ASSIMILATIONS=[
+P("invocar","Invocar",4,"Ativação",["pa",2],"Invoque um Tentáculo de Lodo durante a cena. No início do turno escolha atacar por 2d8 + 4 de Morte ou envolver o corpo, recebendo +5 em Manobra e podendo atacar através dele."),
+P("finalizador-morte","Finalizador",4,"Passiva",null,"Recebe +5 para acertar criaturas Machucadas e causa +5 de dano ao acertá-las."),
+P("alteracao-corporal","Alteração Corporal",4,"Ativação",["pa",1],"Aumenta o alcance corpo a corpo em 1 posição. Após acertar, pode gastar 1 PA para puxar o alvo uma posição."),
+P("destino-compartilhado","Destino Compartilhado",4,"Ativação",["pa",2],"Escolha uma criatura. Enquanto estiver consciente ela permanece com pelo menos 1 PV; o dano excedente é transferido a você ignorando RD. Você fica Vulnerável."),
+P("toxico","Tóxico",4,"Ativação",["pa",2],"Aplique Envenenado a uma criatura. Uma vez por alvo por cena."),
+P("memoria-dos-mortos","Memória dos Mortos",4,"Passiva",null,"Quando uma criatura morrer, recebe +5 em todos os testes até o fim da rodada. Não acumula."),
+P("passado-a-tona","Passado à Tona",4,"Passiva",null,"Reutilize o resultado natural de um dado da rodada anterior. Usos por cena iguais a Nexo."),
+P("vortice-vivo","Vórtice Vivo",4,"Ativação",["pa",2],"Crie um vórtice por 3 rodadas. O alvo fica com deslocamento 0, é puxado uma posição por turno e sofre 2d10 de Morte se estiver no centro. Pode escapar com Manobra."),
+P("desastre-ambulante","Desastre Ambulante",4,"Ativação",["pa",2],"No primeiro turno da cena, cause 4d6 de dano de Morte em todas as ameaças. Uma vez por cena."),
+P("consumidor-do-tempo","Consumidor do Tempo",4,"Passiva",null,"Ao envelhecer uma criatura, recupera PM igual aos anos, limitado a Nexo PM por rodada."),
+P("negar-fim","Negar Fim",4,"Passiva",null,"Uma vez por cena, ignore completamente um dano que causaria sua morte. Não recupera PV por descansos durante 1 dia."),
+P("labirinto-mental","Labirinto Mental",4,"Passiva",null,"Ignore Controlado uma vez por cena."),
+P("decrepitar","Decrepitar",4,"Ativação",["pa",1],"Uma criatura recebe -5 em Fortitude por 3 rodadas. Não acumula e apenas um alvo pode ser mantido."),
+P("enferrujar-e-destruir","Enferrujar e Destruir",4,"Ativação",["pa",2],"Destrói um objeto mundano desprotegido. Itens empunhados ou vestidos exigem ataque contra a Defesa do usuário; artefatos únicos são imunes."),
+P("negar-repeticao","Negar Repetição",4,"Reação",["pa",1],"Ignore um ataque idêntico usado contra você nesta rodada ou na anterior. Uma vez por rodada."),
+P("expor-demonio","Expor Demônio",4,"Ativação",["pa",4],"Cause 8d8 + 10 de Morte. Se reduzir o alvo a 0 PV, a primeira execução concede 4 PM máximos; as seguintes recuperam 4 PM. Uma vez por cena."),
+P("parada-temporal","Parada Temporal",4,"Ativação",["pa",2],"Escolha Esquivar, Bloquear ou Contra-atacar. O alvo não pode usar a reação escolhida até seu próximo turno."),
+P("propenso-ao-tempo","Propenso ao Tempo",4,"Passiva",null,"Curas de Morte recebem +1 dado principal e você envelhece 2 anos a menos por esses efeitos."),
+P("visao-sombria","Visão Sombria",4,"Passiva",null,"É imune à condição Cego."),
+P("pressentir-os-vivos","Pressentir os Vivos",4,"Ativação",["pa",1],"Até seu próximo turno recebe +5 em Percepção e fica imune a Desprevenido."),
+P("aprender-com-os-mortos","Aprender com os Mortos",4,"Passiva",null,"Ao fim de uma cena em que um aliado morreu, copie uma habilidade geral dele até o fim da próxima cena de combate."),
+P("futuro-roubado","Futuro Roubado",4,"Ativação",["pa",2],"Até o fim do próximo turno do alvo, todas as ações dele custam +1 PA."),
+P("imutavel","Imutável",4,"Passiva",null,"Ignore uma condição negativa uma vez por cena."),
+P("tempo-fragmentado","Tempo Fragmentado",4,"Ativação",["pa",2],"Uma vez por cena, a primeira habilidade ou ataque do alvo é cancelada, o PA é devolvido e ele deve escolher uma ação diferente."),
+P("ciclo-infinito","Ciclo Infinito",4,"Ativação",["pa",2],"Realize um ataque corpo a corpo. No início do próximo turno role o mesmo ataque novamente contra o alvo ou outra criatura adjacente."),
+P("decadencia-acumulada","Decadência Acumulada",4,"Passiva",null,"Dano de Morte no mesmo alvo em rodadas consecutivas acumula Decadência. Com 3, causa 3d8 de Morte, aplica Enfraquecido até o próximo turno e remove os acúmulos."),
+P("relogio-funebre","Relógio Fúnebre",4,"Ativação",["pa",1],"Registre os PV de uma criatura. No próximo turno ela retorna ao valor registrado caso tenha sido curada. Uma vez por alvo por cena."),
+P("lodo-sepulcral","Lodo Sepulcral",4,"Ativação",["pa",2],"Escolha uma posição em até 3 posições. Ela e as adjacentes viram terreno difícil até seu próximo turno; inimigos sofrem 2d6 + Nexo de Morte e -3 para escapar de movimento."),
+P("servo-do-fim","Servo do Fim",4,"Ativação",["pa",2],"Reanime um morto como servo de 15 PV que causa 2d6 de Morte uma vez por rodada. Um servo por vez; desaparece no fim da cena."),
+P("debito-temporal","Débito Temporal",4,"Ativação",null,"Receba 2 PA temporários agora. No próximo turno recupere 2 PA a menos; a diferença não paga consome PM. Uma vez por cena."),
+P("dano-tardio","Dano Tardio",4,"Reação",["pa",1],"Adie metade do dano final para o início do próximo turno. O dano adiado ignora RD. Uma vez por rodada."),
+P("idade-subita","Idade Súbita",4,"Ativação",["pa",1],"Aplique Cansado e -3 Corpo a uma criatura até o fim do próximo turno. Uma vez por alvo por cena."),
+P("passo-cadaverico","Passo Cadavérico",4,"Ativação",["pa",1],"Teleporte-se até a posição de uma criatura morta ou posição adjacente em até 5 posições, sem provocar Ataque de Oportunidade."),
+P("erosao-inevitavel","Erosão Inevitável",4,"Ativação",["pa",1],"A próxima fonte de dano de Morte contra o alvo ignora toda a RD."),
+P("ancora-temporal","Âncora Temporal",4,"Ativação",["pa",1],"Até seu próximo turno o alvo não pode mover, ser movido, teleportado, puxado ou empurrado."),
+P("regressao","Regressão",5,"Reação",["pa",2],"Retorne à posição e aos PV do início da rodada. Condições, PA, PM e usos não retornam. Uma vez por cena."),
+P("roubar-instante","Roubar Instante",4,"Reação",["pa",1],"Quando uma criatura concluir ação de 2 PA ou mais, ela recebe 1 PA a menos e você +1 PA temporário no início da próxima rodada. Uma vez por rodada."),
+P("repeticao-morbida","Repetição Mórbida",4,"Passiva",null,"Ao causar exatamente o mesmo dano do ataque anterior, aplique Enfraquecido até o próximo turno. Uma vez por rodada."),
+P("fim-anunciado","Fim Anunciado",4,"Ativação",["pa",2],"Escolha um alvo e um número de 1 a 12. Quando um ataque contra ele obtiver esse resultado natural, torna-se crítico. Dura até ocorrer ou a cena terminar."),
+P("inevitavel","Inevitável",5,"Passiva",null,"Ao errar, registre o d12 natural. No próximo ataque contra o mesmo alvo pode usar 13 menos o valor registrado. Uma vez por rodada.")
+];
+window.ECO_DEATH_ASSIMILATION_ALIASES={};
+})();
