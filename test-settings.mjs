@@ -33,5 +33,6 @@ assert.equal(settings.effectiveMusicVolume(1),0,"silenciar deve zerar a música"
 assert.ok(read("mesa.js").includes("effectiveMusicVolume"),"mesa não aplica o volume global");
 assert.ok(read("configuracoes.js").includes("GoogleAuthProvider"),"Firebase Google não preparado");
 assert.ok(read("configuracoes.js").includes("createUserWithEmailAndPassword"),"criação de conta não preparada");
+assert.ok(read("firebase-config.js").includes('projectId:"ecos-9c010"'),"Firebase do ECO não configurado");
 
-console.log(JSON.stringify({ok:true,sections:5,themes:5,pages:pages.length,audio:true,firebasePrepared:true},null,2));
+console.log(JSON.stringify({ok:true,sections:5,themes:5,pages:pages.length,audio:true,firebasePrepared:true,firebaseProject:"ecos-9c010"},null,2));
