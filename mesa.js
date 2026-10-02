@@ -5817,10 +5817,16 @@ function healEnemy(enemy,amount,source="Regeneração"){
 }
 function processEnemyRoundAbilities(){
     const round=enemyCombatRound();currentTableCampaign.combat=currentTableCampaign.combat||{};currentTableCampaign.combat.oppressivePenalties={};
+    /*
+        As mensagens de rolagem recarregam a campanha do localStorage.
+        Persiste o mapa vazio antes delas para a Aura Opressora não perder
+        a referência e interromper a passagem de rodada com TypeError.
+    */
+    saveTableCampaign();
     (currentTableCampaign?.enemies||[]).forEach(enemy=>{
         const state=enemyAbilityState(enemy);
         if(enemyHasAbility(enemy,"regenerativo")&&state.regenerativoRound!==round){state.regenerativoRound=round;healEnemy(enemy,Math.max(0,Number(enemy.corpo)||0),"Regenerativo");}
-        if(enemyHasAbility(enemy,"aura-opressora")){(currentTableCampaign.players||[]).forEach(player=>{const character=getLiveCharacter(player.characterId);if(!character)return;const enemyRoll=rollEnemyTrainedTest(enemy,"Vontade"),playerRoll=rollCharacterVontade(character);if(!enemyRoll||!playerRoll.result)return;addRollChatMessage(`Aura Opressora • ${enemy.name}`,enemyRoll.formula,enemyRoll.total,enemyRollDetail(enemyRoll));addRollChatMessage(`Resistência de Vontade • ${character.name}`,playerRoll.formula,playerRoll.result.total,enemyRollDetail(playerRoll.result));if(enemyRoll.total>=playerRoll.result.total){const penalty=Math.max(0,Number(enemy.nexo)||0),previous=currentTableCampaign.combat.oppressivePenalties[character.id];if(!previous||penalty>previous.penalty)currentTableCampaign.combat.oppressivePenalties[character.id]={penalty,enemyName:enemy.name,round};addSystemChatMessage(`${character.name} falhou contra a Aura Opressora de ${enemy.name} e terá -${penalty} no próximo ataque.`);}});}
+        if(enemyHasAbility(enemy,"aura-opressora")){(currentTableCampaign.players||[]).forEach(player=>{const character=getLiveCharacter(player.characterId);if(!character)return;const enemyRoll=rollEnemyTrainedTest(enemy,"Vontade"),playerRoll=rollCharacterVontade(character);if(!enemyRoll||!playerRoll.result)return;addRollChatMessage(`Aura Opressora • ${enemy.name}`,enemyRoll.formula,enemyRoll.total,enemyRollDetail(enemyRoll));addRollChatMessage(`Resistência de Vontade • ${character.name}`,playerRoll.formula,playerRoll.result.total,enemyRollDetail(playerRoll.result));if(enemyRoll.total>=playerRoll.result.total){currentTableCampaign.combat=currentTableCampaign.combat||{};currentTableCampaign.combat.oppressivePenalties=currentTableCampaign.combat.oppressivePenalties||{};const penalty=Math.max(0,Number(enemy.nexo)||0),previous=currentTableCampaign.combat.oppressivePenalties[character.id];if(!previous||penalty>previous.penalty)currentTableCampaign.combat.oppressivePenalties[character.id]={penalty,enemyName:enemy.name,round};saveTableCampaign();addSystemChatMessage(`${character.name} falhou contra a Aura Opressora de ${enemy.name} e terá -${penalty} no próximo ataque.`);}});}
     });saveTableCampaign();
 }
 function triggerEnemyMetamorphosis(enemy){if(!enemy||!enemyHasAbility(enemy,"metamorfose"))return false;const state=enemyAbilityState(enemy);if(state.metamorfoseActive)return false;state.metamorfoseActive=true;enemy.corpo=(Number(enemy.corpo)||0)+1;enemy.foco=(Number(enemy.foco)||0)+1;saveTableCampaign();addSystemChatMessage(`${enemy.name} ativou Metamorfose: +1 Corpo e +1 Foco pelo restante da cena.`);return true;}

@@ -404,6 +404,12 @@ for (const id of ["aura-opressora", "devorador-de-condicoes", "ultimo-suspiro", 
 for (const marker of ["oppressivePenalties", "openDevourCondition", "triggerEnemyLastBreath", "triggerEnemyMetamorphosis", 'enemyHasAbility(attacker,"predador")']) {
     if (!mesaSource.includes(marker)) throw new Error(`Automação de habilidade aprovada ausente: ${marker}`);
 }
+
+const auraStart=mesaSource.indexOf("function processEnemyRoundAbilities()");
+const auraEnd=mesaSource.indexOf("function triggerEnemyMetamorphosis",auraStart);
+const auraBlock=mesaSource.slice(auraStart,auraEnd);
+if (!(auraBlock.indexOf("saveTableCampaign();")<auraBlock.indexOf("Aura Opressora •"))) throw new Error("Aura Opressora não persiste o mapa de penalidades antes das rolagens.");
+if (!/oppressivePenalties=currentTableCampaign\.combat\.oppressivePenalties\|\|\{\}/.test(auraBlock)) throw new Error("Aura Opressora não reconstrói defensivamente o mapa após as mensagens.");
 for (const marker of ["processEnemyRoundAbilities", "resolveEnemyAbilityTargetRouter", "illusoryPenalties", "Vampirismo", "applyApplicatorCondition", "Espinhoso de", 'ids.includes("ferocidade")']) {
     if (!mesaSource.includes(marker)) throw new Error(`Automação de nova habilidade ausente: ${marker}`);
 }
