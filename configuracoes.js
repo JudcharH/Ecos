@@ -42,6 +42,7 @@ if(!configured){
  function applyCloud(cloud){
   if(cloud.settings)settings.save(cloud.settings);
   const data=cloud.localData||{};
+  Object.keys(localData()).forEach(key=>localStorage.removeItem(key));
   Object.entries(data).forEach(([key,value])=>{if(typeof value==="string")localStorage.setItem(key,value)});
   const hash=cloud.contentHash||stableHash({settings:cloud.settings||settings.load(),localData:data});
   setMeta({uid:currentUser.uid,hash,syncedAt:Number(cloud.clientUpdatedAt)||Date.now()});
@@ -70,7 +71,7 @@ if(!configured){
     }
    }
    const now=Date.now();
-   await setDoc(ref,{displayName:currentUser.displayName||$("#authName").value||"Jogador",email:currentUser.email,settings:localSettings,localData:data,contentHash:localHash,clientUpdatedAt:now,updatedAt:serverTimestamp()},{merge:true});
+   await setDoc(ref,{displayName:currentUser.displayName||$("#authName").value||"Jogador",email:currentUser.email,settings:localSettings,localData:data,contentHash:localHash,clientUpdatedAt:now,updatedAt:serverTimestamp()});
    setMeta({uid:currentUser.uid,hash:localHash,syncedAt:now});
    $("#syncState").textContent="Firebase • sincronizado";
    if(manual)toast("Dados sincronizados.");
