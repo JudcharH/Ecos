@@ -6180,7 +6180,12 @@ const DEFAULT_ABILITIES = [
             value:5
         },
 
-        useCost:null,
+        useCost:{
+            type:"pa",
+            value:0
+        },
+
+        abilityType:"active",
 
         description:
             "Uma vez por cena, recebe +2 PA temporários. Esses PA devem ser utilizados na rodada atual.",

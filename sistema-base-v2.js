@@ -70,19 +70,18 @@ function getDefenseAttribute(){
 
 function getBodyMaximums(level,corpo){
     const total=Math.max(1,(9*Math.max(1,Number(level)||1))+(2*Math.max(0,Number(corpo)||0)));
-    const chest=Math.ceil(total*0.25);
+    let chest=Math.ceil(total*0.25);
     const head=Math.round(total*0.20);
     const remaining=Math.max(0,total-chest-head);
     const limbBase=Math.floor(remaining/4);
-    let extra=remaining-(limbBase*4);
-    const limb=()=>limbBase+(extra-->0?1:0);
+    chest+=remaining-(limbBase*4);
     return {
         head,
         chest,
-        leftArm:limb(),
-        rightArm:limb(),
-        leftLeg:limb(),
-        rightLeg:limb()
+        leftArm:limbBase,
+        rightArm:limbBase,
+        leftLeg:limbBase,
+        rightLeg:limbBase
     };
 }
 

@@ -1163,6 +1163,7 @@ function restorePlayersActionPoints(){
 
 
         const character =
+            getLiveCharacter(characterId) ||
             tableCharacters.find(
                 item =>
                     item.id ===
@@ -1198,6 +1199,8 @@ function restorePlayersActionPoints(){
 
         character.status.paAtual =
             maximum;
+
+        saveDamagedCharacter(character);
 
     });
 
@@ -1855,7 +1858,7 @@ function openCharacterPanel(){
 
 function ensureCharacterHeart(character){
     if(!character)return null;const level=Math.max(1,Number(character.level)||1),corpo=Math.max(0,Number(character.attributes?.corpo??character.attributes?.for)||0),classicMax=(9*level)+(corpo*2),legacyMax=(7*level)+corpo,bodyMax=Math.max(0,Number(character.bodyMaximums?.chest??character.body?.chestMax??((2*level)+corpo))||0);
-    character.status=character.status&&typeof character.status==="object"?character.status:{};if(character.lifeMode!=="body"){const oldMax=Math.max(0,Number(character.status.pvMax)||0),oldCurrent=Math.max(0,Number(character.status.pvAtual)||0);if(!oldMax||oldMax===legacyMax){character.status.pvMax=classicMax;character.status.pvAtual=oldMax>0&&oldCurrent>=oldMax?classicMax:Math.min(classicMax,oldCurrent);}else character.status.pvMax=oldMax;}const heartMax=character.lifeMode==="body"?Math.ceil(classicMax/4):Math.ceil(Math.max(0,Number(character.status.pvMax)||classicMax)/4);
+    character.status=character.status&&typeof character.status==="object"?character.status:{};if(character.lifeMode!=="body"){const oldMax=Math.max(0,Number(character.status.pvMax)||0),oldCurrent=Math.max(0,Number(character.status.pvAtual)||0);if(!oldMax||oldMax===legacyMax){character.status.pvMax=classicMax;character.status.pvAtual=oldMax>0&&oldCurrent>=oldMax?classicMax:Math.min(classicMax,oldCurrent);}else character.status.pvMax=oldMax;}const heartMax=character.lifeMode==="body"?Math.max(1,bodyMax||Math.ceil(classicMax/4)):Math.ceil(Math.max(0,Number(character.status.pvMax)||classicMax)/4);
     character.heart=character.heart&&typeof character.heart==="object"?character.heart:{};const existingMax=Math.max(0,Number(character.heart.max)||0),existingCurrent=Number(character.heart.current);character.heart.max=heartMax;character.heart.current=Number.isFinite(existingCurrent)?Math.min(heartMax,Math.max(0,existingCurrent)):(existingMax?Math.min(heartMax,existingMax):heartMax);return character.heart;
 }
 function markCharacterDead(character){character.conditions=Array.isArray(character.conditions)?character.conditions:[];if(!character.conditions.some(condition=>normalizeEnemyAbilityId(typeof condition==="string"?condition:condition.id||condition.name)==="morto"))character.conditions.push({id:"morto",name:"Morto",description:"O Coração chegou a 0 PV.",source:"coracao"});character.status=character.status||{};character.status.paAtual=0;}
@@ -3138,11 +3141,7 @@ function rollQuickAttack(
     let playerCritical=false;
     if(type==="attack"){
         const mainRoll=Number(result.details?.find(part=>part.type==="dice")?.rolls?.[0])||0;
-        const training=String(attack.training||attack.treino||"0");
-        if(mainRoll===12&&training!=="0"){
-            const extraTraining=rollDiceExpression(training);
-            if(extraTraining){result.total+=Number(extraTraining.total)||0;result.details.push(...(extraTraining.details||[]));formula=`${formula} + ${training} (Crítico)`;playerCritical=true;}
-        }
+        playerCritical=mainRoll===12;
     }
 
 
@@ -11822,7 +11821,7 @@ function bodyDamageParts(target,type){
 }
 function applyDamageAmountToBodyPart(current,remaining){return Math.min(Math.max(0,Number(current)||0),Math.max(0,Number(remaining)||0));}
 function startBodyDamageDistribution(type,target,originalDamage,damageReduction){
-    const reducedDamage=Math.max(0,originalDamage-damageReduction),temporaryBefore=type==="player"?Math.max(0,Number(target.body?.temporaryPV)||0):0,temporaryAbsorbed=Math.min(temporaryBefore,reducedDamage);
+    const reducedDamage=Math.max(0,originalDamage-damageReduction),temporaryBefore=type==="player"?Math.max(0,Number(target.body?.temporaryPV)||0,Number(target.status?.pvTemp)||0):0,temporaryAbsorbed=Math.min(temporaryBefore,reducedDamage);
     pendingBodyDamageApplication={type,targetId:type==="player"?target.id:(target.enemyId||target.id),messageId:pendingDamageApplication.messageId,attackName:pendingDamageApplication.attackName,originalDamage,damageReduction,reducedDamage,temporaryBefore,temporaryAbsorbed,remaining:reducedDamage-temporaryAbsorbed,allocations:{}};
     cancelDamageTargetSelection();
     if(type==="player"&&Math.max(0,Number(target.body?.chest)||0)<=0){applyPendingDamageToHeart();finishBodyDamageDistribution();return;}
@@ -11851,7 +11850,7 @@ function allocatePendingBodyDamage(partId){
 function finishBodyDamageDistribution(){
     const state=pendingBodyDamageApplication,target=getPendingBodyDamageTarget();if(!state||!target)return;
     bodyDamageParts(target,state.type).forEach(part=>{const amount=Number(state.allocations[part.id])||0;if(!amount)return;if(part.state.type==="prosthetic")part.state.currentPV=Math.max(0,part.current-amount);else target.body[part.id]=Math.max(0,part.current-amount);});
-    if(state.type==="player"){target.body.temporaryPV=Math.max(0,state.temporaryBefore-state.temporaryAbsorbed);saveDamagedCharacter(target);const sourceMessage=(currentTableCampaign.chatMessages||[]).find(item=>item.id===state.messageId);applyApplicatorCondition(target,sourceMessage?.enemyInstanceId);}else{const remainingBodyPV=bodyDamageParts(target,"enemy").reduce((sum,part)=>sum+Math.max(0,Number(part.current)||0),0);if(remainingBodyPV<=0)triggerEnemyLastBreath(target);saveTableCampaign();}
+    if(state.type==="player"){target.status=target.status||{};target.body.temporaryPV=Math.max(0,state.temporaryBefore-state.temporaryAbsorbed);target.status.pvTemp=target.body.temporaryPV;saveDamagedCharacter(target);const sourceMessage=(currentTableCampaign.chatMessages||[]).find(item=>item.id===state.messageId);applyApplicatorCondition(target,sourceMessage?.enemyInstanceId);}else{const remainingBodyPV=bodyDamageParts(target,"enemy").reduce((sum,part)=>sum+Math.max(0,Number(part.current)||0),0);if(remainingBodyPV<=0)triggerEnemyLastBreath(target);saveTableCampaign();}
     const context=currentTableCampaign.combat?.damageContext;if(context?.active===true){context.active=false;context.consumed=true;context.consumedAt=Date.now();}
     const message=(currentTableCampaign.chatMessages||[]).find(item=>item.id===state.messageId),appliedDamage=state.reducedDamage-state.remaining;
     if(message){message.applied=true;message.appliedAt=Date.now();message.appliedTarget={type:state.type,characterId:state.type==="player"?target.id:null,enemyId:state.type==="enemy"?(target.enemyId||target.id):null,name:target.name||"Alvo"};message.damageApplication={originalDamage:state.originalDamage,damageReduction:state.damageReduction,finalDamage:appliedDamage,bodyDamage:true,allocations:{...state.allocations},unallocatedDamage:state.remaining};}
@@ -11963,9 +11962,8 @@ const damageReduction =
     const temporaryPVBefore =
         Math.max(
             0,
-            Number(
-                character.status.pvTemp
-            ) || 0
+            Number(character.status.pvTemp) || 0,
+            Number(character.body?.temporaryPV) || 0
         );
 
 
@@ -12013,6 +12011,9 @@ const damageReduction =
             temporaryPVBefore -
             temporaryAbsorbed
         );
+
+    character.body=character.body||{};
+    character.body.temporaryPV=character.status.pvTemp;
 
 
     character.status.pvAtual =

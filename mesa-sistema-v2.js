@@ -156,9 +156,11 @@ function damageTypeLabel(value){
 function currentLifeHTML(character){
     const mode=character.lifeMode||character.life?.mode||character.status?.lifeMode||"classic";
     if(typeof ensureCharacterHeart==="function")ensureCharacterHeart(character);
+    const temporary=Math.max(number(character.body?.temporaryPV,0),number(character.status?.pvTemp,0));
     const heart=`<div class="table-v2-status-card"><span>Coração</span><strong>${number(character.heart?.current,0)} / ${number(character.heart?.max,0)}</strong></div>`;
+    const temp=`<div class="table-v2-status-card"><span>PV Temporário</span><strong>${temporary}</strong></div>`;
     if(mode!=="members"&&mode!=="body"){
-        return `<div class="table-v2-status-card"><span>PV</span><strong>${number(character.status?.pvAtual,0)} / ${number(character.status?.pvMax,0)}</strong></div>${heart}`;
+        return `<div class="table-v2-status-card"><span>PV</span><strong>${number(character.status?.pvAtual,0)} / ${number(character.status?.pvMax,0)}</strong></div>${heart}${temp}`;
     }
 
     const body=character.body||{};
@@ -168,7 +170,7 @@ function currentLifeHTML(character){
     ];
     return `<div class="table-v2-members">${parts.map(([label,key])=>`
         <div><span>${label}</span><strong>${number(body[key],0)} / ${number(body[`${key}Max`],number(body[key],0))}</strong></div>
-    `).join("")}</div>${heart}`;
+    `).join("")}</div>${heart}${temp}`;
 }
 
 function abilitySummaryHTML(character){

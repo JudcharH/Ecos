@@ -86,6 +86,7 @@ function abilityName(ability){return String(ability?.name||ability?.title||"Habi
 function abilityType(ability){
     const id=abilityId(ability);
     const configured=slug(ability?.abilityType||ability?.type||ability?.activationType||ability?.category);
+    if(id==="surto-de-acao") return "active";
     if(REACTION_IDS.has(id)||configured==="reaction"||configured==="reacao") return "reaction";
     if(HYBRID_IDS.has(id)||configured==="hybrid"||configured==="passiva-ativacao") return "hybrid";
     if(configured==="passive"||configured==="passiva"||ability?.passive===true) return "passive";
@@ -232,8 +233,20 @@ function openAttackSpecial(ability){
         <div class="field"><label>PM gasto</label><input id="specialV2PM" type="number" min="1" max="${available}" value="1"></div>
         <div class="field"><label>Bônus no ataque</label><input id="specialV2Attack" type="number" min="0" step="2" value="2"></div>
         <div class="field"><label>Bônus no dano</label><input id="specialV2Damage" type="number" min="0" step="2" value="0"></div>
+        <div class="table-panel-card" id="specialV2Summary"><strong>Custo calculado: 1 PM</strong><p>Distribuição disponível: 2 pontos.</p></div>
         <button id="confirmSpecialV2" class="primary-button full-button">Preparar</button>
     `);
+    const syncCost=()=>{
+        const attack=Math.max(0,Number(document.getElementById("specialV2Attack")?.value)||0);
+        const damage=Math.max(0,Number(document.getElementById("specialV2Damage")?.value)||0);
+        const required=Math.max(1,Math.ceil((attack+damage)/2));
+        const pmInput=document.getElementById("specialV2PM");
+        if(pmInput) pmInput.value=String(Math.min(available,required));
+        const summary=document.getElementById("specialV2Summary");
+        if(summary) summary.innerHTML=`<strong>Custo calculado: ${required} PM</strong><p>${attack} no ataque + ${damage} no dano = ${attack+damage} pontos.</p>`;
+    };
+    document.getElementById("specialV2Attack")?.addEventListener("input",syncCost);
+    document.getElementById("specialV2Damage")?.addEventListener("input",syncCost);
     document.getElementById("confirmSpecialV2")?.addEventListener("click",()=>{
         const pm=Math.max(1,Number(document.getElementById("specialV2PM")?.value)||1);
         const attack=Math.max(0,Number(document.getElementById("specialV2Attack")?.value)||0);
@@ -281,6 +294,15 @@ function useAbilityV2(id){
         character.status.paAtual=Math.max(0,Number(character.status.paAtual)||0)+2;
         saveDamagedCharacter(character);markUsed(key);
         notify(`${character.name} utilizou Surto de Ação`,`+2 PA temporários nesta rodada.`,"⚡");
+        openAbilitiesV2();return;
+    }
+    if(id==="potencia-maxima"){
+        const key=useKey(id,"scene");
+        if(hasUsed(key)){addSystemChatMessage("Potência Máxima já foi utilizada nesta cena.");return;}
+        if(!spend(character,"pa",1)) return;
+        combatState().potenciaMaxima={active:true,characterId:character.id,round:roundNumber(),activatedAt:Date.now()};
+        markUsed(key);
+        notify(`${character.name} ativou Potência Máxima`,`Bônus numéricos de ataque e dano dobrados durante esta rodada.`,"💣");
         openAbilitiesV2();return;
     }
     if(id==="segunda-respiracao"){
