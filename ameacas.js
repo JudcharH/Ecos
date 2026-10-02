@@ -30,7 +30,8 @@ const ENEMY_ABILITY_CATALOG=[
  ,{id:"metamorfose",name:"Metamorfose",description:"Ao ficar Machucado, transforma-se e recebe +1 Corpo e +1 Foco pelo restante da cena.",passive:true}
  ,{id:"predador",name:"Predador",description:"Recebe +3 para acertar alvos que estejam Machucados.",passive:true}
 ];
-const wolfAbilities=ENEMY_ABILITY_CATALOG;
+const WOLF_ABILITY_IDS=["esquiva-maior","investida","mordida-feroz","ferocidade","predador"];
+const wolfAbilities=WOLF_ABILITY_IDS.map(id=>ENEMY_ABILITY_CATALOG.find(ability=>ability.id===id)).filter(Boolean);
 const $=id=>document.getElementById(id),num=id=>Math.max(0,Number($(id)?.value)||0);
 function load(){try{threats=JSON.parse(localStorage.getItem(KEY)||"[]");if(!Array.isArray(threats))threats=[]}catch{threats=[]}seedWolf()}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(threats));return true}catch(error){console.error("Erro ao salvar ameaças:",error);alert("Não foi possível salvar as fotos. Tente imagens menores ou remova imagens antigas.");return false}}

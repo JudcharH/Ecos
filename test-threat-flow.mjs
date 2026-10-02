@@ -417,6 +417,11 @@ for (const marker of ["openNpcControlSheet", "Ataque em conjunto", "Curar 2d8 + 
     if (!mesaSource.includes(marker)) throw new Error(`Sistema de NPC aliado ausente: ${marker}`);
 }
 const threatEditorSource = fs.readFileSync("ameacas.js", "utf8");
+const wolfAbilityMatch=threatEditorSource.match(/const WOLF_ABILITY_IDS=\[([^\]]+)\]/);
+const wolfAbilityIds=wolfAbilityMatch?[...wolfAbilityMatch[1].matchAll(/"([^"]+)"/g)].map(match=>match[1]):[];
+const expectedWolfAbilities=["esquiva-maior","investida","mordida-feroz","ferocidade","predador"];
+if (JSON.stringify(wolfAbilityIds)!==JSON.stringify(expectedWolfAbilities)) throw new Error(`Habilidades do Lobisomem incorretas: ${JSON.stringify(wolfAbilityIds)}`);
+if (!mesaSource.includes('enemy?.systemId==="lobisomem-na6"') || !mesaSource.includes("wolfIds.has")) throw new Error("Instâncias existentes do Lobisomem não são normalizadas para as cinco habilidades oficiais.");
 for (const marker of ["persistNpc", "npcRole", "npcLevel", "NPC Aliado"]) {
     if (!threatEditorSource.includes(marker)) throw new Error(`Editor de NPC aliado ausente: ${marker}`);
 }
