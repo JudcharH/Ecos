@@ -13,28 +13,31 @@ function mediaNode(source,name,media={},portrait=false){
     return videoPattern.test(source)?`<video class="${className}" style="${style}" src="${esc(source)}" autoplay muted loop playsinline></video>`:`<img class="${className}" style="${style}" src="${esc(source)}" alt="${esc(name||"Personagem")}">`;
 }
 function entityForSlot(slot){
-    const position=Number(slot.dataset.position||slot.dataset.npcPosition),isPlayer=slot.classList.contains("player-position"),isEnemy=slot.classList.contains("enemy-position");
-    const list=isPlayer?currentTableCampaign?.players:isEnemy?currentTableCampaign?.enemies:currentTableCampaign?.npcs;
+    const position=Number(slot.dataset.position),type=slot.dataset.cinematicType;
+    const list=type==="player"?currentTableCampaign?.players:type==="enemy"?currentTableCampaign?.enemies:currentTableCampaign?.npcs;
     const entity=(list||[]).find(item=>Number(item.position)===position);
-    return entity?{entity,type:isPlayer?"player":isEnemy?"enemy":"npc",position}:null;
+    return entity?{entity,type,position}:null;
 }
 function decorateTokens(){
-    document.querySelectorAll(".combat-position,.npc-position").forEach(slot=>{
-        const found=entityForSlot(slot),token=slot.querySelector(".combat-token");
-        if(!found||!token)return;
+    document.querySelectorAll(".cinematic-slot").forEach(slot=>{
+        slot.classList.remove("occupied","covered","current-turn");
+        const found=entityForSlot(slot);
+        if(!found){slot.replaceChildren();return}
         let model=found.entity;
         if(found.type==="player")model=liveCharacter(model.characterId)||model;
         const wounded=(model.conditions||[]).some(condition=>String(typeof condition==="string"?condition:condition.id||condition.name||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase()==="machucado");
         const media=model.combatMedia||{},enemySize=found.type==="enemy"?Math.max(1,Number(found.entity.size)||1):1,displayMedia={...media,scale:(Number(media.scale)||100)*(1+((enemySize-1)*.18))},fullBodySource=media.idle||(wounded?model.woundedPhoto:"")||"",source=fullBodySource||model.photo||model.image||"",portrait=Boolean(source&&!fullBodySource);
-        token.dataset.cinematicType=found.type;
-        token.dataset.cinematicId=model.id||model.enemyId||model.npcId||found.entity.characterId||"";
-        const old=token.querySelector("img,.combat-token-fallback,video");
         const sourceSignature=`${source}:${portrait}:${displayMedia.scale}:${displayMedia.offsetX||0}:${displayMedia.offsetY||0}:${Boolean(displayMedia.flip)}`;
-        if(old&&token.dataset.cinematicSource!==sourceSignature){const holder=document.createElement("div");holder.innerHTML=mediaNode(source,model.name,displayMedia,portrait);old.replaceWith(holder.firstElementChild);token.dataset.cinematicSource=sourceSignature}
-        if(!token.dataset.cinematicBound){token.addEventListener("click",()=>{if(pendingEnemyAbilityTarget||pendingAttackApplication||pendingDamageApplication)return;cinematicSelection=entityForSlot(slot);renderHud()});token.dataset.cinematicBound="true"}
-        if(currentTableRole==="master")token.onclick=event=>{event.preventDefault();event.stopPropagation();if(pendingEnemyAbilityTarget){resolveEnemyAbilityTargetRouter(found.type,found.entity);return}if(pendingAttackApplication){applyPendingAttackToTarget(found.type,found.entity);return}if(pendingDamageApplication){applyPendingDamageToTarget(found.type,found.entity);return}cinematicSelection=found;renderHud()};
-        if(found.type==="enemy")slot.style.setProperty("--enemy-size",enemySize);
+        if(slot.dataset.cinematicSource!==sourceSignature||slot.dataset.cinematicEntity!==String(model.id||model.enemyId||model.npcId||found.entity.characterId||"")){
+            slot.innerHTML=`<button type="button" class="cinematic-token" aria-label="${esc(model.name||"Entidade")}">${mediaNode(source,model.name,displayMedia,portrait)}<span class="cinematic-token-name">${esc(model.name||"Sem nome")}</span><small class="cinematic-position-number">${found.position}</small></button>`;
+            slot.dataset.cinematicSource=sourceSignature;slot.dataset.cinematicEntity=String(model.id||model.enemyId||model.npcId||found.entity.characterId||"");
+        }
+        slot.classList.add("occupied");
+        if(typeof isEntityCurrentTurn==="function"&&isEntityCurrentTurn(found.entity,found.type))slot.classList.add("current-turn");
+        slot.style.setProperty("--entity-size",enemySize);
+        slot.onclick=event=>{event.preventDefault();event.stopPropagation();const current=entityForSlot(slot);if(!current)return;if(pendingEnemyAbilityTarget){resolveEnemyAbilityTargetRouter(current.type,current.entity);return}if(pendingAttackApplication){applyPendingAttackToTarget(current.type,current.entity);return}if(pendingDamageApplication){applyPendingDamageToTarget(current.type,current.entity);return}if(currentTableRole==="master"){cinematicSelection=current;renderHud()}};
     });
+    (currentTableCampaign?.enemies||[]).forEach(enemy=>{const anchor=Number(enemy.position),size=Math.max(1,Number(enemy.size)||1);for(let offset=1;offset<size;offset++)document.querySelector(`.cinematic-slot[data-cinematic-type="enemy"][data-position="${anchor-offset}"]`)?.classList.add("covered")});
 }
 function portraitForParticipant(participant){
     const id=participant.characterId||participant.enemyId||participant.npcId||participant.id;
@@ -112,6 +115,12 @@ function openCinematicEnemyPanel(enemy,type){
     if(type==="move"){startMoveEntity("enemy",enemy);return}if(type==="remove"){removeEntityFromScene("enemy",enemy);cinematicSelection=null;renderHud()}
 }
 function masterHud(){return `<div class="hud-identity"><span>MESTRE</span><strong>Controle do combate</strong><small>Selecione um personagem, NPC ou ameaça</small>${backButton()}</div><div class="hud-actions"><button data-master="initiative">Iniciativa</button><button data-master="next-round">Passar rodada</button><button data-master="enemies">Ameaças</button><button data-master="npcs">NPCs</button><button data-master="map">Cenário</button><button data-master="music">Música</button><button data-master="dice">Dados</button><button data-master="notes">Anotações</button></div>`}
+function redirectLegacyEnemySheet(enemy,position){
+    if(!enemy)return;
+    closeCurrentPanel();
+    cinematicSelection={entity:enemy,type:"enemy",position:Number(position||enemy.position)||1};
+    renderHud();
+}
 function renderHud(){
     const root=document.getElementById("cinematicHud");if(!root||!currentTableCampaign)return;
     root.className="cinematic-hud";
@@ -144,6 +153,8 @@ function renderResult(){
 function refresh(){decorateTokens();renderInitiative();renderHud();renderResult();document.body.classList.toggle("cinematic-master",currentTableRole==="master");document.body.classList.toggle("cinematic-player",currentTableRole==="player")}
 
 document.addEventListener("DOMContentLoaded",()=>{
+    window.openEnemyControlSheet=redirectLegacyEnemySheet;
+    try{openEnemyControlSheet=redirectLegacyEnemySheet}catch(error){}
     const original=window.renderCombatPositions;
     if(typeof original==="function")window.renderCombatPositions=function(){const value=original.apply(this,arguments);requestAnimationFrame(refresh);return value};
     const originalQuick=window.rollQuickAttack;
