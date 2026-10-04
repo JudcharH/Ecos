@@ -14,7 +14,7 @@ function mediaNode(source,name,media={},portrait=false){
 }
 function entityForSlot(slot){
     const position=Number(slot.dataset.position),type=slot.dataset.cinematicType;
-    const list=type==="player"?currentTableCampaign?.players:type==="enemy"?currentTableCampaign?.enemies:currentTableCampaign?.npcs;
+    const list=type==="player"?currentTableCampaign?.players:currentTableCampaign?.enemies;
     const entity=(list||[]).find(item=>Number(item.position)===position);
     return entity?{entity,type,position}:null;
 }
@@ -45,11 +45,10 @@ function decorateTokens(){
     (currentTableCampaign?.enemies||[]).forEach(enemy=>{const anchor=Number(enemy.position),size=Math.max(1,Number(enemy.size)||1);for(let offset=1;offset<size;offset++)document.querySelector(`.cinematic-slot[data-cinematic-type="enemy"][data-position="${anchor-offset}"]`)?.classList.add("covered")});
 }
 function portraitForParticipant(participant){
-    const id=participant.characterId||participant.enemyId||participant.npcId||participant.id;
+    const id=participant.characterId||participant.enemyId||participant.id;
     const character=liveCharacter(participant.characterId||id);
     const enemy=(currentTableCampaign?.enemies||[]).find(item=>String(item.enemyId||item.id)===String(id));
-    const npc=(currentTableCampaign?.npcs||[]).find(item=>String(item.npcId||item.id)===String(id));
-    const model=character||enemy||npc||participant;
+    const model=character||enemy||participant;
     return {name:model.name||participant.name||"Participante",photo:model.photo||model.image||"",id};
 }
 function renderInitiative(){
@@ -98,7 +97,7 @@ function playerHud(model,masterViewing=false){
     const status=model.status||{},pmNow=resource(model,"pmAtual",model.pm),pmMax=resource(model,"pmMax",model.pm),temp=resource(model,"pvTemporario",model.temporaryPV);
     const attacks=(model.attacks||[]).slice(0,3);
     const quick=`<div class="hud-quick-attacks">${[0,1,2].map(index=>{const attack=attacks[index];return `<div class="hud-quick-card"><strong>${esc(attack?.name||`Ataque ${index+1}`)}</strong><div>${attack?`<button data-quick="${index}" data-roll="attack">Ataque</button><button data-quick="${index}" data-roll="damage">Dano</button>`:"<small>Vazio</small>"}</div></div>`}).join("")}<button class="hud-heal" data-menu="character">＋ Cura</button></div>`;
-    return `<div class="hud-identity"><span>${masterViewing?"FICHA SELECIONADA":"JOGADOR"}</span><strong>${esc(model.name||"Personagem")}</strong><small>PV temporário ${temp} • PM ${pmNow}/${pmMax}</small>${masterViewing?'<button type="button" class="hud-master-return" data-master-reset>♛ Controles do mestre</button>':backButton()}</div>${quick}${bodyHtml(model)}<div class="hud-resources"><button data-menu="character">Perícias</button><button data-menu="inventory">Inventário</button><button data-menu="notes">Anotações</button><button data-menu="dice">Dados</button></div><div class="hud-actions"><button data-open="abilities">Habilidades</button><button data-open="assimilations">Assimilações</button><button data-menu="grimoire">Rituais</button></div>`;
+    return `<div class="hud-identity"><span>${masterViewing?"FICHA SELECIONADA":"JOGADOR"}</span><strong>${esc(model.name||"Personagem")}</strong><small>PV temporário ${temp} • PM ${pmNow}/${pmMax}</small>${masterViewing?'<button type="button" class="hud-master-return" data-master-reset>♛ Controles do mestre</button>':backButton()}</div>${quick}${bodyHtml(model)}<div class="hud-resources"><button data-menu="character">Perícias</button><button data-menu="inventory">Inventário</button><button data-menu="notes">Anotações</button><button data-menu="dice">Dados</button></div><div class="hud-actions"><button data-open="abilities">Habilidades</button><button data-open="assimilations">Assimilações</button><button data-menu="grimoire">Rituais</button><button data-menu="allies">Aliados</button></div>`;
 }
 function enemyHud(enemy){
     const hp=resource(enemy,"pvAtual",enemy.pv),max=resource(enemy,"pvMax",enemy.pv),pa=resource(enemy,"paAtual",enemy.pa),paMax=resource(enemy,"paMax",enemy.pa);
@@ -110,8 +109,8 @@ function liveEnemyFromSelection(){const id=cinematicSelection?.entity?.enemyId||
 function beginLatestTarget(kind,index){refreshCurrentTableCampaign();const message=[...(currentTableCampaign?.chatMessages||[])].reverse().find(item=>item.type==="roll"&&item.rollKind===kind&&item.applied!==true&&(index==null||item.attackVariant===index));if(message){closeCurrentPanel();if(kind==="attack")startAttackTargetSelection(message.id);else startDamageTargetSelection(message.id)}}
 function rollCinematicEnemy(enemy,kind,rollType){
     const attackName=kind==="strong"?"Ataque forte":"Ataque básico",position=cinematicSelection?.position||enemy.position,enemyInstanceId=enemy.enemyId||enemy.id;
-    if(rollType==="attack"){if(!spendEnemyActionPoints(enemy,1))return;rollEnemySkill(enemy,"Luta",{label:`Ataque • ${attackName} • ${enemy.name||"Criatura"}`,rollKind:"attack",attackName,enemyInstanceId,attackVariant:kind,applied:false});beginLatestTarget("attack",kind);renderHud();return}
-    const state=enemyAbilityState(enemy),raw=kind==="strong"?enemy.strongAttack:enemy.basicAttack,critical=state.criticalDamageDice&&(!state.criticalAttackVariant||state.criticalAttackVariant===kind)?Number(state.criticalDamageDice)||0:0,investida=state.investidaArmed?1:0,formula=String((critical+investida)?addEnemyDamageDice(raw,critical+investida):raw||"").replace(/Corpo/gi,Number(enemy.corpo)||0),result=rollDiceExpression(formula);if(!result)return;if(investida)state.investidaArmed=false;if(critical){state.criticalDamageDice=0;state.criticalAttackVariant=null}saveTableCampaign();addRollChatMessage(`Dano • ${attackName} • ${enemy.name}`,formula,result.total,enemyRollDetail(result),{rollKind:"damage",attackName,enemyInstanceId,attackVariant:kind,applied:false});beginLatestTarget("damage",kind);renderHud();
+    if(rollType==="attack"){if(!spendEnemyActionPoints(enemy,1))return;const secondPhase=enemyHasAbility(enemy,"segunda-fase")&&(enemy.conditions||[]).some(condition=>normalizeEnemyAbilityId(typeof condition==="string"?condition:condition.id||condition.name)==="machucado");rollEnemySkill(enemy,"Luta",{label:`Ataque • ${attackName} • ${enemy.name||"Criatura"}`,rollKind:"attack",attackName,enemyInstanceId,attackVariant:kind,flatBonus:secondPhase?3:0,applied:false});beginLatestTarget("attack",kind);renderHud();return}
+    const state=enemyAbilityState(enemy),raw=kind==="strong"?enemy.strongAttack:enemy.basicAttack,critical=state.criticalDamageDice&&(!state.criticalAttackVariant||state.criticalAttackVariant===kind)?Number(state.criticalDamageDice)||0:0,investida=state.investidaArmed?1:0,secondPhase=enemyHasAbility(enemy,"segunda-fase")&&(enemy.conditions||[]).some(condition=>normalizeEnemyAbilityId(typeof condition==="string"?condition:condition.id||condition.name)==="machucado"),phaseDice=secondPhase?1:0,extraDice=critical+investida+phaseDice,formula=String(extraDice?addEnemyDamageDice(raw,extraDice):raw||"").replace(/Corpo/gi,Number(enemy.corpo)||0),result=rollDiceExpression(formula);if(!result)return;if(investida)state.investidaArmed=false;if(critical){state.criticalDamageDice=0;state.criticalAttackVariant=null}saveTableCampaign();addRollChatMessage(`Dano • ${attackName} • ${enemy.name}${secondPhase?" • Segunda Fase +1 dado":""}`,formula,result.total,enemyRollDetail(result),{rollKind:"damage",attackName,enemyInstanceId,attackVariant:kind,applied:false});beginLatestTarget("damage",kind);renderHud();
 }
 function openCinematicEnemyPanel(enemy,type){
     const position=cinematicSelection?.position||enemy.position;
@@ -122,7 +121,7 @@ function openCinematicEnemyPanel(enemy,type){
     if(type==="rituals"){if(typeof window.openEnemyGrimoireV25==="function")window.openEnemyGrimoireV25(enemy);else openEnemyGrimoire(enemy);return}
     if(type==="move"){startMoveEntity("enemy",enemy);return}if(type==="remove"){removeEntityFromScene("enemy",enemy);cinematicSelection=null;renderHud()}
 }
-function masterHud(){return `<div class="hud-identity"><span>MESTRE</span><strong>Controle do combate</strong><small>Selecione um personagem, NPC ou ameaça</small>${backButton()}</div><div class="hud-actions"><button data-master="initiative">Iniciativa</button><button data-master="next-round">Passar rodada</button><button data-master="enemies">Ameaças</button><button data-master="npcs">NPCs</button><button data-master="map">Cenário</button><button data-master="music">Música</button><button data-master="dice">Dados</button><button data-master="notes">Anotações</button></div>`}
+function masterHud(){return `<div class="hud-identity"><span>MESTRE</span><strong>Controle do combate</strong><small>Selecione um personagem ou ameaça</small>${backButton()}</div><div class="hud-actions"><button data-master="initiative">Iniciativa</button><button data-master="next-round">Passar rodada</button><button data-master="enemies">Ameaças</button><button data-master="npcs">Aliados</button><button data-master="map">Cenário</button><button data-master="music">Música</button><button data-master="dice">Dados</button><button data-master="notes">Anotações</button></div>`}
 function redirectLegacyEnemySheet(enemy,position){
     if(!enemy)return;
     closeCurrentPanel();

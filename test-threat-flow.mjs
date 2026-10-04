@@ -401,6 +401,9 @@ for (const id of ["ferocidade", "atrair", "ilusorio", "regenerativo", "vampirism
 for (const id of ["aura-opressora", "devorador-de-condicoes", "ultimo-suspiro", "metamorfose", "predador"]) {
     if (!abilityCatalog.includes(id)) throw new Error(`Habilidade aprovada ausente da biblioteca: ${id}`);
 }
+for (const id of ["travar", "fantasmagorico"]) {
+    if (!abilityCatalog.includes(id)) throw new Error(`Habilidade da Telopsia ausente da biblioteca: ${id}`);
+}
 for (const marker of ["oppressivePenalties", "openDevourCondition", "triggerEnemyLastBreath", "triggerEnemyMetamorphosis", 'enemyHasAbility(attacker,"predador")']) {
     if (!mesaSource.includes(marker)) throw new Error(`Automação de habilidade aprovada ausente: ${marker}`);
 }
@@ -417,6 +420,9 @@ for (const marker of ["openNpcControlSheet", "Ataque em conjunto", "Curar 2d8 + 
     if (!mesaSource.includes(marker)) throw new Error(`Sistema de NPC aliado ausente: ${marker}`);
 }
 const threatEditorSource = fs.readFileSync("ameacas.js", "utf8");
+for (const marker of ["function telopsia()", 'systemId:"telopsia-na8"', "consumeFantasmagorico", "travarSceneUses", "Travar •"]) {
+    if (!threatEditorSource.includes(marker) && !mesaSource.includes(marker)) throw new Error(`Automação da Telopsia ausente: ${marker}`);
+}
 const wolfAbilityMatch=threatEditorSource.match(/const WOLF_ABILITY_IDS=\[([^\]]+)\]/);
 const wolfAbilityIds=wolfAbilityMatch?[...wolfAbilityMatch[1].matchAll(/"([^"]+)"/g)].map(match=>match[1]):[];
 const expectedWolfAbilities=["esquiva-maior","investida","mordida-feroz","ferocidade","predador"];
