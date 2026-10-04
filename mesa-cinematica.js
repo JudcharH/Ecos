@@ -22,7 +22,12 @@ function decorateTokens(){
     document.querySelectorAll(".cinematic-slot").forEach(slot=>{
         slot.classList.remove("occupied","covered","current-turn");
         const found=entityForSlot(slot);
-        if(!found){slot.replaceChildren();return}
+        if(!found){
+            slot.replaceChildren();
+            slot.dataset.cinematicSource="";slot.dataset.cinematicEntity="";
+            slot.onclick=event=>{event.preventDefault();event.stopPropagation();if(pendingEnemyAbilityTarget||pendingAttackApplication||pendingDamageApplication)return;handleEmptyPosition(slot.dataset.cinematicType,Number(slot.dataset.position))};
+            return;
+        }
         let model=found.entity;
         if(found.type==="player")model=liveCharacter(model.characterId)||model;
         const wounded=(model.conditions||[]).some(condition=>String(typeof condition==="string"?condition:condition.id||condition.name||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase()==="machucado");

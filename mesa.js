@@ -1490,7 +1490,14 @@ const ATTACK_REACTION_ABILITY_IDS = [
 =                    CENÁRIO
 ==========================================================*/
 
-function loadScene(){
+let activeSceneObjectURL="";
+
+function renderEmptyScene(){
+    if(!sceneBackground)return;
+    sceneBackground.innerHTML=`<div class="scene-placeholder"><span>✦</span><strong>Nenhum cenário definido</strong><small>O mestre pode adicionar um mapa ou imagem de cenário.</small></div>`;
+}
+
+async function loadScene(){
 
     if(!sceneBackground){
 
@@ -1503,10 +1510,16 @@ function loadScene(){
         currentTableCampaign.background ||
         "";
 
-    if(!scene){
+    if(!scene){renderEmptyScene();return;}
 
-        return;
-
+    let source=scene;
+    if(String(scene).startsWith("eco-scene:")){
+        try{
+            const blob=await readTableSceneBlob(String(scene).slice(10));
+            if(!blob){renderEmptyScene();return;}
+            if(activeSceneObjectURL)URL.revokeObjectURL(activeSceneObjectURL);
+            activeSceneObjectURL=URL.createObjectURL(blob);source=activeSceneObjectURL;
+        }catch(error){console.error("Falha ao carregar cenário armazenado",error);renderEmptyScene();return;}
     }
 
     sceneBackground.innerHTML = "";
@@ -1514,7 +1527,7 @@ function loadScene(){
     const image =
         document.createElement("img");
 
-    image.src = scene;
+    image.src = source;
 
     image.alt =
         "Cenário da campanha";
@@ -1523,6 +1536,7 @@ function loadScene(){
         const width=Math.max(1,sceneBackground.clientWidth),height=Math.max(1,sceneBackground.clientHeight);
         image.classList.toggle("scene-image-low-resolution",image.naturalWidth<width||image.naturalHeight<height);
     });
+    image.addEventListener("error",()=>renderEmptyScene());
 
     sceneBackground.appendChild(
         image
@@ -3775,10 +3789,12 @@ sceneUploadInput?.addEventListener(
 
         const previousScene=currentTableCampaign.scene||"";
         try{
-            const image=await tableSceneFileToDataURL(file);
-            currentTableCampaign.scene=image;
-            if(saveTableCampaign()===false){currentTableCampaign.scene=previousScene;throw new Error("Não foi possível salvar a imagem no navegador.");}
-            loadScene();
+            const image=await tableSceneFileToBlob(file),sceneKey=`${currentTableCampaign.id}:${Date.now()}`;
+            await writeTableSceneBlob(sceneKey,image);
+            currentTableCampaign.scene=`eco-scene:${sceneKey}`;
+            if(saveTableCampaign()===false){currentTableCampaign.scene=previousScene;await deleteTableSceneBlob(sceneKey);throw new Error("Não foi possível salvar a referência da imagem.");}
+            if(String(previousScene).startsWith("eco-scene:"))await deleteTableSceneBlob(String(previousScene).slice(10));
+            await loadScene();
             closeCurrentPanel();
             addSystemChatMessage("O mestre alterou o cenário.");
         }catch(error){
@@ -3796,33 +3812,16 @@ sceneUploadInput?.addEventListener(
 =              REMOVER CENÁRIO
 ==========================================================*/
 
-function removeScene(){
+async function removeScene(){
 
+    const previousScene=currentTableCampaign.scene||"";
     currentTableCampaign.scene = "";
 
     saveTableCampaign();
 
-    if(sceneBackground){
-
-        sceneBackground.innerHTML = `
-
-            <div class="scene-placeholder">
-
-                <span>✦</span>
-
-                <strong>
-                    Nenhum cenário definido
-                </strong>
-
-                <small>
-                    O mestre pode adicionar um mapa ou imagem de cenário.
-                </small>
-
-            </div>
-
-        `;
-
-    }
+    if(String(previousScene).startsWith("eco-scene:"))await deleteTableSceneBlob(String(previousScene).slice(10));
+    if(activeSceneObjectURL){URL.revokeObjectURL(activeSceneObjectURL);activeSceneObjectURL="";}
+    renderEmptyScene();
 
     closeCurrentPanel();
 
@@ -4428,6 +4427,29 @@ function tableSceneFileToDataURL(file){
         image.src=url;
     });
 }
+
+function tableSceneFileToBlob(file){
+    if(!file||!/^image\/(png|jpe?g|webp)$/i.test(file.type||""))return Promise.reject(new Error("Formato de imagem inválido."));
+    if(file.size>20*1024*1024)return Promise.reject(new Error("Imagem maior que 20 MB."));
+    return new Promise((resolve,reject)=>{
+        const url=URL.createObjectURL(file),image=new Image();
+        image.onload=()=>{
+            try{
+                const maxWidth=1920,maxHeight=1080,scale=Math.min(1,maxWidth/image.naturalWidth,maxHeight/image.naturalHeight),width=Math.max(1,Math.round(image.naturalWidth*scale)),height=Math.max(1,Math.round(image.naturalHeight*scale)),canvas=document.createElement("canvas"),context=canvas.getContext("2d",{alpha:false});
+                canvas.width=width;canvas.height=height;context.imageSmoothingEnabled=true;context.imageSmoothingQuality="high";context.drawImage(image,0,0,width,height);
+                URL.revokeObjectURL(url);canvas.toBlob(blob=>blob?resolve(blob):reject(new Error("Falha ao processar cenário.")),"image/webp",.86);
+            }catch(error){URL.revokeObjectURL(url);reject(error);}
+        };
+        image.onerror=()=>{URL.revokeObjectURL(url);reject(new Error("A imagem não pôde ser lida."));};image.src=url;
+    });
+}
+
+function openTableSceneDatabase(){
+    return new Promise((resolve,reject)=>{const request=indexedDB.open("eco_table_assets",1);request.onupgradeneeded=()=>{const db=request.result;if(!db.objectStoreNames.contains("scenes"))db.createObjectStore("scenes")};request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error||new Error("Falha ao abrir armazenamento de cenários."));});
+}
+async function writeTableSceneBlob(key,blob){const db=await openTableSceneDatabase();return new Promise((resolve,reject)=>{const tx=db.transaction("scenes","readwrite");tx.objectStore("scenes").put(blob,key);tx.oncomplete=()=>{db.close();resolve(true)};tx.onerror=()=>{db.close();reject(tx.error)}});}
+async function readTableSceneBlob(key){const db=await openTableSceneDatabase();return new Promise((resolve,reject)=>{const tx=db.transaction("scenes","readonly"),request=tx.objectStore("scenes").get(key);request.onsuccess=()=>resolve(request.result||null);request.onerror=()=>reject(request.error);tx.oncomplete=()=>db.close()});}
+async function deleteTableSceneBlob(key){if(!key)return;try{const db=await openTableSceneDatabase();await new Promise((resolve,reject)=>{const tx=db.transaction("scenes","readwrite");tx.objectStore("scenes").delete(key);tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error)});db.close();}catch(error){console.warn("Não foi possível remover o cenário antigo",error);}}
 
 /*==========================================================
 =                    MESA.JS - PARTE 4
@@ -7179,6 +7201,8 @@ window.addEventListener(
         refreshCurrentTableCharacter();
 
         renderCombatPositions();
+
+        loadScene();
 
         renderPublicChat();
 
