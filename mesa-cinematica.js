@@ -29,7 +29,7 @@ function decorateTokens(){
         const media=model.combatMedia||{},enemySize=found.type==="enemy"?Math.max(1,Number(found.entity.size)||1):1,displayMedia={...media,scale:(Number(media.scale)||100)*(1+((enemySize-1)*.18))},fullBodySource=media.idle||(wounded?model.woundedPhoto:"")||"",source=fullBodySource||model.photo||model.image||"",portrait=Boolean(source&&!fullBodySource);
         const sourceSignature=`${source}:${portrait}:${displayMedia.scale}:${displayMedia.offsetX||0}:${displayMedia.offsetY||0}:${Boolean(displayMedia.flip)}`;
         if(slot.dataset.cinematicSource!==sourceSignature||slot.dataset.cinematicEntity!==String(model.id||model.enemyId||model.npcId||found.entity.characterId||"")){
-            slot.innerHTML=`<button type="button" class="cinematic-token" aria-label="${esc(model.name||"Entidade")}">${mediaNode(source,model.name,displayMedia,portrait)}<span class="cinematic-token-name">${esc(model.name||"Sem nome")}</span><small class="cinematic-position-number">${found.position}</small></button>`;
+            slot.innerHTML=`<button type="button" class="cinematic-token" aria-label="${esc(model.name||"Entidade")}">${mediaNode(source,model.name,displayMedia,portrait)}<span class="cinematic-token-name">${esc(model.name||"Sem nome")}</span></button>`;
             slot.dataset.cinematicSource=sourceSignature;slot.dataset.cinematicEntity=String(model.id||model.enemyId||model.npcId||found.entity.characterId||"");
         }
         slot.classList.add("occupied");
@@ -98,7 +98,8 @@ function playerHud(model,masterViewing=false){
 function enemyHud(enemy){
     const hp=resource(enemy,"pvAtual",enemy.pv),max=resource(enemy,"pvMax",enemy.pv),pa=resource(enemy,"paAtual",enemy.pa),paMax=resource(enemy,"paMax",enemy.pa);
     const attack=(kind,label)=>`<div class="hud-quick-card"><strong>${label}</strong><div><button data-enemy-roll="attack" data-enemy-kind="${kind}">Ataque</button><button data-enemy-roll="damage" data-enemy-kind="${kind}">Dano</button></div></div>`;
-    return `<div class="hud-identity"><span>CONTROLANDO AMEAÇA</span><strong>${esc(enemy.name||"Criatura")}</strong><small>PV ${hp}/${max} • PA ${pa}/${paMax} • DEF ${Number(enemy.defense)||0} • RD ${Number(enemy.rd)||0}</small><button type="button" class="hud-master-return" data-master-reset>♛ Controles do mestre</button></div><div class="hud-quick-attacks">${attack("basic","Ataque básico")}${attack("strong","Ataque forte")}</div>${enemy.lifeMode==="body"?bodyHtml(enemy):`<div class="hud-vital"><span>PV</span><strong>${hp}</strong><small>de ${max}</small></div>`}<div class="hud-resources"><button data-enemy-panel="skills">Perícias</button><button data-enemy-panel="conditions">Condições</button><button data-enemy-panel="move">Mover</button><button data-enemy-panel="remove">Remover</button></div><div class="hud-actions"><button data-enemy-panel="abilities">Habilidades</button><button data-master="dice">Dados</button></div>`;
+    const lifeLabel=enemy.lifeMode==="body"?"Usar PV clássico":"Usar membros";
+    return `<div class="hud-identity"><span>CONTROLANDO AMEAÇA</span><strong>${esc(enemy.name||"Criatura")}</strong><small>PV ${hp}/${max} • PA ${pa}/${paMax} • DEF ${Number(enemy.defense)||0} • RD ${Number(enemy.rd)||0}</small><button type="button" class="hud-master-return" data-master-reset>♛ Controles do mestre</button></div><div class="hud-quick-attacks">${attack("basic","Ataque básico")}${attack("strong","Ataque forte")}</div>${enemy.lifeMode==="body"?bodyHtml(enemy):`<div class="hud-vital"><span>PV</span><strong>${hp}</strong><small>de ${max}</small></div>`}<div class="hud-resources"><button data-enemy-panel="skills">Perícias</button><button data-enemy-panel="conditions">Condições</button><button data-enemy-panel="move">Mover</button><button data-enemy-panel="remove">Remover</button></div><div class="hud-actions"><button data-enemy-panel="abilities">Habilidades</button><button data-enemy-panel="life-mode">${lifeLabel}</button><button data-enemy-panel="rituals">Rituais</button><button data-master="dice">Dados</button></div>`;
 }
 function liveEnemyFromSelection(){const id=cinematicSelection?.entity?.enemyId||cinematicSelection?.entity?.id;return(currentTableCampaign?.enemies||[]).find(item=>String(item.enemyId||item.id)===String(id))||cinematicSelection?.entity}
 function beginLatestTarget(kind,index){refreshCurrentTableCampaign();const message=[...(currentTableCampaign?.chatMessages||[])].reverse().find(item=>item.type==="roll"&&item.rollKind===kind&&item.applied!==true&&(index==null||item.attackVariant===index));if(message){closeCurrentPanel();if(kind==="attack")startAttackTargetSelection(message.id);else startDamageTargetSelection(message.id)}}
@@ -112,6 +113,8 @@ function openCinematicEnemyPanel(enemy,type){
     if(type==="abilities"){openTablePanel("AMEAÇA",`Habilidades • ${enemy.name}`,renderEnemyAbilityCards(enemy));document.querySelectorAll(".enemy-use-ability").forEach(button=>button.onclick=()=>{if(!useNewEnemyAbility(enemy,button.dataset.ability,position))useEnemyAbility(enemy,button.dataset.ability,position)});return}
     if(type==="skills"){const skills=enemy.skills&&typeof enemy.skills==="object"?Object.keys(enemy.skills):[];openTablePanel("AMEAÇA",`Perícias • ${enemy.name}`,`<div class="table-panel-list">${skills.map(name=>`<button class="table-panel-card cinematic-enemy-skill" data-skill="${esc(name)}" style="width:100%;text-align:left"><h3>${esc(name)}</h3><p>Clique para rolar</p></button>`).join("")||"<p>Nenhuma perícia.</p>"}</div>`);document.querySelectorAll(".cinematic-enemy-skill").forEach(button=>button.onclick=()=>rollEnemySkill(enemy,button.dataset.skill));return}
     if(type==="conditions"){const conditions=enemy.conditions||[];openTablePanel("AMEAÇA",`Condições • ${enemy.name}`,`<button id="cinematicEnemyAddCondition" class="primary-button full-button">＋ Adicionar condição</button><div class="table-panel-list">${conditions.map(item=>`<div class="table-panel-card"><h3>${esc(typeof item==="string"?item:item.name||"Condição")}</h3></div>`).join("")||"<p>Nenhuma condição ativa.</p>"}</div>`);document.getElementById("cinematicEnemyAddCondition")?.addEventListener("click",()=>openEnemyConditionSelector(enemy,position));return}
+    if(type==="life-mode"){if(enemy.lifeMode==="body")enemy.lifeMode="classic";else initializeEnemyBody(enemy);saveTableCampaign();renderHud();return}
+    if(type==="rituals"){if(typeof window.openEnemyGrimoireV25==="function")window.openEnemyGrimoireV25(enemy);else openEnemyGrimoire(enemy);return}
     if(type==="move"){startMoveEntity("enemy",enemy);return}if(type==="remove"){removeEntityFromScene("enemy",enemy);cinematicSelection=null;renderHud()}
 }
 function masterHud(){return `<div class="hud-identity"><span>MESTRE</span><strong>Controle do combate</strong><small>Selecione um personagem, NPC ou ameaça</small>${backButton()}</div><div class="hud-actions"><button data-master="initiative">Iniciativa</button><button data-master="next-round">Passar rodada</button><button data-master="enemies">Ameaças</button><button data-master="npcs">NPCs</button><button data-master="map">Cenário</button><button data-master="music">Música</button><button data-master="dice">Dados</button><button data-master="notes">Anotações</button></div>`}
@@ -140,8 +143,7 @@ function renderHud(){
 }
 function renderResult(){
     const root=document.getElementById("cinematicResult");if(!root)return;
-    const rolls=(currentTableCampaign?.chatMessages||[]).filter(message=>message.type==="roll");
-    const last=rolls[rolls.length-1];if(!last)return;
+    const messages=currentTableCampaign?.chatMessages||[];let last=null;for(let index=messages.length-1;index>=0;index--){if(messages[index]?.type==="roll"){last=messages[index];break}}if(!last)return;
     let success=null,caption=last.label||"Resultado";
     if(typeof last.attackApplication?.hit==="boolean")success=last.attackApplication.hit;
     else if(typeof last.testSuccess==="boolean")success=last.testSuccess;
@@ -167,8 +169,10 @@ document.addEventListener("DOMContentLoaded",()=>{
     };
     const originalRollMessage=window.addRollChatMessage;
     if(typeof originalRollMessage==="function")window.addRollChatMessage=function(){const value=originalRollMessage.apply(this,arguments);requestAnimationFrame(renderResult);return value};
+    const originalSaveCampaign=window.saveTableCampaign;let resultFrame=0;
+    if(typeof originalSaveCampaign==="function")window.saveTableCampaign=function(){const value=originalSaveCampaign.apply(this,arguments);if(!resultFrame)resultFrame=requestAnimationFrame(()=>{resultFrame=0;renderResult()});return value};
+    try{saveTableCampaign=window.saveTableCampaign}catch(error){}
     requestAnimationFrame(refresh);
-    window.setInterval(renderResult,120);
     window.setInterval(renderInitiative,800);
 });
 })();
