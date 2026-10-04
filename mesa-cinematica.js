@@ -6,10 +6,11 @@ const videoPattern=/\.(webm|mp4)(?:$|[?#])/i;
 
 function esc(value){return String(value??"").replace(/[&<>'"]/g,char=>({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}[char]))}
 function liveCharacter(id){return typeof getLiveCharacter==="function"?getLiveCharacter(id):null}
-function mediaNode(source,name,media={}){
+function mediaNode(source,name,media={},portrait=false){
     if(!source)return `<span class="cinematic-fallback">${esc((name||"?").slice(0,1).toUpperCase())}</span>`;
     const style=`--media-scale:${Math.max(40,Math.min(200,Number(media.scale)||100))/100};--media-x:${Math.max(-200,Math.min(200,Number(media.offsetX)||0))}px;--media-y:${Math.max(-200,Math.min(200,Number(media.offsetY)||0))}px;--media-flip:${media.flip?-1:1}`;
-    return videoPattern.test(source)?`<video class="cinematic-entity-media" style="${style}" src="${esc(source)}" autoplay muted loop playsinline></video>`:`<img class="cinematic-entity-media" style="${style}" src="${esc(source)}" alt="${esc(name||"Personagem")}">`;
+    const className=portrait?"cinematic-entity-media cinematic-portrait-media":"cinematic-entity-media";
+    return videoPattern.test(source)?`<video class="${className}" style="${style}" src="${esc(source)}" autoplay muted loop playsinline></video>`:`<img class="${className}" style="${style}" src="${esc(source)}" alt="${esc(name||"Personagem")}">`;
 }
 function entityForSlot(slot){
     const position=Number(slot.dataset.position||slot.dataset.npcPosition),isPlayer=slot.classList.contains("player-position"),isEnemy=slot.classList.contains("enemy-position");
@@ -24,12 +25,12 @@ function decorateTokens(){
         let model=found.entity;
         if(found.type==="player")model=liveCharacter(model.characterId)||model;
         const wounded=(model.conditions||[]).some(condition=>String(typeof condition==="string"?condition:condition.id||condition.name||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase()==="machucado");
-        const media=model.combatMedia||{},enemySize=found.type==="enemy"?Math.max(1,Number(found.entity.size)||1):1,displayMedia={...media,scale:(Number(media.scale)||100)*(1+((enemySize-1)*.18))},source=media.idle||(wounded?model.woundedPhoto:"")||model.photo||model.image||"";
+        const media=model.combatMedia||{},enemySize=found.type==="enemy"?Math.max(1,Number(found.entity.size)||1):1,displayMedia={...media,scale:(Number(media.scale)||100)*(1+((enemySize-1)*.18))},fullBodySource=media.idle||(wounded?model.woundedPhoto:"")||"",source=fullBodySource||model.photo||model.image||"",portrait=Boolean(source&&!fullBodySource);
         token.dataset.cinematicType=found.type;
         token.dataset.cinematicId=model.id||model.enemyId||model.npcId||found.entity.characterId||"";
         const old=token.querySelector("img,.combat-token-fallback,video");
-        const sourceSignature=`${source}:${displayMedia.scale}:${displayMedia.offsetX||0}:${displayMedia.offsetY||0}:${Boolean(displayMedia.flip)}`;
-        if(old&&token.dataset.cinematicSource!==sourceSignature){const holder=document.createElement("div");holder.innerHTML=mediaNode(source,model.name,displayMedia);old.replaceWith(holder.firstElementChild);token.dataset.cinematicSource=sourceSignature}
+        const sourceSignature=`${source}:${portrait}:${displayMedia.scale}:${displayMedia.offsetX||0}:${displayMedia.offsetY||0}:${Boolean(displayMedia.flip)}`;
+        if(old&&token.dataset.cinematicSource!==sourceSignature){const holder=document.createElement("div");holder.innerHTML=mediaNode(source,model.name,displayMedia,portrait);old.replaceWith(holder.firstElementChild);token.dataset.cinematicSource=sourceSignature}
         if(!token.dataset.cinematicBound){token.addEventListener("click",()=>{if(pendingEnemyAbilityTarget||pendingAttackApplication||pendingDamageApplication)return;cinematicSelection=entityForSlot(slot);renderHud()});token.dataset.cinematicBound="true"}
         if(currentTableRole==="master")token.onclick=event=>{event.preventDefault();event.stopPropagation();if(pendingEnemyAbilityTarget){resolveEnemyAbilityTargetRouter(found.type,found.entity);return}if(pendingAttackApplication){applyPendingAttackToTarget(found.type,found.entity);return}if(pendingDamageApplication){applyPendingDamageToTarget(found.type,found.entity);return}cinematicSelection=found;renderHud()};
         if(found.type==="enemy")slot.style.setProperty("--enemy-size",enemySize);
@@ -70,6 +71,7 @@ function openAbilityPicker(character){
 function openCinematicAbilities(character){
     if(currentTableRole==="master")currentTableCharacter=character;
     if(typeof window.openSystemBaseAbilitiesPanel==="function")window.openSystemBaseAbilitiesPanel();else openTablePanel("HABILIDADES","Habilidades","");
+    if(tablePanelContent)tablePanelContent.dataset.ecoPanelKind="abilities";
     const button=document.createElement("button");button.className="primary-button full-button cinematic-add-owned";button.textContent="＋ Adicionar habilidade";button.onclick=()=>openAbilityPicker(character);tablePanelContent?.prepend(button);
 }
 function assimilationCatalog(){return [...(window.ECO_BLOOD_ASSIMILATIONS||[]),...(window.ECO_DEATH_ASSIMILATIONS||[])]}
@@ -80,7 +82,8 @@ function openAssimilationPicker(character){
 }
 function openCinematicAssimilations(character){
     if(currentTableRole==="master")currentTableCharacter=character;
-    openTablePanel("HABILIDADES • ASSIMILAÇÕES","Assimilações",`<button id="cinematicAddAssimilation" class="primary-button full-button">＋ Adicionar assimilação</button><div class="table-panel-list">${(character.assimilations||[]).length?"":"<div class='editor-empty-state'><p>Nenhuma assimilação adquirida.</p></div>"}</div>`);
+    openTablePanel("ASSIMILAÇÕES","Assimilações",`<button id="cinematicAddAssimilation" class="primary-button full-button">＋ Adicionar assimilação</button><div class="table-panel-list">${(character.assimilations||[]).length?"":"<div class='editor-empty-state'><p>Nenhuma assimilação adquirida.</p></div>"}</div>`);
+    if(tablePanelContent)tablePanelContent.dataset.ecoPanelKind="assimilations";
     document.getElementById("cinematicAddAssimilation")?.addEventListener("click",()=>openAssimilationPicker(character));
 }
 function playerHud(model,masterViewing=false){

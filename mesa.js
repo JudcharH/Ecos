@@ -1428,6 +1428,8 @@ function openTablePanel(
 
     }
 
+    delete tablePanelContent.dataset.ecoPanelKind;
+
     tablePanelContent.innerHTML =
         content;
 
@@ -3771,25 +3773,20 @@ sceneUploadInput?.addEventListener(
 
         }
 
-        const image =
-            await tableFileToBase64(
-                file
-            );
-
-        currentTableCampaign.scene =
-            image;
-
-        saveTableCampaign();
-
-        loadScene();
-
-        closeCurrentPanel();
-
-        addSystemChatMessage(
-            "O mestre alterou o cenário."
-        );
-
-        sceneUploadInput.value = "";
+        const previousScene=currentTableCampaign.scene||"";
+        try{
+            const image=await tableSceneFileToDataURL(file);
+            currentTableCampaign.scene=image;
+            if(saveTableCampaign()===false){currentTableCampaign.scene=previousScene;throw new Error("Não foi possível salvar a imagem no navegador.");}
+            loadScene();
+            closeCurrentPanel();
+            addSystemChatMessage("O mestre alterou o cenário.");
+        }catch(error){
+            console.error("Falha ao adicionar cenário",error);
+            addSystemChatMessage("Não foi possível adicionar o cenário. Tente uma imagem PNG, JPG ou WEBP de até 20 MB.");
+        }finally{
+            sceneUploadInput.value="";
+        }
 
     }
 );
@@ -4368,12 +4365,18 @@ function saveTableCampaign(){
     tableCampaigns[index] =
         currentTableCampaign;
 
-    localStorage.setItem(
-        TABLE_CAMPAIGN_STORAGE,
-        JSON.stringify(
-            tableCampaigns
-        )
-    );
+    try{
+        localStorage.setItem(
+            TABLE_CAMPAIGN_STORAGE,
+            JSON.stringify(
+                tableCampaigns
+            )
+        );
+        return true;
+    }catch(error){
+        console.error("Falha ao salvar campanha",error);
+        return false;
+    }
 
 }
 
@@ -4405,6 +4408,25 @@ function tableFileToBase64(file){
         }
     );
 
+}
+
+function tableSceneFileToDataURL(file){
+    if(!file||!/^image\/(png|jpe?g|webp)$/i.test(file.type||""))return Promise.reject(new Error("Formato de imagem inválido."));
+    if(file.size>20*1024*1024)return Promise.reject(new Error("Imagem maior que 20 MB."));
+    return new Promise((resolve,reject)=>{
+        const url=URL.createObjectURL(file),image=new Image();
+        image.onload=()=>{
+            try{
+                const maxWidth=1920,maxHeight=1080,scale=Math.min(1,maxWidth/image.naturalWidth,maxHeight/image.naturalHeight),width=Math.max(1,Math.round(image.naturalWidth*scale)),height=Math.max(1,Math.round(image.naturalHeight*scale)),canvas=document.createElement("canvas"),context=canvas.getContext("2d",{alpha:false});
+                canvas.width=width;canvas.height=height;
+                context.imageSmoothingEnabled=true;context.imageSmoothingQuality="high";context.drawImage(image,0,0,width,height);
+                URL.revokeObjectURL(url);
+                resolve(canvas.toDataURL("image/webp",.86));
+            }catch(error){URL.revokeObjectURL(url);reject(error);}
+        };
+        image.onerror=()=>{URL.revokeObjectURL(url);reject(new Error("A imagem não pôde ser lida."));};
+        image.src=url;
+    });
 }
 
 /*==========================================================
