@@ -6,6 +6,7 @@ const css=fs.readFileSync("mesa-cinematica.css","utf8");
 const js=fs.readFileSync("mesa-cinematica.js","utf8");
 const editorHtml=fs.readFileSync("editor-ficha.html","utf8");
 const editorJs=fs.readFileSync("editor-ficha.js","utf8");
+const grimoire=fs.readFileSync("grimorio-v25.js","utf8");
 
 assert.match(html,/id="cinematicInitiative"/);
 assert.match(html,/id="cinematicResult"/);
@@ -15,6 +16,7 @@ assert.match(html,/mesa-cinematica\.js/);
 assert.match(css,/object-fit:contain!important/);
 assert.match(css,/\.cinematic-player #tableChat/);
 assert.match(css,/\.table-sidebar\{display:none!important\}/);
+assert.match(css,/\.scene-shell,.table-map-column,.table-scene,.scene-background/);
 assert.match(css,/grid-template-columns:minmax\(0,1fr\)!important/);
 assert.match(css,/\.players-side \.position-6\{order:1\}/);
 assert.match(css,/\.players-side \.position-1\{order:6\}/);
@@ -32,5 +34,8 @@ assert.match(editorHtml,/id="combatMediaIdle"/);
 assert.match(editorHtml,/id="combatMediaDefeat"/);
 assert.match(editorJs,/collectCharacterCombatMedia/);
 assert.match(editorJs,/combatMedia:/);
+assert.match(grimoire,/＋ Criar ritual/);
+assert.match(grimoire,/function openRitualBuilderV25/);
+assert.match(grimoire,/Somente as palavras aprendidas/);
 
 console.log(JSON.stringify({ok:true,initiative:true,resultPanel:true,targetSelection:true,quickAttacks:3,optionalAnimationStates:11},null,2));
