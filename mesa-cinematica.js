@@ -56,7 +56,7 @@ function playerHud(model){
     const status=model.status||{},pmNow=resource(model,"pmAtual",model.pm),pmMax=resource(model,"pmMax",model.pm),temp=resource(model,"pvTemporario",model.temporaryPV);
     const attacks=(model.attacks||[]).slice(0,3);
     const quick=`<div class="hud-quick-attacks">${[0,1,2].map(index=>{const attack=attacks[index];return `<div class="hud-quick-card"><strong>${esc(attack?.name||`Ataque ${index+1}`)}</strong><div>${attack?`<button data-quick="${index}" data-roll="attack">Ataque</button><button data-quick="${index}" data-roll="damage">Dano</button>`:"<small>Vazio</small>"}</div></div>`}).join("")}<button class="hud-heal" data-menu="character">＋ Cura</button></div>`;
-    return `<div class="hud-identity"><span>JOGADOR</span><strong>${esc(model.name||"Personagem")}</strong><small>PV temporário ${temp} • PM ${pmNow}/${pmMax}</small></div>${quick}${bodyHtml(model)}<div class="hud-resources"><strong>PM ${pmNow}/${pmMax}</strong><button data-menu="character">Perícias</button><button data-menu="inventory">Inventário</button><button data-menu="notes">Notas</button></div><div class="hud-actions"><button data-open="abilities">Habilidades</button><button data-open="assimilations">Assimilações</button></div>`;
+    return `<div class="hud-identity"><span>JOGADOR</span><strong>${esc(model.name||"Personagem")}</strong><small>PV temporário ${temp} • PM ${pmNow}/${pmMax}</small></div>${quick}${bodyHtml(model)}<div class="hud-resources"><strong>PM ${pmNow}/${pmMax}</strong><button data-menu="character">Perícias</button><button data-menu="inventory">Inventário</button><button data-menu="notes">Anotações</button><button data-menu="dice">Dados</button></div><div class="hud-actions"><button data-open="abilities">Habilidades</button><button data-open="assimilations">Assimilações</button><button data-menu="grimoire">Rituais</button></div>`;
 }
 function enemyHud(enemy){
     const hp=resource(enemy,"pvAtual",enemy.pv),max=resource(enemy,"pvMax",enemy.pv),pa=resource(enemy,"paAtual",enemy.pa),paMax=resource(enemy,"paMax",enemy.pa);
@@ -86,7 +86,7 @@ function renderResult(){
     else if(typeof last.testSuccess==="boolean")success=last.testSuccess;
     else if(typeof last.success==="boolean")success=last.success;
     const signature=`${last.id}:${last.total}:${success}`;if(root.dataset.signature===signature)return;root.dataset.signature=signature;
-    root.innerHTML=`<span>${esc(caption)}</span><strong>${Number(last.total)||0}</strong><small class="${success===true?"success":success===false?"failure":""}">${success===true?"S":success===false?"F":""}</small>`;
+    root.innerHTML=`<span>${esc(caption)}</span><strong>${Number(last.total)||0}</strong><small class="${success===true?"success":success===false?"failure":""}">${success===true?"SUCESSO":success===false?"FALHA":""}</small>`;
 }
 function refresh(){decorateTokens();renderInitiative();renderHud();renderResult();document.body.classList.toggle("cinematic-master",currentTableRole==="master");document.body.classList.toggle("cinematic-player",currentTableRole==="player")}
 
