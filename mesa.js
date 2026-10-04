@@ -1517,6 +1517,11 @@ function loadScene(){
     image.alt =
         "Cenário da campanha";
 
+    image.addEventListener("load",()=>{
+        const width=Math.max(1,sceneBackground.clientWidth),height=Math.max(1,sceneBackground.clientHeight);
+        image.classList.toggle("scene-image-low-resolution",image.naturalWidth<width||image.naturalHeight<height);
+    });
+
     sceneBackground.appendChild(
         image
     );
@@ -6701,6 +6706,26 @@ attackVariant:
 
 enemyCritical:
     metadata.enemyCritical === true,
+
+success:
+    typeof metadata.success === "boolean"
+        ? metadata.success
+        : null,
+
+testSuccess:
+    typeof metadata.testSuccess === "boolean"
+        ? metadata.testSuccess
+        : null,
+
+dt:
+    Number.isFinite(Number(metadata.dt))
+        ? Number(metadata.dt)
+        : null,
+
+resistanceDT:
+    Number.isFinite(Number(metadata.resistanceDT))
+        ? Number(metadata.resistanceDT)
+        : null,
 
         createdAt:
             Date.now()
