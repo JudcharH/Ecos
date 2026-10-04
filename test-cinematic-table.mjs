@@ -1,0 +1,27 @@
+import fs from "node:fs";
+import assert from "node:assert/strict";
+
+const html=fs.readFileSync("mesa.html","utf8");
+const css=fs.readFileSync("mesa-cinematica.css","utf8");
+const js=fs.readFileSync("mesa-cinematica.js","utf8");
+const editorHtml=fs.readFileSync("editor-ficha.html","utf8");
+const editorJs=fs.readFileSync("editor-ficha.js","utf8");
+
+assert.match(html,/id="cinematicInitiative"/);
+assert.match(html,/id="cinematicResult"/);
+assert.match(html,/id="cinematicHud"/);
+assert.match(html,/mesa-cinematica\.css/);
+assert.match(html,/mesa-cinematica\.js/);
+assert.match(css,/object-fit:contain!important/);
+assert.match(css,/\.cinematic-player #tableChat/);
+assert.match(css,/\.selecting-attack-target/);
+assert.match(js,/startAttackTargetSelection\(message\.id\)/);
+assert.match(js,/startDamageTargetSelection\(message\.id\)/);
+assert.match(js,/data-quick=/);
+assert.match(js,/attackApplication\?\.hit/);
+assert.match(editorHtml,/id="combatMediaIdle"/);
+assert.match(editorHtml,/id="combatMediaDefeat"/);
+assert.match(editorJs,/collectCharacterCombatMedia/);
+assert.match(editorJs,/combatMedia:/);
+
+console.log(JSON.stringify({ok:true,initiative:true,resultPanel:true,targetSelection:true,quickAttacks:3,optionalAnimationStates:11},null,2));

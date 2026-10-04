@@ -153,6 +153,30 @@ Não salvo
 
     </div>
 
+    <details class="character-media-editor">
+        <summary>Arte de combate e animações</summary>
+        <p>Opcional. Use uma URL de imagem, GIF, WebP animado, WebM ou MP4. Se ficar vazio, a mesa usa a foto normal.</p>
+        <div class="character-media-grid">
+            <label>Parado / idle<input id="combatMediaIdle" type="url" placeholder="https://.../idle.webm"></label>
+            <label>Ataque<input id="combatMediaAttack" type="url" placeholder="https://.../ataque.webm"></label>
+            <label>Ataque forte<input id="combatMediaStrongAttack" type="url" placeholder="https://.../ataque-forte.webm"></label>
+            <label>Recebendo dano<input id="combatMediaHit" type="url" placeholder="https://.../dano.webm"></label>
+            <label>Esquiva<input id="combatMediaDodge" type="url" placeholder="https://.../esquiva.webm"></label>
+            <label>Bloqueio<input id="combatMediaBlock" type="url" placeholder="https://.../bloqueio.webm"></label>
+            <label>Cura<input id="combatMediaHeal" type="url" placeholder="https://.../cura.webm"></label>
+            <label>Habilidade<input id="combatMediaAbility" type="url" placeholder="https://.../habilidade.webm"></label>
+            <label>Ritual<input id="combatMediaRitual" type="url" placeholder="https://.../ritual.webm"></label>
+            <label>Movimento<input id="combatMediaMove" type="url" placeholder="https://.../movimento.webm"></label>
+            <label>Derrota<input id="combatMediaDefeat" type="url" placeholder="https://.../derrota.webm"></label>
+        </div>
+        <div class="character-media-transform">
+            <label>Escala (%)<input id="combatMediaScale" type="number" min="40" max="200" value="100"></label>
+            <label>Deslocamento X<input id="combatMediaOffsetX" type="number" min="-200" max="200" value="0"></label>
+            <label>Deslocamento Y<input id="combatMediaOffsetY" type="number" min="-200" max="200" value="0"></label>
+            <label class="media-flip-label"><input id="combatMediaFlip" type="checkbox"> Virar horizontalmente</label>
+        </div>
+    </details>
+
 
     <input
         type="file"

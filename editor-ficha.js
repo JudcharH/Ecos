@@ -36,6 +36,27 @@ let characterPhotoBase64 = "";
 
 let characterWoundedPhotoBase64 = "";
 
+const COMBAT_MEDIA_FIELDS={idle:"combatMediaIdle",attack:"combatMediaAttack",strongAttack:"combatMediaStrongAttack",hit:"combatMediaHit",dodge:"combatMediaDodge",block:"combatMediaBlock",heal:"combatMediaHeal",ability:"combatMediaAbility",ritual:"combatMediaRitual",move:"combatMediaMove",defeat:"combatMediaDefeat"};
+
+function collectCharacterCombatMedia(previous={}){
+    const media={...previous};
+    Object.entries(COMBAT_MEDIA_FIELDS).forEach(([key,id])=>{media[key]=document.getElementById(id)?.value.trim()||""});
+    media.scale=Math.max(40,Math.min(200,Number(document.getElementById("combatMediaScale")?.value)||100));
+    media.offsetX=Math.max(-200,Math.min(200,Number(document.getElementById("combatMediaOffsetX")?.value)||0));
+    media.offsetY=Math.max(-200,Math.min(200,Number(document.getElementById("combatMediaOffsetY")?.value)||0));
+    media.flip=Boolean(document.getElementById("combatMediaFlip")?.checked);
+    return media;
+}
+
+function loadCharacterCombatMedia(media={}){
+    Object.entries(COMBAT_MEDIA_FIELDS).forEach(([key,id])=>{const input=document.getElementById(id);if(input)input.value=media?.[key]||""});
+    const scale=document.getElementById("combatMediaScale"),offsetX=document.getElementById("combatMediaOffsetX"),offsetY=document.getElementById("combatMediaOffsetY"),flip=document.getElementById("combatMediaFlip");
+    if(scale)scale.value=Number(media?.scale)||100;
+    if(offsetX)offsetX.value=Number(media?.offsetX)||0;
+    if(offsetY)offsetY.value=Number(media?.offsetY)||0;
+    if(flip)flip.checked=Boolean(media?.flip);
+}
+
 let linkedCampaignId = null;
 
 let characterBodyState = {};
@@ -1638,10 +1659,15 @@ const selectedSystem =
             oldCharacter.photo ||
             "",
 
-            woundedPhoto:
+        woundedPhoto:
     characterWoundedPhotoBase64 ||
     oldCharacter.woundedPhoto ||
     "",
+
+        combatMedia:
+            collectCharacterCombatMedia(
+                oldCharacter.combatMedia || {}
+            ),
 
         lifeMode:
             lifeMode?.value ||
@@ -2383,6 +2409,10 @@ characterAssimilationsState =
 
 characterWoundedPhotoBase64 =
     editingCharacter.woundedPhoto || "";
+
+loadCharacterCombatMedia(
+    editingCharacter.combatMedia || {}
+);
 
 
 renderCharacterPhoto();

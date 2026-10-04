@@ -7,6 +7,7 @@
 <title>Mesa • ECO</title>
 <link rel="stylesheet" href="global.css">
 <link rel="stylesheet" href="mesa.css">
+<link rel="stylesheet" href="mesa-cinematica.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -27,6 +28,8 @@
 <section class="scene-shell"><div class="table-play-area">
 <div class="table-map-column"><div class="table-scene">
 <div id="sceneBackground" class="scene-background"></div><div class="scene-dark-overlay"></div>
+<div id="cinematicInitiative" class="cinematic-initiative" aria-label="Ordem de iniciativa"></div>
+<div id="cinematicResult" class="cinematic-result" aria-live="polite"><span>RESULTADO</span><strong>—</strong><small></small></div>
 <span class="scene-side-label players-label">JOGADORES</span>
 <div class="combat-side players-side">
 <div class="combat-position player-position position-5" data-position="5"><span class="position-number">5</span><div class="position-token-slot"></div></div>
@@ -50,6 +53,7 @@
 <div class="npc-position" data-npc-position="2"><span class="position-number">2</span><div class="position-token-slot"></div></div>
 <div class="npc-position" data-npc-position="3"><span class="position-number">3</span><div class="position-token-slot"></div></div>
 </div>
+<section id="cinematicHud" class="cinematic-hud" aria-live="polite"></section>
 </div></div>
 <section id="tableChat" class="table-chat table-chat-side">
 <div class="table-chat-header"><div><span class="table-chat-label">COMUNICAÇÃO</span><h2>Chat</h2></div><button type="button" id="collapseChat" class="chat-collapse-button">›</button></div>
@@ -75,5 +79,6 @@
 <script src="mesa-assimilacoes-sangue.js"></script>
 <script src="mesa-assimilacoes-morte.js"></script>
 <script src="mesa-combate-correcao-final.js"></script>
+<script src="mesa-cinematica.js"></script>
 </body>
 </html>
