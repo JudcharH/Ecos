@@ -55,6 +55,11 @@ const context = vm.createContext({
 });
 
 const mesaSource = fs.readFileSync("mesa.js", "utf8");
+const threatBalanceSource = fs.readFileSync("ameacas.js", "utf8");
+if (!threatBalanceSource.includes("pv:20+25*na")) throw new Error("Progressão de PV das ameaças não foi atualizada.");
+if (!threatBalanceSource.includes("rd:2+na")) throw new Error("Progressão de RD das ameaças não foi atualizada.");
+if (!threatBalanceSource.includes("defense:5+na")) throw new Error("Progressão de Defesa das ameaças não foi atualizada.");
+if (!threatBalanceSource.includes("head:4+4*na,torso:4+5*na,limb:3+4*na")) throw new Error("Progressão dos membros das ameaças não foi atualizada.");
 vm.runInContext(mesaSource, context, { filename: "mesa.js" });
 
 vm.runInContext(`
@@ -360,7 +365,7 @@ const deathGodPreset = vm.runInContext(`(() => {
     const god = window.OrdemThreatRules.deathGodPreset();
     return { corpo: god.corpo, foco: god.foco, nexo: god.nexo, skills: god.skills, pv: god.pv, rd: god.rd, abilities: god.abilities.map(a => a.id) };
 })()`, context);
-if (deathGodPreset.corpo !== 8 || deathGodPreset.foco !== 8 || deathGodPreset.nexo !== 6 || Object.values(deathGodPreset.skills).reduce((a, b) => a + b, 0) !== 24 || deathGodPreset.pv !== 440 || deathGodPreset.rd !== 25 || !["reliquia", "cronos", "segunda-fase", "conjurador"].every(id => deathGodPreset.abilities.includes(id))) {
+if (deathGodPreset.corpo !== 8 || deathGodPreset.foco !== 8 || deathGodPreset.nexo !== 6 || Object.values(deathGodPreset.skills).reduce((a, b) => a + b, 0) !== 24 || deathGodPreset.pv !== 540 || deathGodPreset.rd !== 15 || !["reliquia", "cronos", "segunda-fase", "conjurador"].every(id => deathGodPreset.abilities.includes(id))) {
     throw new Error(`Deus da Morte incorreto: ${JSON.stringify(deathGodPreset)}`);
 }
 const passiveThreat = vm.runInContext(`(() => {
