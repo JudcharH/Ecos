@@ -174,6 +174,7 @@ function renderHud(){
 }
 function renderResult(){
     const root=document.getElementById("cinematicResult");if(!root)return;
+    refreshCurrentTableCampaign?.();
     const messages=currentTableCampaign?.chatMessages||[];let last=null;for(let index=messages.length-1;index>=0;index--){if(messages[index]?.type==="roll"){last=messages[index];break}}if(!last)return;
     let success=null,caption=last.label||"Resultado";
     if(typeof last.attackApplication?.hit==="boolean")success=last.attackApplication.hit;

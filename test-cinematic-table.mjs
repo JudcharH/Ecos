@@ -69,6 +69,10 @@ assert.match(tableCore,/const currentCharacterId = String\(currentTableCharacter
 assert.match(tableCore,/String\(player\.characterId\) !==\s*currentCharacterId/);
 assert.match(tableCore,/const normalizedCharacterId = String\(characterId\)/);
 assert.match(tableCore,/String\(campaign\.id\) ===\s*String\(currentTableCampaign\?\.id\)/);
+assert.match(tableCore,/String\(campaign\.id\) ===\s*String\(currentTableCampaign\.id\)/);
+assert.match(tableCore,/String\(character\.id\) === String\(characterId\)/);
+assert.match(tableCore,/String\(updatedCharacter\.id\)/);
+assert.match(js,/function renderResult\(\)\{[\s\S]*?refreshCurrentTableCampaign\?\.\(\)/);
 assert.match(tableCore,/\.cinematic-slot\.occupied/);
 assert.match(fs.readFileSync("mesa-combate-habilidades.js","utf8"),/String\(p\.characterId\)===String\(currentTableCharacter\?\.id\)/);
 assert.match(js,/bodyHtml\(enemy,false\)/);

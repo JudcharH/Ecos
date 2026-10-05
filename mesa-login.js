@@ -805,8 +805,8 @@ function saveCurrentCampaign(){
     const index =
         campaigns.findIndex(
             campaign =>
-                campaign.id ===
-                currentCampaign.id
+                String(campaign.id) ===
+                String(currentCampaign.id)
         );
 
     if(index === -1){

@@ -4369,8 +4369,8 @@ function saveTableCampaign(){
     const index =
         tableCampaigns.findIndex(
             campaign =>
-                campaign.id ===
-                currentTableCampaign.id
+                String(campaign.id) ===
+                String(currentTableCampaign.id)
         );
 
     if(index === -1){
@@ -7137,7 +7137,7 @@ function getLiveCharacter(
 
     return characters.find(
         character =>
-            character.id === characterId
+            String(character.id) === String(characterId)
     ) || null;
 
 }
@@ -12295,8 +12295,8 @@ function saveDamagedCharacter(
     const characterIndex =
         characters.findIndex(
             character =>
-                character.id ===
-                updatedCharacter.id
+                String(character.id) ===
+                String(updatedCharacter.id)
         );
 
 
@@ -12324,8 +12324,8 @@ function saveDamagedCharacter(
 
 
     if(
-        currentTableCharacter?.id ===
-        updatedCharacter.id
+        String(currentTableCharacter?.id) ===
+        String(updatedCharacter.id)
     ){
 
         currentTableCharacter =
