@@ -12,6 +12,7 @@ const tableCore=fs.readFileSync("mesa.js","utf8");
 
 assert.match(html,/id="cinematicInitiative"/);
 assert.match(html,/id="cinematicResult"/);
+assert.match(html,/id="cinematicPreviousResult"/);
 assert.match(html,/id="cinematicHud"/);
 assert.match(html,/id="cinematicFormation"/);
 assert.match(html,/data-cinematic-type="player"/);
@@ -65,6 +66,9 @@ assert.match(js,/originalSaveCampaign/);
 assert.match(js,/result-flash/);
 assert.match(js,/critical-result/);
 assert.match(css,/\.cinematic-result\.critical-result>strong/);
+assert.match(css,/\.cinematic-result-previous/);
+assert.match(js,/function scheduleResultRender/);
+assert.match(js,/rolls\.at\(-2\)/);
 assert.match(css,/\.cinematic-slot\.current-turn \.cinematic-token:after/);
 assert.match(css,/cinematic-portrait-media/);
 assert.match(js,/portrait=false/);

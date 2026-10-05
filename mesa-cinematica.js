@@ -2,6 +2,7 @@
 "use strict";
 
 let cinematicSelection=null;
+let resultRenderFrame=0;
 const videoPattern=/\.(webm|mp4)(?:$|[?#])/i;
 
 function esc(value){return String(value??"").replace(/[&<>'"]/g,char=>({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}[char]))}
@@ -172,17 +173,32 @@ function renderHud(){
     root.querySelectorAll("[data-enemy-roll]").forEach(button=>button.onclick=()=>{const enemy=liveEnemyFromSelection();if(enemy)rollCinematicEnemy(enemy,button.dataset.enemyKind,button.dataset.enemyRoll)});
     root.querySelectorAll("[data-enemy-panel]").forEach(button=>button.onclick=()=>{const enemy=liveEnemyFromSelection();if(enemy)openCinematicEnemyPanel(enemy,button.dataset.enemyPanel)});
 }
+function resultView(message){
+    if(!message)return null;
+    let success=null,caption=message.label||"Resultado";
+    if(typeof message.attackApplication?.hit==="boolean")success=message.attackApplication.hit;
+    else if(typeof message.testSuccess==="boolean")success=message.testSuccess;
+    else if(typeof message.success==="boolean")success=message.success;
+    const target=Number(message.attackApplication?.finalDefense??message.dt??message.resistanceDT),comparison=Number.isFinite(target)&&target>0?` contra ${target}`:"",critical=message.critical===true||message.playerCritical===true||message.enemyCritical===true||/CRÍTICO/i.test(String(message.label||""));
+    return{caption,total:Number(message.total)||0,success,comparison,critical,signature:`${message.id}:${message.total}:${success}:${target}:${critical}`};
+}
+function paintResult(root,view,animate=false){
+    if(!root||!view)return;
+    root.dataset.signature=view.signature;
+    if(animate){root.classList.remove("result-flash");void root.offsetWidth;root.classList.add("result-flash")}
+    root.innerHTML=`<span>${esc(view.caption)}</span><strong>${view.total}</strong><small class="${view.success===true?"success":view.success===false?"failure":""}">${view.success===true?"SUCESSO":view.success===false?"FALHA":""}${view.comparison}</small>`;
+    root.classList.toggle("critical-result",view.critical);
+}
 function renderResult(){
-    const root=document.getElementById("cinematicResult");if(!root)return;
-    refreshCurrentTableCampaign?.();
-    const messages=currentTableCampaign?.chatMessages||[];let last=null;for(let index=messages.length-1;index>=0;index--){if(messages[index]?.type==="roll"){last=messages[index];break}}if(!last)return;
-    let success=null,caption=last.label||"Resultado";
-    if(typeof last.attackApplication?.hit==="boolean")success=last.attackApplication.hit;
-    else if(typeof last.testSuccess==="boolean")success=last.testSuccess;
-    else if(typeof last.success==="boolean")success=last.success;
-    const target=Number(last.attackApplication?.finalDefense??last.dt??last.resistanceDT),comparison=Number.isFinite(target)&&target>0?` contra ${target}`:"",critical=last.critical===true||last.playerCritical===true||last.enemyCritical===true||/CRÍTICO/i.test(String(last.label||"")),signature=`${last.id}:${last.total}:${success}:${target}:${critical}`;if(root.dataset.signature===signature)return;root.dataset.signature=signature;
-    root.classList.remove("result-flash");void root.offsetWidth;root.classList.add("result-flash");root.innerHTML=`<span>${esc(caption)}</span><strong>${Number(last.total)||0}</strong><small class="${success===true?"success":success===false?"failure":""}">${success===true?"SUCESSO":success===false?"FALHA":""}${comparison}</small>`;
-    root.classList.toggle("critical-result",critical);
+    const root=document.getElementById("cinematicResult"),previousRoot=document.getElementById("cinematicPreviousResult");if(!root)return;
+    const rolls=(currentTableCampaign?.chatMessages||[]).filter(message=>message?.type==="roll"),last=rolls.at(-1),previous=rolls.at(-2);if(!last)return;
+    const currentView=resultView(last),previousView=resultView(previous),signature=`${currentView.signature}|${previousView?.signature||""}`;if(root.dataset.historySignature===signature)return;root.dataset.historySignature=signature;
+    paintResult(root,currentView,true);
+    if(previousView)paintResult(previousRoot,previousView,false);
+}
+function scheduleResultRender(refreshCampaign=false){
+    if(resultRenderFrame)return;
+    resultRenderFrame=requestAnimationFrame(()=>{resultRenderFrame=0;if(refreshCampaign)refreshCurrentTableCampaign?.();renderResult()});
 }
 function refresh(){decorateTokens();renderInitiative();renderHud();renderResult();document.body.classList.toggle("cinematic-master",currentTableRole==="master");document.body.classList.toggle("cinematic-player",currentTableRole==="player")}
 
@@ -200,12 +216,12 @@ document.addEventListener("DOMContentLoaded",()=>{
         requestAnimationFrame(refresh);
     };
     const originalRollMessage=window.addRollChatMessage;
-    if(typeof originalRollMessage==="function")window.addRollChatMessage=function(){const value=originalRollMessage.apply(this,arguments);requestAnimationFrame(renderResult);return value};
-    const originalSaveCampaign=window.saveTableCampaign;let resultFrame=0;
-    if(typeof originalSaveCampaign==="function")window.saveTableCampaign=function(){const value=originalSaveCampaign.apply(this,arguments);if(!resultFrame)resultFrame=requestAnimationFrame(()=>{resultFrame=0;renderResult()});return value};
+    if(typeof originalRollMessage==="function")window.addRollChatMessage=function(){const value=originalRollMessage.apply(this,arguments);scheduleResultRender(false);return value};
+    const originalSaveCampaign=window.saveTableCampaign;
+    if(typeof originalSaveCampaign==="function")window.saveTableCampaign=function(){const value=originalSaveCampaign.apply(this,arguments);scheduleResultRender(false);return value};
     try{saveTableCampaign=window.saveTableCampaign}catch(error){}
     document.addEventListener("eco:campaign-render",()=>{refreshCurrentTableCampaign?.();refresh()});
-    document.addEventListener("eco:roll-render",()=>{refreshCurrentTableCampaign?.();renderResult()});
+    document.addEventListener("eco:roll-render",()=>scheduleResultRender(true));
     requestAnimationFrame(refresh);
     window.setInterval(renderInitiative,800);
 });
