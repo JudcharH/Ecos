@@ -423,6 +423,12 @@ const threatEditorSource = fs.readFileSync("ameacas.js", "utf8");
 for (const marker of ["function telopsia()", 'systemId:"telopsia-na8"', "consumeFantasmagorico", "travarSceneUses", "Travar •"]) {
     if (!threatEditorSource.includes(marker) && !mesaSource.includes(marker)) throw new Error(`Automação da Telopsia ausente: ${marker}`);
 }
+for (const marker of ["assets/threats/lobisomem-normal.webp", "assets/threats/lobisomem-machucado.webp", "data.length<=150000"]) {
+    if (!threatEditorSource.includes(marker)) throw new Error(`Persistência de fotos de ameaça ausente: ${marker}`);
+}
+if (!mesaSource.includes("function hydrateEnemyMedia") || !fs.existsSync("assets/threats/lobisomem-normal.webp") || !fs.existsSync("assets/threats/lobisomem-machucado.webp")) {
+    throw new Error("Fotos padrão ou sincronização visual do Lobisomem ausentes.");
+}
 const wolfAbilityMatch=threatEditorSource.match(/const WOLF_ABILITY_IDS=\[([^\]]+)\]/);
 const wolfAbilityIds=wolfAbilityMatch?[...wolfAbilityMatch[1].matchAll(/"([^"]+)"/g)].map(match=>match[1]):[];
 const expectedWolfAbilities=["esquiva-maior","investida","mordida-feroz","ferocidade","predador"];

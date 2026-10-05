@@ -28,7 +28,7 @@ function decorateTokens(){
             slot.onclick=event=>{event.preventDefault();event.stopPropagation();if(pendingEnemyAbilityTarget||pendingAttackApplication||pendingDamageApplication)return;handleEmptyPosition(slot.dataset.cinematicType,Number(slot.dataset.position))};
             return;
         }
-        let model=found.entity;
+        let model=found.type==="enemy"&&typeof hydrateEnemyMedia==="function"?hydrateEnemyMedia(found.entity):found.entity;
         if(found.type==="player")model=liveCharacter(model.characterId)||model;
         const wounded=(model.conditions||[]).some(condition=>String(typeof condition==="string"?condition:condition.id||condition.name||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase()==="machucado");
         const media=model.combatMedia||{},enemySize=found.type==="enemy"?Math.max(1,Number(found.entity.size)||1):1,displayMedia={...media,scale:(Number(media.scale)||100)*(1+((enemySize-1)*.18))},fullBodySource=media.idle||(wounded?model.woundedPhoto:"")||"",source=fullBodySource||model.photo||model.image||"",portrait=Boolean(source&&!fullBodySource);
@@ -47,7 +47,7 @@ function decorateTokens(){
 function portraitForParticipant(participant){
     const id=participant.characterId||participant.enemyId||participant.id;
     const character=liveCharacter(participant.characterId||id);
-    const enemy=(currentTableCampaign?.enemies||[]).find(item=>String(item.enemyId||item.id)===String(id));
+    const rawEnemy=(currentTableCampaign?.enemies||[]).find(item=>String(item.enemyId||item.id)===String(id)),enemy=rawEnemy&&typeof hydrateEnemyMedia==="function"?hydrateEnemyMedia(rawEnemy):rawEnemy;
     const model=character||enemy||participant;
     return {name:model.name||participant.name||"Participante",photo:model.photo||model.image||"",id};
 }

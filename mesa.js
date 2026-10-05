@@ -5001,6 +5001,10 @@ if(
 }
 else{
 
+    if(type === "enemy"){
+        entity = hydrateEnemyMedia(entity);
+    }
+
     const enemyIsWounded =
         type === "enemy" &&
         Array.isArray(entity.conditions) &&
@@ -5870,6 +5874,7 @@ function enemyTrainingDie(rank){return ({1:"1d4",2:"1d8",3:"1d12"})[Number(rank)
 function enemySkillAttribute(name){return ["Manobra","Fortitude","Luta","Presteza"].includes(name)?"corpo":["Disciplina","Discreto","Interação","Intimidação","Percepção","Pilotagem","Pontaria","Vontade","Sorte"].includes(name)?"foco":"nexo";}
 function normalizeEnemyAbilityId(value){return String(value||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"");}
 function hydrateEnemyAbilities(enemy){const wolfIds=new Set(["esquiva-maior","investida","mordida-feroz","ferocidade","predador"]),isWolf=enemy?.systemId==="lobisomem-na6"||enemy?.templateId==="lobisomem-pronto"||enemy?.id==="lobisomem-pronto";if(Array.isArray(enemy.abilities)&&enemy.abilities.length){if(isWolf)enemy.abilities=enemy.abilities.filter(ability=>wolfIds.has(normalizeEnemyAbilityId(ability.id||ability.name)));return enemy.abilities;}let library=[];try{library=JSON.parse(localStorage.getItem("ordem_threats")||"[]")}catch{library=[]}const template=library.find(item=>String(item.id)===String(enemy.templateId||enemy.id)||item.systemId&&item.systemId===enemy.systemId);enemy.abilities=Array.isArray(template?.abilities)?template.abilities.map(ability=>({...ability})):[];if(isWolf)enemy.abilities=enemy.abilities.filter(ability=>wolfIds.has(normalizeEnemyAbilityId(ability.id||ability.name)));return enemy.abilities;}
+function hydrateEnemyMedia(enemy){if(!enemy)return enemy;let library=[];try{library=JSON.parse(localStorage.getItem("ordem_threats")||"[]")}catch{library=[]}const template=library.find(item=>String(item.id)===String(enemy.templateId||enemy.id)||item.systemId&&item.systemId===enemy.systemId);if(!template)return enemy;if(template.photo)enemy.photo=template.photo;if(template.woundedPhoto)enemy.woundedPhoto=template.woundedPhoto;if(template.combatMedia?.idle)enemy.combatMedia={...(enemy.combatMedia||{}),...template.combatMedia};return enemy;}
 function enemyHasAbility(enemy,id){return hydrateEnemyAbilities(enemy).some(ability=>normalizeEnemyAbilityId(ability.id||ability.name)===id);}
 function applyEnemyPassiveStats(enemy){if(!enemy||enemy.passiveStatsApplied)return enemy;const ids=hydrateEnemyAbilities(enemy).map(ability=>normalizeEnemyAbilityId(ability.id||ability.name));if(ids.includes("reliquia")){enemy.pv=(Number(enemy.pv)||0)*2;enemy.head=(Number(enemy.head)||0)*2;enemy.torso=(Number(enemy.torso)||0)*2;enemy.limb=(Number(enemy.limb)||0)*2;}if(ids.includes("camada-extra"))enemy.rd=(Number(enemy.rd)||0)+3;if(ids.includes("ferocidade")){enemy.basicAttack=addEnemyDamageDice(enemy.basicAttack,1);enemy.strongAttack=addEnemyDamageDice(enemy.strongAttack,1);enemy.ferocityApplied=true;}enemy.passiveStatsApplied=true;return enemy;}
 function enemyAbilityState(enemy){enemy.abilityState=enemy.abilityState&&typeof enemy.abilityState==="object"?enemy.abilityState:{};return enemy.abilityState;}
@@ -6045,7 +6050,7 @@ function useNpcAction(npc,action,position){refreshCurrentTableCampaign();npc=(cu
 function openEnemyControlSheet(enemy,position){
     const requestedEnemyId=enemy?.enemyId||enemy?.id;
     refreshCurrentTableCampaign();
-    enemy=(currentTableCampaign.enemies||[]).find(item=>String(item.enemyId||item.id)===String(requestedEnemyId))||enemy;
+    enemy=hydrateEnemyMedia((currentTableCampaign.enemies||[]).find(item=>String(item.enemyId||item.id)===String(requestedEnemyId))||enemy);
     if(enemyHasAbility(enemy,"ferocidade")&&!enemy.ferocityApplied){enemy.basicAttack=addEnemyDamageDice(enemy.basicAttack,1);enemy.strongAttack=addEnemyDamageDice(enemy.strongAttack,1);enemy.ferocityApplied=true;saveTableCampaign();}
     if((enemy.conditions||[]).some(condition=>normalizeEnemyAbilityId(typeof condition==="string"?condition:condition.id||condition.name)==="machucado"))triggerEnemyMetamorphosis(enemy);
     const skills=enemy.skills&&typeof enemy.skills==="object"?enemy.skills:{};
