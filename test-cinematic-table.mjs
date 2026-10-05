@@ -46,6 +46,8 @@ assert.match(tableCore,/eco:roll-render/);
 assert.match(js,/addEventListener\("eco:campaign-render"/);
 assert.match(js,/addEventListener\("eco:roll-render"/);
 assert.match(js,/data-player-move/);
+assert.match(js,/class="hud-pa">PA/);
+assert.match(css,/\.hud-pa\{/);
 assert.match(js,/String\(current\.entity\.characterId\)===String\(currentTableCharacter\?\.id\)/);
 assert.match(js,/Adicionar habilidade/);
 assert.match(js,/Adicionar assimilação/);
