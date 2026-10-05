@@ -1305,16 +1305,25 @@ function characterFileToBase64(
                                 WEBP economiza muito espaço.
                             */
 
-                            const compressed =
-                                canvas.toDataURL(
-                                    "image/webp",
-                                    0.78
-                                );
+                            let quality = 0.78;
+                            let compressed = canvas.toDataURL("image/webp",quality);
 
+                            /*
+                                Mantém cada arte pequena o bastante para que
+                                foto normal + machucada não impeçam a ficha de
+                                ser salva no armazenamento do navegador.
+                            */
+                            for(let attempt=0;attempt<5&&compressed.length>180000;attempt++){
+                                quality=Math.max(0.5,quality-0.07);
+                                const factor=Math.pow(0.84,attempt+1);
+                                const resized=document.createElement("canvas");
+                                resized.width=Math.max(1,Math.round(width*factor));
+                                resized.height=Math.max(1,Math.round(height*factor));
+                                resized.getContext("2d")?.drawImage(image,0,0,resized.width,resized.height);
+                                compressed=resized.toDataURL("image/webp",quality);
+                            }
 
-                            resolve(
-                                compressed
-                            );
+                            resolve(compressed);
 
                         };
 
@@ -1962,8 +1971,13 @@ conditions:
 }
 
 
+    const preparedCharacterData =
+        typeof window.migrateSystemBaseV2Character === "function"
+            ? window.migrateSystemBaseV2Character(characterData)
+            : characterData;
+
     saveCharacterToStorage(
-        characterData
+        preparedCharacterData
     );
 
 }
@@ -3297,6 +3311,16 @@ function calculateAutomaticDamageReduction(){
 ==========================================================*/
 
 function calculateBodyMaximums(){
+
+    /*
+        O sistema atual distribui o mesmo total do PV clássico entre os
+        seis membros. Impede que a fórmula antiga, baseada em VIG, volte a
+        zerar cabeça e torso depois que o módulo V2 já foi carregado.
+    */
+    if(typeof window.calculateSystemBaseV2Stats === "function"){
+        window.calculateSystemBaseV2Stats();
+        return;
+    }
 
     const level =
         Math.max(

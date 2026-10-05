@@ -445,6 +445,10 @@ const heartOverflow = vm.runInContext(`(() => { const originalSave=saveDamagedCh
 if (heartOverflow.pv !== 0 || heartOverflow.heart !== 0 || !heartOverflow.dead) throw new Error(`Transbordamento para o Coração incorreto: ${JSON.stringify(heartOverflow)}`);
 const baseSystemSource = fs.readFileSync("sistema-base-v2.js", "utf8");
 if (!baseSystemSource.includes("const pvMax=(9*level)+(corpo*2)")) throw new Error("Fórmula nova de PV clássico ausente.");
+const repairedEnemyBody = vm.runInContext(`(() => { const enemy={head:20,torso:24,limb:15,body:{torso:0},bodyMaximums:{torso:0}};initializeEnemyBody(enemy);return{body:enemy.body,maximums:enemy.bodyMaximums,version:enemy.bodySystemVersion}; })()`, context);
+if (repairedEnemyBody.body.chest !== 24 || repairedEnemyBody.maximums.chest !== 24 || "torso" in repairedEnemyBody.body || repairedEnemyBody.version !== 2) {
+    throw new Error(`Migração do Torso da ameaça incorreta: ${JSON.stringify(repairedEnemyBody)}`);
+}
 
 console.log(JSON.stringify({
     ok: true,

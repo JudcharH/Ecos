@@ -11919,7 +11919,18 @@ function initializeEnemyBody(enemy){
     enemy.body=enemy.body&&typeof enemy.body==="object"?enemy.body:{};
     enemy.bodyMaximums=enemy.bodyMaximums&&typeof enemy.bodyMaximums==="object"?enemy.bodyMaximums:{};
     const maximums={head:Number(enemy.head)||0,chest:Number(enemy.torso)||0,leftArm:Number(enemy.limb)||0,rightArm:Number(enemy.limb)||0,leftLeg:Number(enemy.limb)||0,rightLeg:Number(enemy.limb)||0};
-    Object.entries(maximums).forEach(([id,max])=>{enemy.bodyMaximums[id]=Math.max(0,Number(enemy.bodyMaximums[id]??max)||0);enemy.body[id]=Math.max(0,Number(enemy.body[id]??enemy.bodyMaximums[id])||0);});
+    const needsMigration=Number(enemy.bodySystemVersion||0)<2;
+    Object.entries(maximums).forEach(([id,max])=>{
+        const legacyId=id==="chest"?"torso":id;
+        const oldMaximum=Math.max(0,Number(enemy.bodyMaximums[id]??enemy.bodyMaximums[legacyId])||0);
+        const fixedMaximum=oldMaximum>0?oldMaximum:Math.max(0,max);
+        const savedCurrent=enemy.body[id]??enemy.body[legacyId];
+        enemy.bodyMaximums[id]=fixedMaximum;
+        enemy.body[id]=needsMigration&&oldMaximum<=0?fixedMaximum:Math.min(fixedMaximum,Math.max(0,Number(savedCurrent??fixedMaximum)||0));
+    });
+    delete enemy.body.torso;
+    delete enemy.bodyMaximums.torso;
+    enemy.bodySystemVersion=2;
     return enemy;
 }
 function bodyDamageParts(target,type){
