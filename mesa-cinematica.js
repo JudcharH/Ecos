@@ -38,7 +38,7 @@ function openCinematicPlayerMovement(characterOrEntry){
         const position=Number(button.dataset.position);
         closeCurrentPanel();
         if(currentTableRole==="master")moveCampaignPlayer(entry.characterId,position);else placeCurrentPlayer(position);
-        requestAnimationFrame(refresh);
+        refresh();
     });
 }
 function decorateTokens(){
@@ -204,6 +204,8 @@ document.addEventListener("DOMContentLoaded",()=>{
     const originalSaveCampaign=window.saveTableCampaign;let resultFrame=0;
     if(typeof originalSaveCampaign==="function")window.saveTableCampaign=function(){const value=originalSaveCampaign.apply(this,arguments);if(!resultFrame)resultFrame=requestAnimationFrame(()=>{resultFrame=0;renderResult()});return value};
     try{saveTableCampaign=window.saveTableCampaign}catch(error){}
+    document.addEventListener("eco:campaign-render",()=>{refreshCurrentTableCampaign?.();refresh()});
+    document.addEventListener("eco:roll-render",()=>{refreshCurrentTableCampaign?.();renderResult()});
     requestAnimationFrame(refresh);
     window.setInterval(renderInitiative,800);
 });

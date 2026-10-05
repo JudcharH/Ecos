@@ -4317,6 +4317,10 @@ function openPositionSelector(
 =              COLOCAR ENTIDADE NA POSIÇÃO
 ==========================================================*/
 
+function notifyCinematicUpdate(type){
+    if(typeof document!=="undefined"&&typeof CustomEvent!=="undefined")document.dispatchEvent(new CustomEvent(type));
+}
+
 function placeEntityAtPosition(type,entity,position){
     if(type==="enemy"){
         if(!Array.isArray(currentTableCampaign.enemies))currentTableCampaign.enemies=[];
@@ -4358,6 +4362,7 @@ function placeEntityAtPosition(type,entity,position){
     }
     saveTableCampaign();closeCurrentPositionModal();renderCombatPositions();
     addSystemChatMessage(`${entity.name||"Entidade"} foi colocado na posição ${position}.`);
+    notifyCinematicUpdate("eco:campaign-render");
 }
 
 /*==========================================================
@@ -5352,6 +5357,8 @@ function placeCurrentPlayer(position){
         `${currentTableCharacter.name} moveu para a posição ${position}.`
     );
 
+    notifyCinematicUpdate("eco:campaign-render");
+
 }
 
 
@@ -5532,6 +5539,8 @@ function moveCampaignPlayer(
     addSystemChatMessage(
         `${player.name} foi movido para a posição ${position}.`
     );
+
+    notifyCinematicUpdate("eco:campaign-render");
 
 }
 
@@ -6826,6 +6835,8 @@ resistanceDT:
             Date.now()
 
     });
+
+    notifyCinematicUpdate("eco:roll-render");
 
 }
 
