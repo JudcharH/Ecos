@@ -5293,13 +5293,23 @@ function placeCurrentPlayer(position){
 
     }
 
+    position = Number(position);
+
+    if(!Number.isInteger(position) || position < 1 || position > 6){
+
+        return;
+
+    }
+
+    const currentCharacterId = String(currentTableCharacter.id);
+
     const occupied =
         currentTableCampaign.players.some(
             player =>
                 Number(player.position) ===
                 position &&
-                player.characterId !==
-                currentTableCharacter.id
+                String(player.characterId) !==
+                currentCharacterId
         );
 
     if(occupied){
@@ -5315,8 +5325,8 @@ function placeCurrentPlayer(position){
     const player =
         currentTableCampaign.players.find(
             item =>
-                item.characterId ===
-                currentTableCharacter.id
+                String(item.characterId) ===
+                currentCharacterId
         );
 
     if(!player){
@@ -5470,13 +5480,23 @@ function moveCampaignPlayer(
     const players =
         currentTableCampaign.players;
 
+    position = Number(position);
+
+    if(!Array.isArray(players) || !Number.isInteger(position) || position < 1 || position > 6){
+
+        return;
+
+    }
+
+    const normalizedCharacterId = String(characterId);
+
     const occupied =
         players.find(
             player =>
                 Number(player.position) ===
                 position &&
-                player.characterId !==
-                characterId
+                String(player.characterId) !==
+                normalizedCharacterId
         );
 
     if(occupied){
@@ -5492,8 +5512,8 @@ function moveCampaignPlayer(
     const player =
         players.find(
             item =>
-                item.characterId ===
-                characterId
+                String(item.characterId) ===
+                normalizedCharacterId
         );
 
     if(!player){
