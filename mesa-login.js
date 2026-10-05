@@ -261,7 +261,7 @@ function discoverCampaign(){
 
             campaign=>
 
-                campaign.id===id
+                String(campaign.id)===String(id)
 
         );
 
@@ -493,8 +493,8 @@ function renderAvailableCharacters(){
 
             return (
                 !character.campaignId ||
-                character.campaignId ===
-                    currentCampaign.id
+                String(character.campaignId) ===
+                    String(currentCampaign.id)
             );
 
         });
@@ -654,8 +654,8 @@ function selectCharacter(character){
     const alreadyExists =
         currentCampaign.players.some(
             player =>
-                player.characterId ===
-                character.id
+                String(player.characterId) ===
+                String(character.id)
         );
 
     if(
@@ -728,8 +728,8 @@ function connectCharacterToCurrentCampaign(
     const existingPlayer =
         currentCampaign.players.find(
             player =>
-                player.characterId ===
-                character.id
+                String(player.characterId) ===
+                String(character.id)
         );
 
     if(!existingPlayer){

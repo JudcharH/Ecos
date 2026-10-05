@@ -308,8 +308,8 @@ function discoverTableSession(){
     currentTableCampaign =
         tableCampaigns.find(
             campaign =>
-                campaign.id ===
-                campaignId
+                String(campaign.id) ===
+                String(campaignId)
         ) || null;
 
     if(!currentTableCampaign){
@@ -340,8 +340,8 @@ function discoverTableSession(){
         currentTableCharacter =
             tableCharacters.find(
                 character =>
-                    character.id ===
-                    characterId
+                    String(character.id) ===
+                    String(characterId)
             ) || null;
 
         if(!currentTableCharacter){
