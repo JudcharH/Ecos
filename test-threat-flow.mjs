@@ -358,8 +358,20 @@ if (greaterDodge.rd !== 8 || greaterDodge.armed !== false || greaterDodge.uses !
 
 vm.runInContext(fs.readFileSync("ameacas.js", "utf8"), context, { filename: "ameacas.js" });
 const abilityCatalog = vm.runInContext("window.OrdemThreatRules.abilityCatalog.map(ability => ability.id)", context);
-if (!["investida", "mordida-feroz", "esquiva-maior"].every(id => abilityCatalog.includes(id))) {
+const expectedEnemyAbilityCatalog = [
+    "investida", "mordida-feroz", "esquiva-maior", "reliquia", "toque-da-morte",
+    "possessao", "agarrao-necrotico", "apice-do-poder", "cronos", "invocador",
+    "segunda-fase", "camada-extra", "conjurador", "ferocidade", "atrair", "ilusorio",
+    "regenerativo", "vampirismo", "aplicador", "espinhoso", "aura-opressora",
+    "devorador-de-condicoes", "ultimo-suspiro", "metamorfose", "predador", "travar",
+    "fantasmagorico"
+];
+if (JSON.stringify(abilityCatalog) !== JSON.stringify(expectedEnemyAbilityCatalog)) {
     throw new Error(`Biblioteca de habilidades incompleta: ${JSON.stringify(abilityCatalog)}`);
+}
+if (!mesaSource.includes('dodgeResult=rollEnemyTrainedTest(enemy,"Presteza")') ||
+    !mesaSource.includes('const enemyResult=rollEnemyTrainedTest(liveEnemy,"Manobra"),playerRoll=rollCharacterManobra(target)')) {
+    throw new Error("Esquiva ou Mordida Feroz não usa o rolador crítico unificado da ameaça.");
 }
 const deathGodPreset = vm.runInContext(`(() => {
     const god = window.OrdemThreatRules.deathGodPreset();
@@ -471,7 +483,8 @@ console.log(JSON.stringify({
     enemyCurrentPVReduced: true,
     enemyConditions: true,
     fierceBiteTarget: true,
-    reusableAbilityCatalog: true,
+    reusableAbilityCatalog: abilityCatalog.length,
+    unifiedEnemyCriticalRolls: true,
     deathGodPreset: true,
     passiveThreatAbilities: true,
     greaterDodge: true,
