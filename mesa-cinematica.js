@@ -101,6 +101,7 @@ function playerHud(model,masterViewing=false){
     return `<div class="hud-identity"><span>${masterViewing?"FICHA SELECIONADA":"JOGADOR"}</span><strong>${esc(model.name||"Personagem")}</strong><small>PV temporário ${temp} • PM ${pmNow}/${pmMax}</small>${masterViewing?'<button type="button" class="hud-master-return" data-master-reset>♛ Controles do mestre</button>':backButton()}</div>${quick}${bodyHtml(model)}<div class="hud-resources"><button data-menu="character">Perícias</button><button data-menu="inventory">Inventário</button><button data-menu="notes">Anotações</button><button data-menu="dice">Dados</button></div><div class="hud-actions"><button data-open="abilities">Habilidades</button><button data-open="assimilations">Assimilações</button><button data-menu="grimoire">Rituais</button><button data-menu="allies">Aliados</button></div>`;
 }
 function enemyHud(enemy){
+    if(enemy?.lifeMode==="body"&&typeof initializeEnemyBody==="function")initializeEnemyBody(enemy);
     const hp=resource(enemy,"pvAtual",enemy.pv),max=resource(enemy,"pvMax",enemy.pv),pa=resource(enemy,"paAtual",enemy.pa),paMax=resource(enemy,"paMax",enemy.pa);
     const attack=(kind,label)=>`<div class="hud-quick-card"><strong>${label}</strong><div><button data-enemy-roll="attack" data-enemy-kind="${kind}">Ataque</button><button data-enemy-roll="damage" data-enemy-kind="${kind}">Dano</button></div></div>`;
     const lifeLabel=enemy.lifeMode==="body"?"Usar PV clássico":"Usar membros";
