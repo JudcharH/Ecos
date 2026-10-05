@@ -18,12 +18,36 @@ function entityForSlot(slot){
     const entity=(list||[]).find(item=>Number(item.position)===position);
     return entity?{entity,type,position}:null;
 }
+function campaignPlayerFor(characterOrEntry){
+    const id=characterOrEntry?.characterId??characterOrEntry?.id;
+    return (currentTableCampaign?.players||[]).find(item=>String(item.characterId)===String(id))||null;
+}
+function openCinematicPlayerMovement(characterOrEntry){
+    refreshCurrentTableCampaign?.();
+    const entry=campaignPlayerFor(characterOrEntry);
+    if(!entry)return;
+    const own=String(entry.characterId)===String(currentTableCharacter?.id);
+    if(currentTableRole!=="master"&&!own)return;
+    const occupied=new Map((currentTableCampaign.players||[]).filter(item=>String(item.characterId)!==String(entry.characterId)&&Number(item.position)>=1).map(item=>[Number(item.position),item]));
+    const buttons=Array.from({length:6},(_,index)=>index+1).map(position=>{
+        const occupant=occupied.get(position),current=Number(entry.position)===position;
+        return `<button type="button" class="primary-button cinematic-move-player" data-position="${position}" ${occupant||current?"disabled":""}>Posição ${position}${current?" • atual":occupant?` • ${esc(occupant.name||"ocupada")}`:""}</button>`;
+    }).join("");
+    openTablePanel("MOVIMENTO",entry.name||"Personagem",`<div class="table-panel-card"><p>Escolha uma posição livre entre 1 e 6.</p></div><div class="cinematic-position-grid">${buttons}</div>`);
+    document.querySelectorAll(".cinematic-move-player").forEach(button=>button.onclick=()=>{
+        const position=Number(button.dataset.position);
+        closeCurrentPanel();
+        if(currentTableRole==="master")moveCampaignPlayer(entry.characterId,position);else placeCurrentPlayer(position);
+        requestAnimationFrame(refresh);
+    });
+}
 function decorateTokens(){
     document.querySelectorAll(".cinematic-slot").forEach(slot=>{
         slot.classList.remove("occupied","covered","current-turn");
         const found=entityForSlot(slot);
         if(!found){
             slot.replaceChildren();
+            slot.style.removeProperty("--entity-size");
             slot.dataset.cinematicSource="";slot.dataset.cinematicEntity="";
             slot.onclick=event=>{event.preventDefault();event.stopPropagation();if(pendingEnemyAbilityTarget||pendingAttackApplication||pendingDamageApplication)return;handleEmptyPosition(slot.dataset.cinematicType,Number(slot.dataset.position))};
             return;
@@ -40,7 +64,7 @@ function decorateTokens(){
         slot.classList.add("occupied");
         if(typeof isEntityCurrentTurn==="function"&&isEntityCurrentTurn(found.entity,found.type))slot.classList.add("current-turn");
         slot.style.setProperty("--entity-size",enemySize);
-        slot.onclick=event=>{event.preventDefault();event.stopPropagation();const current=entityForSlot(slot);if(!current)return;if(pendingEnemyAbilityTarget){resolveEnemyAbilityTargetRouter(current.type,current.entity);return}if(pendingAttackApplication){applyPendingAttackToTarget(current.type,current.entity);return}if(pendingDamageApplication){applyPendingDamageToTarget(current.type,current.entity);return}if(currentTableRole==="master"){cinematicSelection=current;renderHud()}};
+        slot.onclick=event=>{event.preventDefault();event.stopPropagation();const current=entityForSlot(slot);if(!current)return;if(pendingEnemyAbilityTarget){resolveEnemyAbilityTargetRouter(current.type,current.entity);return}if(pendingAttackApplication){applyPendingAttackToTarget(current.type,current.entity);return}if(pendingDamageApplication){applyPendingDamageToTarget(current.type,current.entity);return}if(currentTableRole==="master"){cinematicSelection=current;renderHud();return}if(current.type==="player"&&String(current.entity.characterId)===String(currentTableCharacter?.id))openCinematicPlayerMovement(current.entity)};
     });
     (currentTableCampaign?.enemies||[]).forEach(enemy=>{const anchor=Number(enemy.position),size=Math.max(1,Number(enemy.size)||1);for(let offset=1;offset<size;offset++)document.querySelector(`.cinematic-slot[data-cinematic-type="enemy"][data-position="${anchor-offset}"]`)?.classList.add("covered")});
 }
@@ -98,7 +122,7 @@ function playerHud(model,masterViewing=false){
     const status=model.status||{},pmNow=resource(model,"pmAtual",model.pm),pmMax=resource(model,"pmMax",model.pm),temp=resource(model,"pvTemporario",model.temporaryPV);
     const attacks=(model.attacks||[]).slice(0,3);
     const quick=`<div class="hud-quick-attacks">${[0,1,2].map(index=>{const attack=attacks[index];return `<div class="hud-quick-card"><strong>${esc(attack?.name||`Ataque ${index+1}`)}</strong><div>${attack?`<button data-quick="${index}" data-roll="attack">Ataque</button><button data-quick="${index}" data-roll="damage">Dano</button>`:"<small>Vazio</small>"}</div></div>`}).join("")}<button class="hud-heal" data-menu="character">＋ Cura</button></div>`;
-    return `<div class="hud-identity"><span>${masterViewing?"FICHA SELECIONADA":"JOGADOR"}</span><strong>${esc(model.name||"Personagem")}</strong><small>PV temporário ${temp} • PM ${pmNow}/${pmMax}</small>${masterViewing?'<button type="button" class="hud-master-return" data-master-reset>♛ Controles do mestre</button>':backButton()}</div>${quick}${bodyHtml(model)}<div class="hud-resources"><button data-menu="character">Perícias</button><button data-menu="inventory">Inventário</button><button data-menu="notes">Anotações</button><button data-menu="dice">Dados</button></div><div class="hud-actions"><button data-open="abilities">Habilidades</button><button data-open="assimilations">Assimilações</button><button data-menu="grimoire">Rituais</button><button data-menu="allies">Aliados</button></div>`;
+    return `<div class="hud-identity"><span>${masterViewing?"FICHA SELECIONADA":"JOGADOR"}</span><strong>${esc(model.name||"Personagem")}</strong><small>PV temporário ${temp} • PM ${pmNow}/${pmMax}</small>${masterViewing?'<button type="button" class="hud-master-return" data-master-reset>♛ Controles do mestre</button>':backButton()}</div>${quick}${bodyHtml(model)}<div class="hud-resources"><button data-menu="character">Perícias</button><button data-menu="inventory">Inventário</button><button data-menu="notes">Anotações</button><button data-menu="dice">Dados</button><button data-player-move>Mover</button></div><div class="hud-actions"><button data-open="abilities">Habilidades</button><button data-open="assimilations">Assimilações</button><button data-menu="grimoire">Rituais</button><button data-menu="allies">Aliados</button></div>`;
 }
 function enemyHud(enemy){
     if(enemy?.lifeMode==="body"&&typeof initializeEnemyBody==="function")initializeEnemyBody(enemy);
@@ -142,6 +166,7 @@ function renderHud(){
     root.querySelectorAll("[data-master]").forEach(button=>button.onclick=()=>handleMenuAction(button.dataset.master));
     root.querySelectorAll("[data-leave-table]").forEach(button=>button.onclick=()=>document.getElementById("leaveTable")?.click());
     root.querySelectorAll("[data-master-reset]").forEach(button=>button.onclick=()=>{cinematicSelection=null;renderHud()});
+    root.querySelectorAll("[data-player-move]").forEach(button=>button.onclick=()=>{const model=currentTableRole==="player"?currentTableCharacter:(cinematicSelection?.type==="player"?cinematicSelection.entity:null);if(model)openCinematicPlayerMovement(model)});
     root.querySelector('[data-open="abilities"]')?.addEventListener("click",()=>{const character=currentTableRole==="player"?currentTableCharacter:(cinematicSelection?.type==="player"?liveCharacter(cinematicSelection.entity.characterId):null);if(character)openCinematicAbilities(character)});
     root.querySelector('[data-open="assimilations"]')?.addEventListener("click",()=>{const character=currentTableRole==="player"?currentTableCharacter:(cinematicSelection?.type==="player"?liveCharacter(cinematicSelection.entity.characterId):null);if(character)openCinematicAssimilations(character)});
     root.querySelectorAll("[data-enemy-roll]").forEach(button=>button.onclick=()=>{const enemy=liveEnemyFromSelection();if(enemy)rollCinematicEnemy(enemy,button.dataset.enemyKind,button.dataset.enemyRoll)});

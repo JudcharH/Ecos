@@ -7202,8 +7202,8 @@ function refreshCurrentTableCampaign(){
     const updatedCampaign =
         campaigns.find(
             campaign =>
-                campaign.id ===
-                currentTableCampaign?.id
+                String(campaign.id) ===
+                String(currentTableCampaign?.id)
         );
 
 
@@ -9536,7 +9536,7 @@ function markAttackTargets(){
 
     document
         .querySelectorAll(
-            ".player-position.occupied, .enemy-position.occupied"
+            ".player-position.occupied, .enemy-position.occupied, .cinematic-slot.occupied"
         )
         .forEach(position => {
 
@@ -11834,7 +11834,7 @@ function markDamageTargets(){
 
     document
         .querySelectorAll(
-            ".player-position.occupied, .enemy-position.occupied"
+            ".player-position.occupied, .enemy-position.occupied, .cinematic-slot.occupied"
         )
         .forEach(position => {
 
