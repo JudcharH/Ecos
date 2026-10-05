@@ -31,7 +31,7 @@ function decorateTokens(){
         let model=found.type==="enemy"&&typeof hydrateEnemyMedia==="function"?hydrateEnemyMedia(found.entity):found.entity;
         if(found.type==="player")model=liveCharacter(model.characterId)||model;
         const wounded=(model.conditions||[]).some(condition=>String(typeof condition==="string"?condition:condition.id||condition.name||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase()==="machucado");
-        const media=model.combatMedia||{},enemySize=found.type==="enemy"?Math.max(1,Number(found.entity.size)||1):1,displayMedia={...media,scale:(Number(media.scale)||100)*(1+((enemySize-1)*.18))},fullBodySource=media.idle||(wounded?model.woundedPhoto:"")||"",source=fullBodySource||model.photo||model.image||"",portrait=Boolean(source&&!fullBodySource);
+        const media=model.combatMedia||{},enemySize=found.type==="enemy"?Math.max(1,Number(found.entity.size)||1):1,displayMedia={...media,scale:Number(media.scale)||100},source=(wounded&&model.woundedPhoto)||media.idle||model.photo||model.image||"",portrait=false;
         const sourceSignature=`${source}:${portrait}:${displayMedia.scale}:${displayMedia.offsetX||0}:${displayMedia.offsetY||0}:${Boolean(displayMedia.flip)}`;
         if(slot.dataset.cinematicSource!==sourceSignature||slot.dataset.cinematicEntity!==String(model.id||model.enemyId||model.npcId||found.entity.characterId||"")){
             slot.innerHTML=`<button type="button" class="cinematic-token" aria-label="${esc(model.name||"Entidade")}">${mediaNode(source,model.name,displayMedia,portrait)}<span class="cinematic-token-name">${esc(model.name||"Sem nome")}</span></button>`;

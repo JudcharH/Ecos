@@ -420,7 +420,7 @@ for (const marker of ["openNpcControlSheet", "Ataque em conjunto", "Curar 2d8 + 
     if (!mesaSource.includes(marker)) throw new Error(`Sistema de NPC aliado ausente: ${marker}`);
 }
 const threatEditorSource = fs.readFileSync("ameacas.js", "utf8");
-for (const marker of ["function telopsia()", 'systemId:"telopsia-na8"', "consumeFantasmagorico", "travarSceneUses", "Travar •"]) {
+for (const marker of ["function telopsia()", 'systemId:"telopsia-na8"', "assets/telopsia-idle.webm", "consumeFantasmagorico", "travarSceneUses", "Travar •"]) {
     if (!threatEditorSource.includes(marker) && !mesaSource.includes(marker)) throw new Error(`Automação da Telopsia ausente: ${marker}`);
 }
 for (const marker of ["assets/threats/lobisomem-normal.webp", "assets/threats/lobisomem-machucado.webp", "data.length<=150000"]) {
