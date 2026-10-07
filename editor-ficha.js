@@ -1,6 +1,3 @@
-Warning: truncated output (original token count: 67491)
-Total output lines: 14805
-
 /*==========================================================
 =                 EDITOR-FICHA.JS - PARTE 1
 ==========================================================*/
@@ -5546,7 +5543,3845 @@ const DEFAULT_ABILITIES = [
         },
 
         useCost:{
-  …17491 tokens truncated…Transformar",
+            type:"pa",
+            value:1
+        },
+
+        requirement:
+            "Escudo Pesado",
+
+        description:
+            "Recebe Resistência a dano de Projéteis e Balístico pela metade até o início da sua próxima rodada. Requer Escudo Pesado.",
+
+        upgrade:null
+    },
+
+
+    {
+        id:"protetor",
+
+        name:"Protetor",
+
+        permanentCost:{
+            type:"pd",
+            value:4
+        },
+
+        useCost:{
+            type:"pa",
+            value:1
+        },
+
+        description:
+            "Protege um aliado adjacente. Enquanto protege, todos os ataques contra o aliado são direcionados a você e o custo para ameaças atacarem o aliado protegido aumenta em +1 PA.",
+
+        upgrade:null
+    },
+
+
+    {
+        id:"golpes-potentes",
+
+        name:"Golpes Potentes",
+
+        permanentCost:{
+            type:"pd",
+            value:4
+        },
+
+        useCost:null,
+
+        description:
+            "Passiva. Sempre que acertar um ataque, empurra o alvo 1 posição. Em um Acerto Crítico, empurra 2 posições. Não funciona contra criaturas com o dobro da sua estatura.",
+
+        upgrade:null
+    },
+
+
+    {
+        id:"tecnica-secreta",
+
+        name:"Técnica Secreta",
+
+        permanentCost:{
+            type:"pd",
+            value:3
+        },
+
+        useCost:{
+            type:"pd",
+            value:2
+        },
+
+        description:
+            "Adiciona uma propriedade especial ao próximo ataque. Amplo: atinge um alvo adicional ao alcance corpo a corpo. Preciso: ignora 5 de Defesa concedida por efeitos temporários.",
+
+        upgrade:null
+    },
+
+
+    {
+        id:"tecnica-sublime",
+
+        name:"Técnica Sublime",
+
+        permanentCost:{
+            type:"pd",
+            value:3
+        },
+
+        useCost:{
+            type:"pd",
+            value:2
+        },
+
+        description:
+            "Recebe +2 na margem de ameaça. Máximo de +4 na margem de ameaça.",
+
+        upgrade:null
+    },
+
+
+    {
+        id:"maquina-de-matar",
+
+        name:"Máquina de Matar",
+
+        permanentCost:{
+            type:"pd",
+            value:6
+        },
+
+        useCost:null,
+
+        description:
+            "Passiva. Sua arma recebe +1 na margem de ameaça e seu dano aumenta em 1 passo.",
+
+        upgrade:null
+    },
+
+
+    {
+        id:"potencia-maxima",
+
+        name:"Potência Máxima",
+
+        permanentCost:{
+            type:"pd",
+            value:6
+        },
+
+        useCost:{
+            type:"pa",
+            value:1
+        },
+
+        description:
+            "Uma vez por cena, durante 1 rodada, todos os bônus de ataque e dano são dobrados.",
+
+        upgrade:null
+    },
+
+    
+    {
+        id:"lobo-solitario",
+
+        name:"Lobo Solitário",
+
+        permanentCost:{
+            type:"pd",
+            value:5
+        },
+
+        useCost:null,
+
+        description:
+            "Passiva. Enquanto estiver sem aliados em combate, recebe +15 PV Temporários, +1 dado de dano, +1 PA Máximo, +3 Defesa e RD 5.",
+
+        upgrade:null
+    },
+
+
+    {
+        id:"incansavel",
+
+        name:"Incansável",
+
+        permanentCost:{
+            type:"pd",
+            value:5
+        },
+
+        useCost:{
+            type:"pd",
+            value:1
+        },
+
+        description:
+            "Ao acertar um ataque desarmado, realiza outro ataque sem consumir PA. Cada ataque adicional custa 1 PD e recebe -3 cumulativo. Ao errar, a sequência termina. Limite: 1 vez por rodada.",
+
+        upgrade:null
+    },
+
+
+    {
+        id:"tiro-certeiro",
+
+        name:"Tiro Certeiro",
+
+        permanentCost:{
+            type:"pd",
+            value:3
+        },
+
+        useCost:null,
+
+        description:
+            "Passiva. Soma AGI ao dano de armas de disparo e ignora penalidades por atacar alvos envolvidos em combate corpo a corpo.",
+
+        upgrade:null
+    },
+
+
+    {
+        id:"ricochete",
+
+        name:"Ricochete",
+
+        permanentCost:{
+            type:"pd",
+            value:5
+        },
+
+        useCost:{
+            type:"mixed",
+            pd:2,
+            pa:1
+        },
+
+        description:
+            "O disparo ricocheteia em superfícies para atingir ângulos impossíveis. O alvo é considerado Desprevenido, mas o dano do disparo é reduzido pela metade.",
+
+        upgrade:null
+    },
+
+
+    {
+        id:"segurar-o-gatilho",
+
+        name:"Segurar o Gatilho",
+
+        permanentCost:{
+            type:"pd",
+            value:3
+        },
+
+        useCost:{
+            type:"variable",
+            resource:"pd",
+            valuePerUse:2
+        },
+
+        description:
+            "Pode realizar ataques adicionais com armas de fogo sem consumir PA. Cada ataque adicional custa 2 PD. O máximo de ataques adicionais por rodada é igual à AGI do personagem.",
+
+        upgrade:null
+    },
+
+
+    {
+        id:"disparo-surpresa",
+
+        name:"Disparo Surpresa",
+
+        permanentCost:{
+            type:"pd",
+            value:4
+        },
+
+        useCost:null,
+
+        description:
+            "Passiva. Recebe +5 em ataques realizados contra alvos que ainda não tenham agido na rodada.",
+
+        upgrade:null
+    },
+
+
+    {
+        id:"atirador-de-elite",
+
+        name:"Atirador de Elite",
+
+        permanentCost:{
+            type:"pd",
+            value:6
+        },
+
+        useCost:null,
+
+        description:
+            "Passiva. Ignora metade da cobertura utilizada pelo alvo e recebe +1 na margem de ameaça com armas de disparo.",
+
+        upgrade:null
+    },
+
+
+    {
+        id:"atirar-para-matar",
+
+        name:"Atirar para Matar",
+
+        permanentCost:{
+            type:"pd",
+            value:5
+        },
+
+        useCost:{
+            type:"pa",
+            value:2
+        },
+
+        description:
+            "Se o disparo resultar em crítico, o dano é maximizado automaticamente. Além disso, soma AGI ×2 ao dano.",
+
+        upgrade:null
+    },
+
+
+    {
+        id:"corrida-imparavel",
+
+        name:"Corrida Imparável",
+
+        permanentCost:{
+            type:"pd",
+            value:3
+        },
+
+        useCost:null,
+
+        description:
+            "Passiva. Recebe +1 posição ao se mover.",
+
+        upgrade:null
+    },
+
+
+    {
+        id:"arrancada",
+
+        name:"Arrancada",
+
+        permanentCost:{
+            type:"pd",
+            value:3
+        },
+
+        useCost:{
+            type:"pd",
+            value:2
+        },
+
+        description:
+            "Move-se até o dobro do deslocamento sem gastar PA adicional. Limite: 1 vez por rodada.",
+
+        upgrade:null
+    },
+
+
+    {
+        id:"passo-veloz",
+
+        name:"Passo Veloz",
+
+        permanentCost:{
+            type:"pd",
+            value:4
+        },
+
+        useCost:null,
+
+        description:
+            "Passiva. Ignora Terreno Difícil e recebe +5 em testes para escapar de agarrões ou imobilizações.",
+
+        upgrade:null
+    },
+
+
+    {
+        id:"movimento-fantasma",
+
+        name:"Movimento Fantasma",
+
+        permanentCost:{
+            type:"pd",
+            value:5
+        },
+
+        useCost:{
+            type:"pd",
+            value:2
+        },
+
+        description:
+            "Até o fim da rodada recebe +10 em testes de Discreto e não provoca ataques de oportunidade ao se mover.",
+
+        upgrade:null
+    },
+
+
+    {
+        id:"resistente",
+
+        name:"Resistente",
+
+        permanentCost:{
+            type:"pd",
+            value:4
+        },
+
+        useCost:null,
+
+        description:
+            "Passiva. Recebe +5 PV Máximos e 5 de RD mundano.",
+
+        upgrade:null
+    },
+
+
+    {
+        id:"pele-dura",
+
+        name:"Pele Dura",
+
+        permanentCost:{
+            type:"pd",
+            value:4
+        },
+
+        useCost:{
+            type:"mixed",
+            pd:3,
+            pa:1
+        },
+
+        description:
+            "Reduz um dano recebido pela metade. Limite: 1 vez por rodada.",
+
+        upgrade:null
+    },
+
+
+    {
+        id:"casca-grossa",
+
+        name:"Casca Grossa",
+
+        permanentCost:{
+            type:"pd",
+            value:4
+        },
+
+        useCost:null,
+
+        description:
+            "Passiva. Recebe +1 PV por nível e soma VIG ao Bloqueio.",
+
+        upgrade:null
+    },
+
+
+    {
+        id:"corpo-treinado",
+
+        name:"Corpo Treinado",
+
+        permanentCost:{
+            type:"pd",
+            value:3
+        },
+
+        useCost:null,
+
+        description:
+            "Passiva. Recebe +5 em testes de Fortitude e ignora a primeira condição Enfraquecido recebida em cada cena.",
+
+        upgrade:null
+    },
+
+
+    {
+        id:"segunda-respiracao",
+
+        name:"Segunda Respiração",
+
+        permanentCost:{
+            type:"pd",
+            value:5
+        },
+
+        useCost:{
+            type:"mixed",
+            pd:2,
+            pa:1
+        },
+
+        description:
+            "Recupera 10 PV. Pode ser utilizada um número de vezes igual ao VIG.",
+
+        upgrade:null
+    },
+
+
+    {
+        id:"cai-dentro",
+
+        name:"Cai Dentro",
+
+        permanentCost:{
+            type:"pd",
+            value:4
+        },
+
+        useCost:{
+            type:"mixed",
+            pd:3,
+            pa:1
+        },
+
+        description:
+            "Reação. Força um inimigo a direcionar seu ataque contra você. Limite: 1 vez a cada 2 rodadas.",
+
+        upgrade:null
+    },
+
+
+    {
+        id:"sempre-alerta",
+
+        name:"Sempre Alerta",
+
+        permanentCost:{
+            type:"pd",
+            value:4
+        },
+
+        useCost:null,
+
+        description:
+            "Passiva. Ao escolher Esquivar, reduz o dano recebido em AGI ×2.",
+
+        upgrade:null
+    },
+
+
+    {
+        id:"esquiva-aprimorada",
+
+        name:"Esquiva Aprimorada",
+
+        permanentCost:{
+            type:"pd",
+            value:4
+        },
+
+        useCost:null,
+
+        description:
+            "Passiva. Recebe +5 nos testes de Esquiva.",
+
+        upgrade:null
+    },
+
+
+    {
+        id:"inabalavel",
+
+        name:"Inabalável",
+
+        permanentCost:{
+            type:"pd",
+            value:4
+        },
+
+        useCost:null,
+
+        description:
+            "Passiva. Não sofre penalidades por estar Caído ou ser Empurrado.",
+
+        upgrade:null
+    },
+
+
+    {
+        id:"defesa-perfeita",
+
+        name:"Defesa Perfeita",
+
+        permanentCost:{
+            type:"pd",
+            value:4
+        },
+
+        useCost:null,
+
+        description:
+            "Passiva. Ao ser atingido, ignora penalidades associadas ao ataque recebido.",
+
+        upgrade:null
+    },
+
+
+    {
+        id:"guarda-alta",
+
+        name:"Guarda Alta",
+
+        permanentCost:{
+            type:"pd",
+            value:4
+        },
+
+        useCost:null,
+
+        description:
+            "Passiva. Enquanto não realizar ataques, recebe +5 Defesa e soma VIG na RD.",
+
+        upgrade:null
+    },
+
+
+    {
+        id:"desvio-absoluto",
+
+        name:"Desvio Absoluto",
+
+        permanentCost:{
+            type:"pd",
+            value:5
+        },
+
+        useCost:{
+            type:"mixed-variable",
+            pd:3,
+            pa:{
+                normal:2,
+                critical:3
+            }
+        },
+
+        description:
+            "Pode gastar 2 PA para esquivar completamente de um ataque. Contra Acertos Críticos, o custo aumenta para 3 PA. O uso também custa 3 PD.",
+
+        upgrade:null
+    },
+
+
+    {
+        id:"adaptacao-rapida",
+
+        name:"Adaptação Rápida",
+
+        permanentCost:{
+            type:"pd",
+            value:4
+        },
+
+        useCost:null,
+
+        description:
+            "Passiva. Ao sofrer dano de um tipo específico, recebe RD 5 contra esse tipo de dano por 2 rodadas.",
+
+        upgrade:null
+    },
+
+
+    {
+        id:"inquebravel",
+
+        name:"Inquebrável",
+
+        permanentCost:{
+            type:"pd",
+            value:4
+        },
+
+        useCost:null,
+
+        description:
+            "Passiva. Enquanto estiver abaixo de 50% dos PV máximos, recebe +5 Defesa e RD 5.",
+
+        upgrade:null
+    },
+
+
+    {
+        id:"suportar-a-dor",
+
+        name:"Suportar a Dor",
+
+        permanentCost:{
+            type:"pd",
+            value:4
+        },
+
+        useCost:null,
+
+        description:
+            "Passiva. Enquanto estiver na condição Machucado, recebe +5 em testes de Fortitude e Vontade.",
+
+        upgrade:null
+    },
+
+    
+    {
+        id:"surto-de-adrenalina",
+
+        name:"Surto de Adrenalina",
+
+        permanentCost:{
+            type:"pd",
+            value:4
+        },
+
+        useCost:{
+            type:"pd",
+            value:4
+        },
+
+        description:
+            "Recebe +1 PA temporário até o final da rodada.",
+
+        upgrade:null
+    },
+
+
+    {
+        id:"surto-de-acao",
+
+        name:"Surto de Ação",
+
+        permanentCost:{
+            type:"pd",
+            value:5
+        },
+
+        useCost:{
+            type:"pa",
+            value:0
+        },
+
+        abilityType:"active",
+
+        description:
+            "Uma vez por cena, recebe +2 PA temporários. Esses PA devem ser utilizados na rodada atual.",
+
+        upgrade:null
+    },
+
+
+    {
+        id:"reposicionamento",
+
+        name:"Reposicionamento",
+
+        permanentCost:{
+            type:"pd",
+            value:3
+        },
+
+        useCost:{
+            type:"variable",
+            resource:"pa",
+            valuePerUse:1
+        },
+
+        description:
+            "Para cada 1 PA gasto, move um aliado em até 1 posição.",
+
+        upgrade:null
+    },
+
+
+    {
+        id:"resgate",
+
+        name:"Resgate",
+
+        permanentCost:{
+            type:"pd",
+            value:3
+        },
+
+        useCost:null,
+
+        description:
+            "Pode se deslocar até 1 posição sem gastar PA. Além disso, recebe bônus em cura igual a INT ×2.",
+
+        upgrade:null
+    },
+
+
+    {
+        id:"inspirar-confianca",
+
+        name:"Inspirar Confiança",
+
+        permanentCost:{
+            type:"pd",
+            value:4
+        },
+
+        useCost:{
+            type:"mixed",
+            pd:2,
+            pa:1
+        },
+
+        description:
+            "Reação. Ao ver um aliado realizar um teste, ele pode rerrolar o teste.",
+
+        upgrade:null
+    },
+
+
+    {
+        id:"prontidao",
+
+        name:"Prontidão",
+
+        permanentCost:{
+            type:"pd",
+            value:6
+        },
+
+        useCost:null,
+
+        description:
+            "Passiva. No início da cena, todos os aliados recebem +1 PA temporário no início da rodada.",
+
+        upgrade:null
+    },
+
+
+    {
+        id:"brecha-na-guarda",
+
+        name:"Brecha na Guarda",
+
+        permanentCost:{
+            type:"pd",
+            value:4
+        },
+
+        useCost:{
+            type:"pd",
+            value:2
+        },
+
+        description:
+            "Reação. Quando um aliado adjacente acerta um ataque, você pode realizar um ataque adicional sem consumir PA. Limite: 1 vez por rodada.",
+
+        upgrade:null
+    },
+
+
+    {
+        id:"comandar",
+
+        name:"Comandar",
+
+        permanentCost:{
+            type:"pd",
+            value:4
+        },
+
+        useCost:{
+            type:"pd",
+            value:2
+        },
+
+        description:
+            "Concede 1 PA seu a um aliado em até 2 posições.",
+
+        upgrade:null
+    },
+
+
+    {
+        id:"oficial-comandante",
+
+        name:"Oficial Comandante",
+
+        permanentCost:{
+            type:"pd",
+            value:6
+        },
+
+        useCost:{
+            type:"mixed",
+            pd:5,
+            pa:3
+        },
+
+        description:
+            "Uma vez por cena, aliados recebem +1 PA temporário e PD temporários. O total de PD distribuído não pode ultrapassar seu nível.",
+
+        upgrade:null
+    },
+
+
+    {
+        id:"valentao",
+
+        name:"Valentão",
+
+        permanentCost:{
+            type:"pd",
+            value:3
+        },
+
+        useCost:{
+            type:"pd",
+            value:1
+        },
+
+        description:
+            "Pode utilizar FOR no lugar de PRE em testes de Intimidação e realizar o teste como ação livre.",
+
+        upgrade:null
+    },
+
+
+    {
+        id:"contatos-oportunos",
+
+        name:"Contatos Oportunos",
+
+        permanentCost:{
+            type:"pd",
+            value:5
+        },
+
+        useCost:{
+            type:"mixed",
+            pd:4,
+            pa:1
+        },
+
+        description:
+            "Convoca um aliado temporário. O aliado chega em aproximadamente 10 minutos.",
+
+        upgrade:null
+    },
+
+
+    {
+        id:"determinacao-fisica",
+
+        name:"Determinação Física",
+
+        permanentCost:{
+            type:"pd",
+            value:3
+        },
+
+        useCost:{
+            type:"pd",
+            value:2
+        },
+
+        description:
+            "Ao realizar testes de Investigação, pode usar FOR ou AGI no lugar de INT.",
+
+        upgrade:null
+    },
+
+
+    {
+        id:"so-mais-um-passo",
+
+        name:"Só Mais um Passo...",
+
+        permanentCost:{
+            type:"pd",
+            value:3
+        },
+
+        useCost:{
+            type:"pd",
+            value:5
+        },
+
+        description:
+            "Ao atingir 0 PV, permanece com 1 PV em vez de cair. Pode usar um número de vezes igual ao VIG. Não funciona contra Morte Letal.",
+
+        upgrade:null
+    },
+
+
+    {
+        id:"determinacao",
+
+        name:"Determinação",
+
+        permanentCost:{
+            type:"pd",
+            value:7
+        },
+
+        useCost:{
+            type:"pd",
+            value:5
+        },
+
+        description:
+            "Sobrevive a um dano que causaria Morte Letal. Limite: 1 vez por cena.",
+
+        upgrade:null
+    },
+
+
+    {
+        id:"chagas-da-resistencia",
+
+        name:"Chagas da Resistência",
+
+        permanentCost:{
+            type:"pd",
+            value:3
+        },
+
+        useCost:null,
+
+        description:
+            "Uma vez por cena, ao atingir 0 PD, sofre 5 PV de dano e permanece com 1 PD.",
+
+        upgrade:null
+    },
+
+
+    {
+        id:"segunda-chance",
+
+        name:"Segunda Chance",
+
+        permanentCost:{
+            type:"pd",
+            value:4
+        },
+
+        useCost:null,
+
+        description:
+            "Passiva. Uma vez por cena, ao cair a 0 PV, ainda pode realizar 1 ação antes de cair.",
+
+        upgrade:null
+    },
+
+
+    {
+        id:"paramedico",
+
+        name:"Paramédico",
+
+        permanentCost:{
+            type:"pd",
+            value:3
+        },
+
+        useCost:{
+            type:"mixed",
+            pd:2,
+            pa:1
+        },
+
+        description:
+            "Cura 2d10 PV.",
+
+        upgrade:
+            "Para cada +3 PD adicionais gastos, a cura aumenta em +2d10 PV."
+    },
+
+
+    {
+        id:"equipe-de-trauma",
+
+        name:"Equipe de Trauma",
+
+        permanentCost:{
+            type:"pd",
+            value:3
+        },
+
+        useCost:{
+            type:"pa",
+            value:1
+        },
+
+        description:
+            "Remove uma condição negativa do alvo.",
+
+        upgrade:null
+    },
+
+
+    {
+        id:"reanimacao",
+
+        name:"Reanimação",
+
+        permanentCost:{
+            type:"pd",
+            value:5
+        },
+
+        useCost:{
+            type:"mixed",
+            pd:10,
+            pa:2
+        },
+
+        description:
+            "Revive um personagem na mesma cena. Pode ser utilizado um número de vezes igual ao INT. Não funciona em casos de Morte Letal.",
+
+        upgrade:null
+    },
+
+
+    {
+        id:"dorminhoco",
+
+        name:"Dorminhoco",
+
+        permanentCost:{
+            type:"pd",
+            value:3
+        },
+
+        useCost:null,
+
+        description:
+            "Passiva. Em cenas de descanso, recupera o dobro baseado no conforto oferecido.",
+
+        upgrade:null
+    },
+
+
+    {
+        id:"recuperando-folego",
+
+        name:"Recuperando Fôlego",
+
+        permanentCost:{
+            type:"pd",
+            value:4
+        },
+
+        useCost:null,
+
+        description:
+            "Passiva. A cada 10 pontos de dano causado, ganha 1 PD temporário. O máximo de PD temporário acumulado é igual ao seu nível.",
+
+        upgrade:null
+    },
+
+
+    {
+        id:"reciclar-energia",
+
+        name:"Reciclar Energia",
+
+        permanentCost:{
+            type:"pd",
+            value:5
+        },
+
+        useCost:{
+            type:"pa",
+            value:1
+        },
+
+        description:
+            "Ao falhar ao conjurar um ritual, recupera metade do PD gasto.",
+
+        upgrade:null
+    },
+
+
+    {
+        id:"reserva-oculta",
+
+        name:"Reserva Oculta",
+
+        permanentCost:{
+            type:"pd",
+            value:4
+        },
+
+        useCost:null,
+
+        description:
+            "Passiva. No início do combate, recebe PD temporários iguais ao PRE.",
+
+        upgrade:null
+    },
+
+    
+    {
+        id:"escolhido-pelo-outro-lado",
+
+        name:"Escolhido Pelo Outro Lado",
+
+        permanentCost:{
+            type:"mixed-permanent",
+            pv:7,
+            pd:4
+        },
+
+        useCost:{
+            type:"variable"
+        },
+
+        description:
+            "Adquire pontos elementais de Sangue, Morte, Energia e Conhecimento. Começa com 3 pontos elementais. A cada nível ímpar desbloqueia 1 slot de ponto comprável por 2 PV. É necessário para Assimilações.",
+
+        upgrade:null
+    },
+
+
+    {
+        id:"abrir-fenda",
+
+        name:"Abrir Fenda",
+
+        permanentCost:{
+            type:"pv",
+            value:5
+        },
+
+        useCost:null,
+
+        description:
+            "Sacrifica 2 pontos elementais para adquirir 1 ponto em Medo. Libera os caminhos e Assimilações de Medo. Não consome slot de habilidade.",
+
+        upgrade:null
+    },
+
+
+    {
+        id:"elemento-favorito",
+
+        name:"Elemento Favorito",
+
+        permanentCost:{
+            type:"pv",
+            value:4
+        },
+
+        useCost:null,
+
+        description:
+            "Recebe +1 ponto elemental imediatamente e outro no nível 10. Apenas 1 elemento pode ser desbloqueado por esta habilidade.",
+
+        upgrade:null
+    },
+
+
+    {
+        id:"nos-olhos-do-monstro",
+
+        name:"Nos Olhos do Monstro",
+
+        permanentCost:{
+            type:"pd",
+            value:3
+        },
+
+        useCost:{
+            type:"pd",
+            value:3
+        },
+
+        description:
+            "Recebe +5 em testes de resistência mental.",
+
+        upgrade:null
+    },
+
+
+    {
+        id:"camuflar-ocultismo",
+
+        name:"Camuflar Ocultismo",
+
+        permanentCost:{
+            type:"pd",
+            value:4
+        },
+
+        useCost:{
+            type:"pd",
+            value:2
+        },
+
+        description:
+            "Oculta símbolos e manifestações ao conjurar rituais. Também permite conjurar sem gestos.",
+
+        upgrade:null
+    },
+
+
+    {
+        id:"criar-selo",
+
+        name:"Criar Selo",
+
+        permanentCost:{
+            type:"pd",
+            value:3
+        },
+
+        useCost:{
+            type:"ritual-plus-pd",
+            pd:2
+        },
+
+        description:
+            "Armazena um ritual em um item de combate. O uso custa 2 PD além do custo normal do ritual.",
+
+        upgrade:null
+    },
+
+
+    {
+        id:"especialista-em-elemento",
+
+        name:"Especialista em Elemento",
+
+        permanentCost:{
+            type:"pd",
+            value:3
+        },
+
+        useCost:null,
+
+        description:
+            "Passiva. Seus rituais recebem +2 na DT.",
+
+        upgrade:null
+    },
+
+
+    {
+        id:"conjurador-talentoso",
+
+        name:"Conjurador Talentoso",
+
+        permanentCost:{
+            type:"pd",
+            value:5
+        },
+
+        useCost:null,
+
+        description:
+            "Passiva. Recebe +5 em testes de conjuração.",
+
+        upgrade:null
+    },
+
+
+    {
+        id:"guiado-pelo-paranormal",
+
+        name:"Guiado pelo Paranormal",
+
+        permanentCost:{
+            type:"pd",
+            value:3
+        },
+
+        useCost:{
+            type:"pd",
+            value:2
+        },
+
+        description:
+            "Recebe uma ação extra de investigação.",
+
+        upgrade:null
+    },
+
+
+    {
+        id:"identificacao-paranormal",
+
+        name:"Identificação Paranormal",
+
+        permanentCost:{
+            type:"pd",
+            value:4
+        },
+
+        useCost:null,
+
+        description:
+            "Passiva. Recebe +10 em testes de Ocultismo que não envolvem conjuração.",
+
+        upgrade:null
+    },
+
+
+    {
+        id:"improvisar-componentes",
+
+        name:"Improvisar Componentes",
+
+        permanentCost:{
+            type:"pd",
+            value:3
+        },
+
+        useCost:{
+            type:"pd",
+            value:2
+        },
+
+        description:
+            "Cria componentes ou oferendas improvisadas.",
+
+        upgrade:null
+    },
+
+
+    {
+        id:"conjuracao-rapida",
+
+        name:"Conjuração Rápida",
+
+        permanentCost:{
+            type:"pd",
+            value:5
+        },
+
+        useCost:{
+            type:"pd",
+            value:3
+        },
+
+        description:
+            "Reduz o custo de rituais de 4 PA para 3 PA.",
+
+        upgrade:null
+    },
+
+
+    {
+        id:"treinamento-rigoroso",
+
+        name:"Treinamento Rigoroso",
+
+        permanentCost:{
+            type:"pd",
+            value:4
+        },
+
+        useCost:null,
+
+        description:
+            "Passiva. Escolha uma opção: Arma recebe +4 de dano e +1 na margem crítica; ou Escudo recebe +2 Defesa e +3 RD. Ao adquirir duas vezes, recebe +1 FOR, VIG ou AGI.",
+
+        upgrade:
+            "Ao adquirir esta habilidade duas vezes, recebe +1 em FOR, VIG ou AGI."
+    },
+
+
+    {
+        id:"elemento-resistente",
+
+        name:"Elemento Resistente",
+
+        permanentCost:{
+            type:"pd",
+            value:4
+        },
+
+        useCost:null,
+
+        description:
+            "Passiva. Recebe RD 2 para cada ponto elemental em um elemento.",
+
+        upgrade:null
+    },
+
+
+    {
+        id:"contrato-paranormal",
+
+        name:"Contrato Paranormal",
+
+        permanentCost:{
+            type:"pd",
+            value:5
+        },
+
+        useCost:null,
+
+        requirement:
+            "5 pontos elementais em um elemento",
+
+        description:
+            "Faz um vínculo com uma entidade do Outro Lado. A entidade pode auxiliar conjurações, mas exige algo em troca definido pelo mestre. Apenas 1 contrato pode existir; se for quebrado, não pode fazer outro.",
+
+        upgrade:null
+    },
+
+
+    {
+        id:"possuido",
+
+        name:"Possuído",
+
+        permanentCost:{
+            type:"pd",
+            value:5
+        },
+
+        useCost:null,
+
+        requirement:
+            "10 pontos elementais",
+
+        description:
+            "Permite manifestação parcial de uma entidade no corpo. Concede rituais instantâneos, imunidade elemental, +20 PV temporários e +10 PD temporários. Os efeitos negativos são definidos pelo mestre.",
+
+        upgrade:null
+    },
+
+
+    {
+        id:"adepto-paranormal",
+
+        name:"Adepto Paranormal",
+
+        permanentCost:{
+            type:"pd",
+            value:5
+        },
+
+        useCost:null,
+
+        description:
+            "Pode transferir até 3 pontos elementais entre elementos ao final de uma missão. Não ultrapassa limites e só pode ser usado 1 vez por missão.",
+
+        upgrade:null
+    },
+
+
+    {
+        id:"dor-e-uma-bencao",
+
+        name:"Dor é uma Benção",
+
+        permanentCost:{
+            type:"pd",
+            value:5
+        },
+
+        useCost:null,
+
+        description:
+            "Passiva. Sempre que sofrer 10 de dano em um único golpe, ganha +1 ponto elemental temporário. Esses pontos podem ser acumulados e utilizados normalmente em rituais.",
+
+        upgrade:null
+    },
+
+
+    {
+        id:"disparo-letal",
+
+        name:"Disparo Letal",
+
+        permanentCost:{
+            type:"pd",
+            value:3
+        },
+
+        useCost:null,
+
+        description:
+            "Passiva. Recebe +2 na margem de ameaça com armas de disparo.",
+
+        upgrade:null
+    },
+
+
+    {
+        id:"ritual-gravado",
+
+        name:"Ritual Gravado",
+
+        permanentCost:{
+            type:"pd",
+            value:5
+        },
+
+        useCost:null,
+
+        description:
+            "Passiva. Uma vez por cena, pode reutilizar um ritual já conjurado sem custo adicional de PD. O ritual ainda respeita os limites de pontos elementais e PD.",
+
+        upgrade:null
+    },
+
+    
+    {
+        id:"carteirada",
+
+        name:"Carteirada",
+
+        permanentCost:{
+            type:"pd",
+            value:3
+        },
+
+        useCost:null,
+
+        description:
+            "Passiva. Ganha treinamento em Diplomacia ou Artifício. Se já for treinado, recebe +5 no teste. Também possui acesso a documentos e autoridade oficial.",
+
+        upgrade:null
+    },
+
+
+    {
+        id:"mente-disciplinada",
+
+        name:"Mente Disciplinada",
+
+        permanentCost:{
+            type:"pd",
+            value:4
+        },
+
+        useCost:null,
+
+        description:
+            "Passiva. Recebe +5 em testes de Vontade.",
+
+        upgrade:null
+    },
+
+
+    {
+        id:"observador",
+
+        name:"Observador",
+
+        permanentCost:{
+            type:"pd",
+            value:4
+        },
+
+        useCost:null,
+
+        description:
+            "Passiva. Recebe +5 em testes de Percepção.",
+
+        upgrade:null
+    },
+
+
+    {
+        id:"conhecimento-amplo",
+
+        name:"Conhecimento Amplo",
+
+        permanentCost:{
+            type:"pd",
+            value:4
+        },
+
+        useCost:{
+            type:"pd",
+            value:2
+        },
+
+        description:
+            "Escolha duas perícias. Ao realizar um teste com uma dessas perícias, pode adicionar 1d6 ao teste.",
+
+        upgrade:null
+    },
+
+
+    {
+        id:"sortudo",
+
+        name:"Sortudo",
+
+        permanentCost:{
+            type:"pd",
+            value:5
+        },
+
+        useCost:{
+            type:"pd",
+            value:2
+        },
+
+        description:
+            "Role novamente um teste recém realizado. Deve utilizar o novo resultado. Limite: 1 vez por rodada.",
+
+        upgrade:null
+    },
+
+
+    {
+        id:"presenca-marcante",
+
+        name:"Presença Marcante",
+
+        permanentCost:{
+            type:"pd",
+            value:3
+        },
+
+        useCost:null,
+
+        description:
+            "Passiva. Recebe +5 em testes de Intimidação ou Interação.",
+
+        upgrade:null
+    },
+
+
+    {
+        id:"lider-nato",
+
+        name:"Líder Nato",
+
+        permanentCost:{
+            type:"pd",
+            value:5
+        },
+
+        useCost:{
+            type:"mixed",
+            pd:2,
+            pa:1
+        },
+
+        description:
+            "Escolha um aliado que possa ouvir você. Ele recebe +5 em um teste realizado até o início do seu próximo turno.",
+
+        upgrade:null
+    },
+
+
+    {
+        id:"especialista",
+
+        name:"Especialista",
+
+        permanentCost:{
+            type:"pd",
+            value:4
+        },
+
+        useCost:null,
+
+        description:
+            "Passiva. Escolha uma perícia baseada em INT. Recebe +10 nessa perícia até o fim da cena.",
+
+        upgrade:null
+    },
+
+
+    {
+        id:"primeiros-socorros",
+
+        name:"Primeiros Socorros",
+
+        permanentCost:{
+            type:"pd",
+            value:3
+        },
+
+        useCost:{
+            type:"pa",
+            value:1
+        },
+
+        description:
+            "Realize um teste de Medicina. Em caso de sucesso, o alvo recupera 5 PV. Em um crítico, recupera 10 PV.",
+
+        upgrade:null
+    },
+
+
+    {
+        id:"improvisador",
+
+        name:"Improvisador",
+
+        permanentCost:{
+            type:"pd",
+            value:4
+        },
+
+        useCost:null,
+
+        description:
+            "Passiva. Pode utilizar Especialização sem possuir as ferramentas adequadas. Sofre apenas -2 em vez de não poder realizar o teste.",
+
+        upgrade:null
+    },
+
+
+    {
+        id:"sobrevivente",
+
+        name:"Sobrevivente",
+
+        permanentCost:{
+            type:"pd",
+            value:4
+        },
+
+        useCost:null,
+
+        description:
+            "Passiva. Recebe +5 em testes de Sobrevivência e necessita de apenas metade da comida e água normalmente exigidas.",
+
+        upgrade:null
+    },
+
+
+    /*======================================================
+    =                  NOVAS HABILIDADES
+    ======================================================*/
+
+    {
+        id:"pressao-constante",
+
+        name:"Pressão Constante",
+
+        permanentCost:{
+            type:"pd",
+            value:4
+        },
+
+        useCost:null,
+
+        description:
+            "Passiva. Sempre que acertar 2 ataques consecutivos contra o mesmo alvo, a partir do 3º ataque seus ataques causam +1 dado de dano até errar um ataque ou trocar de alvo.",
+
+        upgrade:null
+    },
+
+
+    /*
+        Existe outro Executor anteriormente.
+        ID diferente para não haver conflito.
+    */
+
+    {
+        id:"executor-2",
+
+        name:"Executor",
+
+        permanentCost:{
+            type:"pd",
+            value:5
+        },
+
+        useCost:null,
+
+        description:
+            "Passiva. Sempre que derrotar uma ameaça, seu próximo ataque até o final da rodada recebe +1 dado de dano. Limite: 1 vez por rodada.",
+
+        upgrade:null
+    },
+
+
+    {
+        id:"ferimento-profundo",
+
+        name:"Ferimento Profundo",
+
+        permanentCost:{
+            type:"pd",
+            value:4
+        },
+
+        useCost:null,
+
+        description:
+            "Passiva. Sempre que obtiver um Acerto Crítico, o alvo recebe a condição Sangramento.",
+
+        upgrade:null
+    },
+
+
+    {
+        id:"instinto-de-combate",
+
+        name:"Instinto de Combate",
+
+        permanentCost:{
+            type:"pd",
+            value:3
+        },
+
+        useCost:null,
+
+        description:
+            "Passiva. Sempre que um inimigo errar um ataque contra você, recebe +5 no próximo ataque contra esse inimigo.",
+
+        upgrade:null
+    },
+
+
+    /*
+        Existe outro Carrasco anteriormente.
+        ID diferente para não haver conflito.
+    */
+
+    {
+        id:"carrasco-2",
+
+        name:"Carrasco",
+
+        permanentCost:{
+            type:"pd",
+            value:5
+        },
+
+        useCost:null,
+
+        description:
+            "Passiva. Sempre que obtiver um Acerto Crítico, recebe +1 PA temporário. Limite: 1 vez por rodada.",
+
+        upgrade:null
+    },
+
+
+    {
+        id:"mira-persistente",
+
+        name:"Mira Persistente",
+
+        permanentCost:{
+            type:"pd",
+            value:4
+        },
+
+        useCost:null,
+
+        description:
+            "Passiva. Caso permaneça uma rodada inteira sem realizar ataques com armas de disparo, seu próximo disparo recebe +10 no teste de ataque.",
+
+        upgrade:null
+    },
+
+
+    {
+        id:"escudo-vivo",
+
+        name:"Escudo Vivo",
+
+        permanentCost:{
+            type:"pd",
+            value:4
+        },
+
+        useCost:null,
+
+        description:
+            "Passiva. Enquanto permanecer adjacente a um aliado, ele recebe +3 em Defesa.",
+
+        upgrade:null
+    },
+
+
+    {
+        id:"reflexo-instantaneo",
+
+        name:"Reflexo Instantâneo",
+
+        permanentCost:{
+            type:"pd",
+            value:4
+        },
+
+        useCost:null,
+
+        description:
+            "Passiva. Sempre que realizar uma Esquiva com sucesso, pode mover 1 posição imediatamente sem consumir PA.",
+
+        upgrade:null
+    },
+
+
+    {
+        id:"cacada",
+
+        name:"Caçada",
+
+        permanentCost:{
+            type:"pd",
+            value:4
+        },
+
+        useCost:null,
+
+        description:
+            "Passiva. Sempre que um inimigo sair voluntariamente do seu alcance, ele recebe -5 em Esquiva até o início do próximo turno.",
+
+        upgrade:null
+    },
+
+
+    {
+        id:"eficiencia",
+
+        name:"Eficiência",
+
+        permanentCost:{
+            type:"pd",
+            value:5
+        },
+
+        useCost:null,
+
+        description:
+            "Passiva. Ao utilizar uma habilidade, pode reduzir pela metade seu custo em PD e PA, arredondando para cima. O custo nunca pode ser reduzido para 0. Pode ser utilizada um número de vezes igual ao INT por cena.",
+
+        upgrade:null
+    },
+
+];
+
+
+function ensureCharacterAbilities(){
+
+    if(
+        !Array.isArray(
+            characterAbilitiesState
+        )
+    ){
+
+        characterAbilitiesState = [];
+
+    }
+
+}
+
+
+/*==========================================================
+=              ADICIONAR HABILIDADE
+==========================================================*/
+
+function addAbilityToCharacter(
+    abilityId
+){
+
+
+    ensureCharacterAbilities();
+
+
+    const ability =
+        DEFAULT_ABILITIES.find(
+            item =>
+                item.id === abilityId
+        );
+
+
+    if(!ability){
+
+        return false;
+
+    }
+
+const alreadyHas =
+    characterAbilitiesState.some(
+            item =>
+                item.id === ability.id
+        );
+
+
+    if(alreadyHas){
+
+        showCharacterEditorMessage(
+            "Habilidade já adquirida",
+            `${ability.name} já pertence ao personagem.`
+        );
+
+        return false;
+
+    }
+
+
+    /*======================================================
+    =              CUSTO PERMANENTE
+    ======================================================*/
+
+    if(
+        ability.permanentCost?.type ===
+        "pd"
+    ){
+
+        const cost =
+            Number(
+                ability.permanentCost.value
+            ) || 0;
+
+
+        const currentMax =
+            Number(
+                characterPDMax?.value
+            ) || 0;
+
+
+        if(currentMax < cost){
+
+            showCharacterEditorMessage(
+                "PD insuficiente",
+                `Você precisa de ${cost} PD máximos para adquirir ${ability.name}.`
+            );
+
+            return false;
+
+        }
+
+
+        characterPDMax.value =
+            Math.max(
+                0,
+                currentMax - cost
+            );
+
+
+        /*
+            Se o PD atual ficar acima do novo máximo,
+            reduzimos o atual também.
+        */
+
+        if(
+            Number(
+                characterPD?.value
+            ) >
+            Number(
+                characterPDMax.value
+            )
+        ){
+
+            characterPD.value =
+                characterPDMax.value;
+
+        }
+
+    }
+
+
+characterAbilitiesState.push({
+
+    id:
+        ability.id,
+
+    name:
+        ability.name,
+
+    description:
+        ability.description,
+
+    upgrade:
+        ability.upgrade,
+
+    permanentCost:
+        structuredCloneSafe(
+            ability.permanentCost
+        ),
+
+    useCost:
+        structuredCloneSafe(
+            ability.useCost
+        ),
+
+    acquiredAt:
+        Date.now()
+
+});
+
+
+calculateAutomaticStats();
+
+renderAbilityEditorList();
+
+
+showCharacterEditorMessage(
+    "Habilidade adquirida",
+    `${ability.name} foi adicionada à ficha.`
+);
+
+
+return true;
+
+}
+
+
+/*==========================================================
+=              USAR HABILIDADE
+==========================================================*/
+
+function useCharacterAbility(
+    abilityId
+){
+
+    const ability =
+        characterAbilitiesState.find(
+            item =>
+                item.id === abilityId
+        );
+
+
+    if(!ability){
+
+        return false;
+
+    }
+
+
+    const cost =
+        ability.useCost;
+
+
+    /*
+        Passiva ou habilidade sem custo de uso.
+    */
+
+    if(!cost){
+
+        showCharacterEditorMessage(
+            ability.name,
+            "Esta habilidade não possui custo de ativação."
+        );
+
+        return true;
+
+    }
+
+
+    /*======================================================
+    =                    CUSTO PD
+    ======================================================*/
+
+    if(cost.type === "pd"){
+
+        return spendAbilityResources(
+            ability,
+            {
+                pd:
+                    Number(
+                        cost.value
+                    ) || 0
+            }
+        );
+
+    }
+
+
+    /*======================================================
+    =                    CUSTO PA
+    ======================================================*/
+
+    if(cost.type === "pa"){
+
+        return spendAbilityResources(
+            ability,
+            {
+                pa:
+                    Number(
+                        cost.value
+                    ) || 0
+            }
+        );
+
+    }
+
+
+    /*======================================================
+    =                    CUSTO PV
+    ======================================================*/
+
+    if(cost.type === "pv"){
+
+        return spendAbilityResources(
+            ability,
+            {
+                pv:
+                    Number(
+                        cost.value
+                    ) || 0
+            }
+        );
+
+    }
+
+
+    /*======================================================
+    =                    CUSTO MISTO
+    ======================================================*/
+
+    if(cost.type === "mixed"){
+
+        return spendAbilityResources(
+            ability,
+            {
+                pd:
+                    Number(
+                        cost.pd
+                    ) || 0,
+
+                pa:
+                    Number(
+                        cost.pa
+                    ) || 0,
+
+                pv:
+                    Number(
+                        cost.pv
+                    ) || 0
+            }
+        );
+
+    }
+
+
+    /*======================================================
+    =              CUSTO + RITUAL
+    ======================================================*/
+
+    if(
+        cost.type ===
+        "ritual-plus-pd"
+    ){
+
+        return spendAbilityResources(
+            ability,
+            {
+                pd:
+                    Number(
+                        cost.pd
+                    ) || 0
+            },
+            "Além desse custo, o ritual ainda deve pagar seu custo normal."
+        );
+
+    }
+
+
+    /*======================================================
+    =              CUSTO VARIÁVEL
+    ======================================================*/
+
+    if(cost.type === "variable"){
+
+        openVariableAbilityCost(
+            ability
+        );
+
+        return true;
+
+    }
+
+
+    /*======================================================
+    =              CUSTO MISTO VARIÁVEL
+    ======================================================*/
+
+    if(
+        cost.type ===
+        "mixed-variable"
+    ){
+
+        openMixedVariableAbilityCost(
+            ability
+        );
+
+        return true;
+
+    }
+
+
+    console.warn(
+        "Tipo de custo não reconhecido:",
+        cost
+    );
+
+
+    showCharacterEditorMessage(
+        "Custo não configurado",
+        `O custo de ${ability.name} ainda não foi configurado no sistema.`
+    );
+
+
+    return false;
+
+}
+
+/*==========================================================
+=              GASTAR RECURSOS
+==========================================================*/
+
+function spendAbilityResources(
+    ability,
+    resources,
+    extraMessage = ""
+){
+
+    let pd =
+        Math.max(
+            0,
+            Number(
+                resources.pd
+            ) || 0
+        );
+
+
+    let pa =
+        Math.max(
+            0,
+            Number(
+                resources.pa
+            ) || 0
+        );
+
+
+    let pv =
+        Math.max(
+            0,
+            Number(
+                resources.pv
+            ) || 0
+        );
+
+
+    const currentPD =
+        Number(
+            characterPD?.value
+        ) || 0;
+
+
+    const currentPA =
+        Number(
+            characterPA?.value
+        ) || 0;
+
+
+    const currentPV =
+        Number(
+            characterPV?.value
+        ) || 0;
+
+
+    /*======================================================
+    =                    VALIDAÇÃO
+    ======================================================*/
+
+    if(currentPD < pd){
+
+        showCharacterEditorMessage(
+            "PD insuficiente",
+            `Você precisa de ${pd} PD para utilizar ${ability.name}.`
+        );
+
+        return false;
+
+    }
+
+
+    if(currentPA < pa){
+
+        showCharacterEditorMessage(
+            "PA insuficiente",
+            `Você precisa de ${pa} PA para utilizar ${ability.name}.`
+        );
+
+        return false;
+
+    }
+
+
+    if(
+        lifeMode?.value === "classic" &&
+        currentPV < pv
+    ){
+
+        showCharacterEditorMessage(
+            "PV insuficiente",
+            `Você precisa de ${pv} PV para utilizar ${ability.name}.`
+        );
+
+        return false;
+
+    }
+
+    if(
+    !isValidRPGSystem(
+        selectedSystemId
+    )
+){
+
+    showCharacterEditorMessage(
+        "Sistema inválido",
+        "Selecione um sistema de RPG válido."
+    );
+
+    characterSystem?.focus();
+
+    return;
+
+}
+
+
+if(
+    !isRPGSystemEnabled(
+        selectedSystemId
+    )
+){
+
+    showCharacterEditorMessage(
+        "Sistema indisponível",
+        `${selectedSystem.name} ainda está em desenvolvimento.`
+    );
+
+    characterSystem?.focus();
+
+    return;
+
+}
+
+
+    /*======================================================
+    =                    PAGAMENTO
+    ======================================================*/
+
+    if(pd > 0){
+
+        characterPD.value =
+            currentPD - pd;
+
+    }
+
+
+    if(pa > 0){
+
+        characterPA.value =
+            currentPA - pa;
+
+    }
+
+
+    if(
+        pv > 0 &&
+        lifeMode?.value === "classic"
+    ){
+
+        characterPV.value =
+            currentPV - pv;
+
+    }
+
+
+    /*======================================================
+    =                    TEXTO
+    ======================================================*/
+
+    const costs = [];
+
+
+    if(pd){
+
+        costs.push(
+            `${pd} PD`
+        );
+
+    }
+
+
+    if(pa){
+
+        costs.push(
+            `${pa} PA`
+        );
+
+    }
+
+
+    if(pv){
+
+        costs.push(
+            `${pv} PV`
+        );
+
+    }
+
+
+    const costText =
+        costs.length
+            ? costs.join(" + ")
+            : "Sem custo";
+
+
+    showCharacterEditorMessage(
+        ability.name,
+        `Habilidade utilizada. Custo: ${costText}.${extraMessage ? ` ${extraMessage}` : ""}`
+    );
+
+
+    return true;
+
+}
+
+/*==========================================================
+=              CUSTO VARIÁVEL
+==========================================================*/
+
+function openVariableAbilityCost(
+    ability
+){
+
+    const cost =
+        ability.useCost;
+
+
+    document
+        .getElementById(
+            "variableAbilityModal"
+        )
+        ?.remove();
+
+
+    const modal =
+        document.createElement(
+            "div"
+        );
+
+
+    modal.id =
+        "variableAbilityModal";
+
+    modal.className =
+        "editor-message";
+
+
+    let content = "";
+
+
+    /*
+        Habilidades com opções específicas.
+        Exemplo: Golpe Arriscado.
+    */
+
+    if(
+        Array.isArray(
+            cost.options
+        )
+    ){
+
+        content =
+            cost.options
+                .map(
+                    (option,index) => `
+
+                    <button
+                        type="button"
+                        class="ability-cost-option"
+                        data-option="${index}"
+                    >
+
+                        <strong>
+                            ${
+                                Number(
+                                    option.pd
+                                ) || 0
+                            }
+                            PD
+                        </strong>
+
+                        <span>
+                            ${escapeCharacterEditorHTML(
+                                option.effect ||
+                                ""
+                            )}
+                        </span>
+
+                    </button>
+
+                `
+                )
+                .join("");
+
+    }
+
+
+    /*
+        Custo por quantidade.
+        Exemplo:
+        2 PD por ataque adicional.
+    */
+
+    else if(
+        cost.resource &&
+        cost.valuePerUse
+    ){
+
+        content = `
+
+            <div class="field">
+
+                <label>
+                    Quantidade
+                </label>
+
+                <input
+                    type="number"
+                    id="variableAbilityAmount"
+                    min="1"
+                    value="1">
+
+            </div>
+
+            <div
+                class="variable-cost-preview"
+                id="variableAbilityPreview"
+            >
+                Custo: ${cost.valuePerUse}
+                ${String(
+                    cost.resource
+                ).toUpperCase()}
+            </div>
+
+            <button
+                type="button"
+                id="confirmVariableAbility"
+                class="primary-button"
+                style="width:100%;"
+            >
+
+                Utilizar
+
+            </button>
+
+        `;
+
+    }
+
+
+    else{
+
+        content = `
+
+            <div class="field">
+
+                <label>
+                    Custo em PD
+                </label>
+
+                <input
+                    type="number"
+                    id="variableAbilityPD"
+                    min="1"
+                    value="1">
+
+            </div>
+
+            <button
+                type="button"
+                id="confirmVariableAbility"
+                class="primary-button"
+                style="width:100%;"
+            >
+
+                Utilizar
+
+            </button>
+
+        `;
+
+    }
+
+
+    modal.innerHTML = `
+
+        <div class="prosthetic-editor-modal">
+
+            <span class="section-label">
+
+                CUSTO VARIÁVEL
+
+            </span>
+
+            <h2>
+                ${escapeCharacterEditorHTML(
+                    ability.name
+                )}
+            </h2>
+
+            <div class="editor-dynamic-list">
+
+                ${content}
+
+            </div>
+
+            <button
+                type="button"
+                id="cancelVariableAbility"
+                class="secondary-button"
+                style="
+                    width:100%;
+                    margin-top:14px;
+                "
+            >
+
+                Cancelar
+
+            </button>
+
+        </div>
+
+    `;
+
+
+    document.body.appendChild(
+        modal
+    );
+
+
+    /*======================================================
+    =              OPÇÕES PRONTAS
+    ======================================================*/
+
+    modal
+        .querySelectorAll(
+            ".ability-cost-option"
+        )
+        .forEach(button => {
+
+            button.addEventListener(
+                "click",
+                () => {
+
+                    const option =
+                        cost.options[
+                            Number(
+                                button.dataset.option
+                            )
+                        ];
+
+
+                    if(!option){
+
+                        return;
+
+                    }
+
+
+                    const success =
+                        spendAbilityResources(
+                            ability,
+                            {
+                                pd:
+                                    Number(
+                                        option.pd
+                                    ) || 0,
+
+                                pa:
+                                    Number(
+                                        option.pa
+                                    ) || 0,
+
+                                pv:
+                                    Number(
+                                        option.pv
+                                    ) || 0
+                            },
+
+                            option.effect || ""
+                        );
+
+
+                    if(success){
+
+                        modal.remove();
+
+                    }
+
+                }
+            );
+
+        });
+
+
+    /*======================================================
+    =              QUANTIDADE VARIÁVEL
+    ======================================================*/
+
+    const amountInput =
+        modal.querySelector(
+            "#variableAbilityAmount"
+        );
+
+
+    const preview =
+        modal.querySelector(
+            "#variableAbilityPreview"
+        );
+
+
+    amountInput?.addEventListener(
+        "input",
+        () => {
+
+            const amount =
+                Math.max(
+                    1,
+                    Number(
+                        amountInput.value
+                    ) || 1
+                );
+
+
+            if(preview){
+
+                preview.textContent =
+                    `Custo: ${
+                        amount *
+                        Number(
+                            cost.valuePerUse
+                        )
+                    } ${
+                        String(
+                            cost.resource
+                        ).toUpperCase()
+                    }`;
+
+            }
+
+        }
+    );
+
+
+    modal
+        .querySelector(
+            "#confirmVariableAbility"
+        )
+        ?.addEventListener(
+            "click",
+            () => {
+
+                /*
+                    Formato quantidade × custo.
+                */
+
+                if(
+                    cost.resource &&
+                    cost.valuePerUse
+                ){
+
+                    const amount =
+                        Math.max(
+                            1,
+                            Number(
+                                amountInput?.value
+                            ) || 1
+                        );
+
+
+                    const total =
+                        amount *
+                        Number(
+                            cost.valuePerUse
+                        );
+
+
+                    const resources = {};
+
+
+                    resources[
+                        cost.resource
+                    ] = total;
+
+
+                    const success =
+                        spendAbilityResources(
+                            ability,
+                            resources
+                        );
+
+
+                    if(success){
+
+                        modal.remove();
+
+                    }
+
+
+                    return;
+
+                }
+
+
+                /*
+                    Variável genérico em PD.
+                */
+
+                const pd =
+                    Math.max(
+                        1,
+                        Number(
+                            modal.querySelector(
+                                "#variableAbilityPD"
+                            )?.value
+                        ) || 1
+                    );
+
+
+                const success =
+                    spendAbilityResources(
+                        ability,
+                        {
+                            pd
+                        }
+                    );
+
+
+                if(success){
+
+                    modal.remove();
+
+                }
+
+            }
+        );
+
+
+    modal
+        .querySelector(
+            "#cancelVariableAbility"
+        )
+        ?.addEventListener(
+            "click",
+            () => {
+
+                modal.remove();
+
+            }
+        );
+
+}
+
+/*==========================================================
+=              CUSTO MISTO VARIÁVEL
+==========================================================*/
+
+function openMixedVariableAbilityCost(
+    ability
+){
+
+    const cost =
+        ability.useCost;
+
+
+    document
+        .getElementById(
+            "mixedVariableAbilityModal"
+        )
+        ?.remove();
+
+
+    const modal =
+        document.createElement(
+            "div"
+        );
+
+
+    modal.id =
+        "mixedVariableAbilityModal";
+
+    modal.className =
+        "editor-message";
+
+
+    modal.innerHTML = `
+
+        <div class="prosthetic-editor-modal">
+
+            <span class="section-label">
+
+                ${escapeCharacterEditorHTML(
+                    ability.name
+                )}
+
+            </span>
+
+            <h2>
+
+                Escolha o tipo de uso
+
+            </h2>
+
+
+            <div class="editor-dynamic-list">
+
+
+                <button
+                    type="button"
+                    class="ability-cost-option"
+                    data-type="normal"
+                >
+
+                    <strong>
+
+                        Ataque Normal
+
+                    </strong>
+
+                    <span>
+
+                        ${Number(
+                            cost.pd
+                        ) || 0}
+                        PD
+
+                        +
+
+                        ${Number(
+                            cost.pa?.normal
+                        ) || 0}
+                        PA
+
+                    </span>
+
+                </button>
+
+
+                <button
+                    type="button"
+                    class="ability-cost-option"
+                    data-type="critical"
+                >
+
+                    <strong>
+
+                        Acerto Crítico
+
+                    </strong>
+
+                    <span>
+
+                        ${Number(
+                            cost.pd
+                        ) || 0}
+                        PD
+
+                        +
+
+                        ${Number(
+                            cost.pa?.critical
+                        ) || 0}
+                        PA
+
+                    </span>
+
+                </button>
+
+
+            </div>
+
+
+            <button
+                type="button"
+                id="cancelMixedVariableAbility"
+                class="secondary-button"
+                style="
+                    width:100%;
+                    margin-top:15px;
+                "
+            >
+
+                Cancelar
+
+            </button>
+
+        </div>
+
+    `;
+
+
+    document.body.appendChild(
+        modal
+    );
+
+
+    modal
+        .querySelectorAll(
+            ".ability-cost-option"
+        )
+        .forEach(button => {
+
+            button.addEventListener(
+                "click",
+                () => {
+
+                    const type =
+                        button.dataset.type;
+
+
+                    const pa =
+                        type === "critical"
+                            ? Number(
+                                cost.pa?.critical
+                            ) || 0
+                            : Number(
+                                cost.pa?.normal
+                            ) || 0;
+
+
+                    const success =
+                        spendAbilityResources(
+                            ability,
+                            {
+                                pd:
+                                    Number(
+                                        cost.pd
+                                    ) || 0,
+
+                                pa
+                            }
+                        );
+
+
+                    if(success){
+
+                        modal.remove();
+
+                    }
+
+                }
+            );
+
+        });
+
+
+    modal
+        .querySelector(
+            "#cancelMixedVariableAbility"
+        )
+        ?.addEventListener(
+            "click",
+            () => {
+
+                modal.remove();
+
+            }
+        );
+
+}
+
+
+/*==========================================================
+=              RENDERIZAR HABILIDADES
+==========================================================*/
+
+function renderAbilityEditorList(){
+
+    const container =
+        document.getElementById(
+            "abilitiesEditorList"
+        );
+
+
+    if(!container){
+
+        return;
+
+    }
+
+
+    const abilities =
+    characterAbilitiesState;
+
+
+    if(abilities.length === 0){
+
+        container.innerHTML = `
+
+            <div class="editor-empty-state">
+
+                <span>◇</span>
+
+                <p>
+                    Nenhuma habilidade adicionada.
+                </p>
+
+            </div>
+
+        `;
+
+        return;
+
+    }
+
+
+    container.innerHTML =
+        abilities
+            .map(ability => `
+
+<div class="ability-editor-card">
+
+    <h3>
+        ${escapeCharacterEditorHTML(
+            ability.name
+        )}
+    </h3>
+
+    <p>
+        ${escapeCharacterEditorHTML(
+            ability.description || ""
+        )}
+    </p>
+
+    ${
+        ability.upgrade
+            ? `
+                <p>
+                    <strong>Aprimoramento:</strong>
+
+                    ${escapeCharacterEditorHTML(
+                        ability.upgrade
+                    )}
+                </p>
+            `
+            : ""
+    }
+
+    ${
+        ability.useCost
+            ? `
+                <button
+                    type="button"
+                    class="primary-button use-ability-button"
+                    data-ability="${escapeCharacterEditorHTML(
+                        ability.id
+                    )}"
+                >
+
+                    Usar •
+                    ${Number(
+                        ability.useCost.value
+                    )}
+                    ${String(
+                        ability.useCost.type
+                    ).toUpperCase()}
+
+                </button>
+            `
+            : ""
+    }
+
+    <button
+        type="button"
+        class="remove-content-button remove-ability-button"
+        data-ability="${escapeCharacterEditorHTML(
+            ability.id
+        )}"
+    >
+
+        Remover
+
+    </button>
+
+</div>
+
+            `)
+            .join("");
+
+
+    container
+        .querySelectorAll(
+            ".use-ability-button"
+        )
+        .forEach(button => {
+
+            button.addEventListener(
+                "click",
+                () => {
+
+                    useCharacterAbility(
+                        button.dataset.ability
+                    );
+
+                }
+            );
+
+        });
+
+container
+    .querySelectorAll(
+        ".remove-ability-button"
+    )
+    .forEach(button => {
+
+        button.addEventListener(
+            "click",
+            () => {
+
+                removeCharacterAbility(
+                    button.dataset.ability
+                );
+
+            }
+        );
+
+    });
+
+}
+
+
+/*==========================================================
+=              BOTÃO + HABILIDADE
+==========================================================*/
+
+document
+    .getElementById(
+        "addAbilityEditor"
+    )
+    ?.addEventListener(
+        "click",
+        openAbilitySelector
+    );
+
+
+/*==========================================================
+=              SELETOR DE HABILIDADES
+==========================================================*/
+
+function openAbilitySelector(){
+
+    document
+        .getElementById(
+            "abilitySelectorModal"
+        )
+        ?.remove();
+
+
+    const modal =
+        document.createElement(
+            "div"
+        );
+
+
+    modal.id =
+        "abilitySelectorModal";
+
+    modal.className =
+        "editor-message";
+
+
+const cards =
+    DEFAULT_ABILITIES
+        .map(
+            ability => `
+
+            <button
+                type="button"
+                class="ability-choice-card"
+                data-ability="${ability.id}"
+            >
+
+                <strong>
+                    ✦ ${escapeCharacterEditorHTML(
+                        ability.name
+                    )}
+                </strong>
+
+                <span>
+                    ${ability.permanentCost.value}
+                    ${ability.permanentCost.type.toUpperCase()}
+                    permanente
+                </span>
+
+                <p>
+                    ${escapeCharacterEditorHTML(
+                        ability.description
+                    )}
+                </p>
+
+            </button>
+
+        `
+        )
+        .join("");
+
+
+    modal.innerHTML = `
+
+        <div class="prosthetic-editor-modal">
+
+            <span class="section-label">
+                HABILIDADES
+            </span>
+
+            <h2>
+                Adicionar Habilidade
+            </h2>
+
+            <div class="editor-dynamic-list">
+
+                ${cards}
+
+            </div>
+
+            <button
+                type="button"
+                id="closeAbilitySelector"
+                class="secondary-button"
+                style="width:100%;margin-top:18px;"
+            >
+
+                Fechar
+
+            </button>
+
+        </div>
+
+    `;
+
+
+    document.body.appendChild(
+        modal
+    );
+
+
+    modal
+        .querySelectorAll(
+            ".ability-choice-card"
+        )
+        .forEach(button => {
+
+            button.addEventListener(
+                "click",
+                () => {
+
+                    const success =
+                        addAbilityToCharacter(
+                            button.dataset.ability
+                        );
+
+
+                    if(success){
+
+                        modal.remove();
+
+                    }
+
+                }
+            );
+
+        });
+
+
+    modal
+        .querySelector(
+            "#closeAbilitySelector"
+        )
+        ?.addEventListener(
+            "click",
+            () => {
+
+                modal.remove();
+
+            }
+        );
+
+}
+
+/*==========================================================
+=              ASSIMILAÇÕES DISPONÍVEIS
+==========================================================*/
+
+const DEFAULT_ASSIMILATIONS = window.ECO_BLOOD_ASSIMILATIONS && window.ECO_DEATH_ASSIMILATIONS
+    ? [...window.ECO_BLOOD_ASSIMILATIONS,...window.ECO_DEATH_ASSIMILATIONS]
+    : [
+
+    {
+        id:"presas",
+        name:"Presas",
+
+        permanentCost:{
+            type:"pv",
+            value:5
+        },
+
+        activationCost:{
+            type:"pa",
+            value:1
+        },
+
+        activationType:"Ativação",
+
+        active:false,
+
+        description:
+            "Cria garras e presas monstruosas. Enquanto estiverem ativas, seus ataques desarmados causam +1 dado de dano."
+    },
+
+
+    {
+        id:"lamina-de-sangue",
+        name:"Lâmina de Sangue",
+
+        permanentCost:{
+            type:"pv",
+            value:5
+        },
+
+        activationCost:{
+            type:"pa",
+            value:1
+        },
+
+        activationType:"Ativação",
+
+        active:false,
+
+        description:
+            "Cria uma espada formada por sangue coagulado que causa 2d8 + FOR de dano de Sangue."
+    },
+
+
+    {
+        id:"celulas-regenerativas",
+        name:"Células Regenerativas",
+
+        permanentCost:{
+            type:"pv",
+            value:5
+        },
+
+        activationCost:null,
+
+        activationType:"Passiva",
+
+        active:true,
+
+        description:
+            "Recupera 2d6 PV no início de cada rodada."
+    },
+
+
+    {
+        id:"espinhoso",
+        name:"Espinhoso",
+
+        permanentCost:{
+            type:"pv",
+            value:5
+        },
+
+        activationCost:{
+            type:"pa",
+            value:1
+        },
+
+        activationType:"Ativação",
+
+        active:false,
+
+        description:
+            "Enquanto estiver ativo, sempre que sofrer um ataque corpo a corpo, o atacante recebe 2d6 de dano de Sangue."
+    },
+
+
+    {
+        id:"devorar",
+        name:"Devorar",
+
+        permanentCost:{
+            type:"pv",
+            value:4
+        },
+
+        activationCost:{
+            type:"pa",
+            value:1
+        },
+
+        activationType:"Ativação",
+
+        active:false,
+
+        description:
+            "Após acertar um ataque corpo a corpo, pode ativar esta habilidade para recuperar 2d10 PV."
+    },
+
+
+    {
+        id:"sangue-compartilhado",
+        name:"Sangue Compartilhado",
+
+        permanentCost:{
+            type:"pv",
+            value:4
+        },
+
+        activationCost:null,
+
+        activationType:"Passiva",
+
+        active:true,
+
+        description:
+            "Pode transferir seus próprios PV para recuperar PV de um aliado em até 1 posição."
+    },
+
+
+    {
+        id:"musculos-intensificados",
+        name:"Músculos Intensificados",
+
+        permanentCost:{
+            type:"pv",
+            value:4
+        },
+
+        activationCost:null,
+
+        activationType:"Passiva",
+
+        active:true,
+
+        description:
+            "Recebe +1 em FOR e +3 em testes de Manobra."
+    },
+
+
+    {
+        id:"peitoral-de-ferro",
+        name:"Peitoral de Ferro",
+
+        permanentCost:{
+            type:"pv",
+            value:4
+        },
+
+        activationCost:null,
+
+        activationType:"Passiva",
+
+        active:true,
+
+        description:
+            "Recebe +1 em VIG e +3 em testes de Fortitude."
+    },
+
+
+    {
+        id:"asas-profanas",
+        name:"Asas Profanas",
+
+        permanentCost:{
+            type:"pv",
+            value:4
+        },
+
+        activationCost:{
+            type:"pa",
+            value:1
+        },
+
+        activationType:"Ativação",
+
+        active:false,
+
+        description:
+            "Cria asas demoníacas. Seu deslocamento passa a ser 4 posições e você ignora terreno difícil."
+    },
+
+
+    {
+        id:"insensibilidade-a-dor",
+        name:"Insensibilidade à Dor",
+
+        permanentCost:{
+            type:"pv",
+            value:4
+        },
+
+        activationCost:{
+            type:"pa",
+            value:1
+        },
+
+        activationType:"Ativação",
+
+        active:false,
+
+        description:
+            "Uma vez por cena, reduza um dano recebido em 30."
+    },
+
+
+    {
+        id:"camada-extra",
+        name:"Camada Extra",
+
+        permanentCost:{
+            type:"pv",
+            value:4
+        },
+
+        activationCost:null,
+
+        activationType:"Passiva",
+
+        active:true,
+
+        description:
+            "No início de cada Cena de Combate recebe 20 PV temporários."
+    },
+
+
+    {
+        id:"sentir-emocao",
+        name:"Sentir Emoção",
+
+        permanentCost:{
+            type:"pv",
+            value:4
+        },
+
+        activationCost:{
+            type:"pd",
+            value:4
+        },
+
+        activationType:"Ativação",
+
+        active:false,
+
+        description:
+            "Descobre exatamente qual emoção domina um alvo no momento."
+    },
+
+
+    {
+        id:"consumir-e-transformar",
+        name:"Consumir e Transformar",
 
         permanentCost:{
             type:"pv",
