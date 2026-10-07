@@ -19,6 +19,11 @@ function entityForSlot(slot){
     const entity=(list||[]).find(item=>Number(item.position)===position);
     return entity?{entity,type,position}:null;
 }
+function latestEntityRoll(model,type){
+    const id=String(type==="player"?(model.characterId||model.id):(model.enemyId||model.id));
+    return [...(currentTableCampaign?.chatMessages||[])].reverse().find(message=>message?.type==="roll"&&(type==="player"?String(message.characterId||"")===id:String(message.enemyInstanceId||"")===id))||null;
+}
+function entityResultHtml(model,type){const roll=latestEntityRoll(model,type);if(!roll)return"";const critical=roll.critical===true||roll.playerCritical===true||roll.enemyCritical===true||/CRÍTICO/i.test(String(roll.label||""));return`<span class="cinematic-entity-result ${critical?"critical":""}" title="${esc(roll.label||"Resultado")}"><small>${esc(String(roll.label||"Teste").split("•")[0].trim())}</small><strong>${Number(roll.total)||0}</strong></span>`}
 function campaignPlayerFor(characterOrEntry){
     const id=characterOrEntry?.characterId??characterOrEntry?.id;
     return (currentTableCampaign?.players||[]).find(item=>String(item.characterId)===String(id))||null;
@@ -57,9 +62,9 @@ function decorateTokens(){
         if(found.type==="player")model=liveCharacter(model.characterId)||model;
         const wounded=(model.conditions||[]).some(condition=>String(typeof condition==="string"?condition:condition.id||condition.name||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase()==="machucado");
         const media=model.combatMedia||{},enemySize=found.type==="enemy"?Math.max(1,Number(found.entity.size)||1):1,displayMedia={...media,scale:Number(media.scale)||100},source=(wounded&&model.woundedPhoto)||media.idle||model.photo||model.image||"",portrait=false;
-        const sourceSignature=`${source}:${portrait}:${displayMedia.scale}:${displayMedia.offsetX||0}:${displayMedia.offsetY||0}:${Boolean(displayMedia.flip)}`;
+        const latestRoll=latestEntityRoll(found.entity,found.type),sourceSignature=`${source}:${portrait}:${displayMedia.scale}:${displayMedia.offsetX||0}:${displayMedia.offsetY||0}:${Boolean(displayMedia.flip)}:${latestRoll?.id||""}:${latestRoll?.total??""}`;
         if(slot.dataset.cinematicSource!==sourceSignature||slot.dataset.cinematicEntity!==String(model.id||model.enemyId||model.npcId||found.entity.characterId||"")){
-            slot.innerHTML=`<button type="button" class="cinematic-token" aria-label="${esc(model.name||"Entidade")}">${mediaNode(source,model.name,displayMedia,portrait)}<span class="cinematic-token-name">${esc(model.name||"Sem nome")}</span></button>`;
+            slot.innerHTML=`<button type="button" class="cinematic-token" aria-label="${esc(model.name||"Entidade")}">${entityResultHtml(found.entity,found.type)}${mediaNode(source,model.name,displayMedia,portrait)}<span class="cinematic-token-name">${esc(model.name||"Sem nome")}</span></button>`;
             slot.dataset.cinematicSource=sourceSignature;slot.dataset.cinematicEntity=String(model.id||model.enemyId||model.npcId||found.entity.characterId||"");
         }
         slot.classList.add("occupied");
@@ -83,11 +88,13 @@ function renderInitiative(){
 }
 function resource(model,key,fallback=0){return Math.max(0,Number(model?.status?.[key]??model?.[key]??fallback)||0)}
 function backButton(){return '<button type="button" class="hud-back" data-leave-table aria-label="Voltar para campanhas">↩ <span>Voltar</span></button>'}
-function bodyHtml(model,includeHeart=true,hiddenValues=false){
+function bodyHtml(model,includeHeart=true,hiddenValues=false,includeTemporary=false){
     const body=model?.body||{},labels=[["head","Cabeça"],["chest","Torso"],["leftArm","Braço E."],["rightArm","Braço D."],["leftLeg","Perna E."],["rightLeg","Perna D."]];
     if(includeHeart)labels.push(["heart","Coração"]);
-    return `<div class="hud-body">${labels.map(([key,label])=>{const raw=key==="heart"?(model.heart||body.heart):body[key];const value=typeof raw==="object"?(raw.current??raw.currentPV??raw.max):raw,numeric=Math.max(0,Number(value)||0),shown=hiddenValues?(numeric<=0?"0":"?"):numeric;return `<div><span>${label}</span><strong>${shown}</strong></div>`}).join("")}</div>`;
+    if(includeTemporary)labels.push(["temporaryPV","PV Temp."]);
+    return `<div class="hud-body">${labels.map(([key,label])=>{const raw=key==="heart"?(model.heart||body.heart):key==="temporaryPV"?(model.status?.pvTemp??body.temporaryPV):body[key];const value=typeof raw==="object"?(raw.current??raw.currentPV??raw.max):raw,numeric=Math.max(0,Number(value)||0),shown=hiddenValues?(numeric<=0?"0":"?"):numeric;return `<div><span>${label}</span><strong>${shown}</strong></div>`}).join("")}</div>`;
 }
+function classicVitalHtml(model){const current=resource(model,"pvAtual",model.pv),maximum=resource(model,"pvMax",model.pv),temporary=resource(model,"pvTemp",model.body?.temporaryPV);return`<div class="hud-body hud-classic-vitals"><div><span>PV</span><strong>${current}</strong><small>de ${maximum}</small></div><div><span>PV Temp.</span><strong>${temporary}</strong></div></div>`}
 function saveCharacterModel(character){
     try{const key="ordem_characters",list=JSON.parse(localStorage.getItem(key)||"[]"),index=list.findIndex(item=>String(item.id)===String(character.id));if(index>=0)list[index]=character;localStorage.setItem(key,JSON.stringify(list));if(typeof tableCharacters!=="undefined"){const tableIndex=tableCharacters.findIndex(item=>String(item.id)===String(character.id));if(tableIndex>=0)tableCharacters[tableIndex]=character}}catch(error){console.error("Falha ao salvar personagem",error)}
 }
@@ -139,7 +146,7 @@ function playerHud(model,masterViewing=false){
     const status=model.status||{},pmNow=resource(model,"pmAtual",model.pm),pmMax=resource(model,"pmMax",model.pm),paNow=resource(model,"paAtual",model.pa),paMax=resource(model,"paMax",model.paMax??model.pa),temp=resource(model,"pvTemporario",model.temporaryPV);
     const entries=[model.quickAttacks,model.attacks,model.ataquesRapidos].find(Array.isArray)||[],attacks=entries.slice(0,3),healing=entries[3];
     const quick=`<div class="hud-quick-attacks">${[0,1,2].map(index=>{const attack=attacks[index];return `<div class="hud-quick-card"><strong>${esc(attack?.name||`Ataque ${index+1}`)}</strong><div>${attack?`<button data-quick="${index}" data-roll="attack">Ataque</button><button data-quick="${index}" data-roll="damage">Dano</button>`:"<small>Vazio</small>"}</div></div>`}).join("")}<div class="hud-quick-card hud-healing-card"><strong>${esc(healing?.name||"Cura rápida")}</strong><div>${healing?'<button data-quick="3" data-roll="healing-test">Testar</button><button data-quick="3" data-roll="healing">Curar</button>':"<small>Vazio</small>"}</div></div></div>`;
-    return `<div class="hud-identity"><span>${masterViewing?"FICHA SELECIONADA":"JOGADOR"}</span><strong>${esc(model.name||"Personagem")}</strong><small>PV temporário ${temp} • PM ${pmNow}/${pmMax}</small>${masterViewing?'<button type="button" class="hud-master-return" data-master-reset>♛ Controles do mestre</button>':`${backButton()}<span class="hud-pa">PA <strong>${paNow}</strong>/${paMax}</span>`}</div>${quick}${bodyHtml(model)}<div class="hud-resources"><button data-menu="character">Perícias</button><button data-menu="inventory">Inventário</button><button data-menu="notes">Anotações</button><button data-menu="dice">Dados</button><button data-player-move>Mover</button><button data-player-conditions>Condições</button></div><div class="hud-actions"><button data-open="abilities">Habilidades</button><button data-open="assimilations">Assimilações</button><button data-menu="grimoire">Rituais</button><button data-menu="allies">Aliados</button></div>`;
+    return `<div class="hud-identity"><span>${masterViewing?"FICHA SELECIONADA":"JOGADOR"}</span><strong>${esc(model.name||"Personagem")}</strong><small>PM ${pmNow}/${pmMax}</small>${masterViewing?'<button type="button" class="hud-master-return" data-master-reset>♛ Controles do mestre</button>':`${backButton()}<span class="hud-pa">PA <strong>${paNow}</strong>/${paMax}</span>`}</div>${quick}${model.lifeMode==="body"?bodyHtml(model,true,false,true):classicVitalHtml(model)}<div class="hud-resources"><button data-menu="character">Perícias</button><button data-menu="inventory">Inventário</button><button data-menu="notes">Anotações</button><button data-menu="dice">Dados</button><button data-player-move>Mover</button><button data-player-conditions>Condições</button></div><div class="hud-actions"><button data-open="abilities">Habilidades</button><button data-open="assimilations">Assimilações</button><button data-menu="grimoire">Rituais</button><button data-menu="allies">Aliados</button></div>`;
 }
 function enemyHud(enemy){
     if(enemy?.lifeMode==="body"&&typeof initializeEnemyBody==="function")initializeEnemyBody(enemy);
@@ -238,7 +245,7 @@ document.addEventListener("DOMContentLoaded",()=>{
     if(typeof originalSaveCampaign==="function")window.saveTableCampaign=function(){const value=originalSaveCampaign.apply(this,arguments);scheduleResultRender(false);return value};
     try{saveTableCampaign=window.saveTableCampaign}catch(error){}
     document.addEventListener("eco:campaign-render",()=>{refreshCurrentTableCampaign?.();refresh()});
-    document.addEventListener("eco:roll-render",()=>scheduleResultRender(true));
+    document.addEventListener("eco:roll-render",()=>{refreshCurrentTableCampaign?.();decorateTokens();scheduleResultRender(false)});
     requestAnimationFrame(refresh);
     window.setInterval(renderInitiative,800);
 });

@@ -11,6 +11,15 @@ assert.ok(list.every(item=>item.name&&item.description&&item.activationType),"to
 const expected=["redencao","pungencia","hematopoiese","gula","inveja","ira","orgulho","ganancia","sangue-fervente","mutacao-reativa","contracao-monstruosa","banquete-de-carne","orgaos-redundantes","surto-hematico"];
 const engine=read("mesa-assimilacoes-sangue.js");expected.forEach(id=>assert.ok(engine.includes(id),`sem automação reconhecida: ${id}`));
 for(const hook of ["passTableRound=function","applyPendingDamageToTarget=function","rollQuickAttack=function","rollTableCharacterSkill=function","answerAttackReaction=function"])assert.ok(engine.includes(hook),`gancho ausente: ${hook}`);
+assert.match(engine,/function ensureUnarmed/);
+assert.match(engine,/amorProprioScene/);
+assert.match(engine,/linked==="desarmado"/);
+assert.match(engine,/lists\.forEach\(list=>list\[2\]/);
+const editor=read("editor-ficha.js");
+assert.match(editor,/name:"Desarmado"/);
+assert.match(editor,/String\(list\[0\]\?\.damage\|\|""\)\.trim\(\)==="55"/);
+assert.match(editor,/attack\$\{index\}Skill/);
+assert.match(read("editor-ficha.html"),/id="attack1Skill"/);
 assert.ok(read("editor-ficha.html").includes("assimilacoes-sangue.js"));
 assert.ok(read("mesa.html").includes("mesa-assimilacoes-sangue.js"));
 console.log(JSON.stringify({ok:true,total:list.length,unique:40,automatedHooks:5,aliases:Object.keys(sandbox.window.ECO_BLOOD_ASSIMILATION_ALIASES).length},null,2));
