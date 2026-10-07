@@ -3090,6 +3090,41 @@ function openNotesPanel(){
 /*==========================================================
 =              ROLAR ATAQUE RÁPIDO
 ==========================================================*/
+function combatFormulaBridge(){
+    if(!currentTableCampaign)return{};
+    currentTableCampaign.combat=currentTableCampaign.combat||{};
+    currentTableCampaign.combat.formulaBridge=currentTableCampaign.combat.formulaBridge||{};
+    return currentTableCampaign.combat.formulaBridge;
+}
+function characterAttackEntries(character){return[character?.quickAttacks,character?.attacks,character?.ataquesRapidos].find(Array.isArray)||[]}
+function syncCombatFormulaSlot(character,index,workingAttack){
+    const characterId=String(character?.id||"");if(!characterId)return null;
+    const persistent=getLiveCharacter(characterId)||character,persistentAttack=characterAttackEntries(persistent)[index]||workingAttack||{},bridge=combatFormulaBridge();
+    bridge[characterId]=bridge[characterId]||{};
+    const base={attack:String(persistentAttack.roll||persistentAttack.attack||persistentAttack.test||""),damage:String(persistentAttack.damage||persistentAttack.dano||""),healing:String(persistentAttack.healing||persistentAttack.cure||persistentAttack.cura||""),updatedAt:Number(persistentAttack.updatedAt)||0},signature=JSON.stringify(base);
+    let slot=bridge[characterId][index];
+    if(!slot||slot.baseSignature!==signature){slot={base,baseSignature:signature,modifiers:Array.isArray(slot?.modifiers)?slot.modifiers:[],revision:(Number(slot?.revision)||0)+1};bridge[characterId][index]=slot}
+    slot.lastSyncedAt=Date.now();return slot;
+}
+function activeCombatFormulaModifiers(slot,kind){
+    const round=Math.max(0,Number(currentTableCampaign?.combat?.round)||0),scene=String(currentTableCampaign?.combat?.sceneId||currentTableCampaign?.id||"");
+    slot.modifiers=(slot.modifiers||[]).filter(mod=>!(Number.isFinite(Number(mod.expiresRound))&&round>Number(mod.expiresRound))&&(!mod.sceneId||String(mod.sceneId)===scene));
+    return slot.modifiers.filter(mod=>!mod.kind||mod.kind===kind||mod.kind==="both");
+}
+function resolveCombatFormula(character,index,kind,workingFormula){
+    const attack=characterAttackEntries(character)[index]||{},slot=syncCombatFormulaSlot(character,index,attack);if(!slot)return String(workingFormula||"");
+    let formula=String(workingFormula||slot.base[kind]||"");const modifiers=activeCombatFormulaModifiers(slot,kind),applied=[];
+    modifiers.forEach(mod=>{if(kind==="damage"&&Number(mod.extraDice)>0)formula=addEnemyDamageDice(formula,Number(mod.extraDice));if(Number(mod.flat))formula=`(${formula}) ${Number(mod.flat)>=0?"+":"-"} ${Math.abs(Number(mod.flat))}`;if(mod.formula)formula=`(${formula}) + (${mod.formula})`;applied.push(mod.id||mod.source||"modificador")});
+    slot.resolved=slot.resolved||{};slot.resolved[kind]={formula,base:slot.base[kind]||"",working:String(workingFormula||""),modifiers:applied,round:Math.max(0,Number(currentTableCampaign?.combat?.round)||0),updatedAt:Date.now()};
+    slot.modifiers=slot.modifiers.filter(mod=>!(mod.consumeOnUse===true&&(!mod.kind||mod.kind===kind||mod.kind==="both")));
+    return formula;
+}
+function addCombatFormulaModifier(characterId,index,modifier){
+    const character=getLiveCharacter(characterId);if(!character)return false;const attack=characterAttackEntries(character)[Number(index)]||{},slot=syncCombatFormulaSlot(character,Number(index),attack);if(!slot)return false;
+    const normalized={...modifier,id:String(modifier?.id||modifier?.source||`modifier_${Date.now()}`),createdAt:Date.now()};slot.modifiers=(slot.modifiers||[]).filter(item=>item.id!==normalized.id);slot.modifiers.push(normalized);saveTableCampaign();return true;
+}
+function removeCombatFormulaModifier(characterId,index,id){const slot=combatFormulaBridge()?.[String(characterId)]?.[Number(index)];if(!slot)return false;slot.modifiers=(slot.modifiers||[]).filter(item=>item.id!==String(id));saveTableCampaign();return true}
+window.ECO_COMBAT_FORMULAS={sync:syncCombatFormulaSlot,resolve:resolveCombatFormula,addModifier:addCombatFormulaModifier,removeModifier:removeCombatFormulaModifier,state:combatFormulaBridge};
 function rollQuickAttack(
     index,
     type
@@ -3131,6 +3166,10 @@ function rollQuickAttack(
         return;
 
     }
+
+    const bridgeKind=isHealing?"healing":type==="damage"?"damage":"attack";
+    formula=resolveCombatFormula(currentTableCharacter,index,bridgeKind,formula);
+    const formulaBridgeSnapshot=combatFormulaBridge()?.[String(currentTableCharacter.id)]?.[Number(index)]?.resolved?.[bridgeKind]||null;
 
 
     /*
@@ -3227,6 +3266,8 @@ addRollChatMessage(
             null,
 
         playerCritical,
+
+        formulaBridge:formulaBridgeSnapshot,
 
         applied:
             false
@@ -6814,6 +6855,10 @@ attackVariant:
 
 enemyCritical:
     metadata.enemyCritical === true,
+
+formulaBridge:
+    metadata.formulaBridge ||
+    null,
 
 success:
     typeof metadata.success === "boolean"

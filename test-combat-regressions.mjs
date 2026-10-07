@@ -45,5 +45,11 @@ assert.match(tableCore,/function startDamageTargetSelection\([\s\S]*?if\(pending
 assert.match(tableCore,/isHealingTest[\s\S]*?isHealing[\s\S]*?attack\.healing/);
 assert.match(tableCore,/state\.type==="enemy"\?\(current<=0\?"Zerado":"PV disponível: \?"\)/);
 assert.match(cinematic,/selecting-damage-target[\s\S]*?applyPendingDamageToTarget[\s\S]*?selecting-attack-target[\s\S]*?applyPendingAttackToTarget/);
+assert.match(tableCore,/function combatFormulaBridge\(\)/);
+assert.match(tableCore,/function syncCombatFormulaSlot\(character,index,workingAttack\)/);
+assert.match(tableCore,/function resolveCombatFormula\(character,index,kind,workingFormula\)/);
+assert.match(tableCore,/window\.ECO_COMBAT_FORMULAS=/);
+assert.match(tableCore,/formulaBridge:formulaBridgeSnapshot/);
+assert.match(blood,/ECO_COMBAT_FORMULAS\.addModifier\(character\.id,index,\{id:"assimilacao:ira"/);
 
 console.log(JSON.stringify({ok:true,criticalDamage:damage[2],temporaryPV:true,pairedLimbs:true,ritualResolution:true},null,2));
