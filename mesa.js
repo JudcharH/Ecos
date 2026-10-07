@@ -3117,9 +3117,12 @@ function rollQuickAttack(
     }
 
 
-    let formula =
-        type === "damage"
-            ? attack.damage
+    const isHealingTest=type === "healing-test";
+    const isHealing=type === "healing";
+    let formula = type === "damage"
+        ? attack.damage
+        : isHealing
+            ? (attack.healing || attack.cure || attack.cura || attack.damage)
             : attack.roll;
 
 
@@ -3166,7 +3169,7 @@ function rollQuickAttack(
     }
 
     let playerCritical=false;
-    if(type==="attack"){
+    if(type==="attack" || isHealingTest){
         const mainRoll=Number(result.details?.find(part=>part.type==="dice")?.rolls?.[0])||0;
         playerCritical=mainRoll===12;
     }
@@ -3197,7 +3200,11 @@ addRollChatMessage(
 
     type === "damage"
         ? `Dano • ${attack.name || "Ataque"}`
-        : `Ataque • ${attack.name || "Ataque"}`,
+        : isHealing
+            ? `Cura • ${attack.name || "Cura rápida"}`
+            : isHealingTest
+                ? `Teste de Medicina • ${attack.name || "Cura rápida"}`
+                : `Ataque • ${attack.name || "Ataque"}`,
 
     formula,
 
@@ -3206,15 +3213,12 @@ addRollChatMessage(
     detail,
 
     {
-        rollKind:
-            type,
+        rollKind:isHealingTest?"skill":type,
 
         attackIndex:
             index,
 
-        attackName:
-            attack.name ||
-            "Ataque",
+        attackName:attack.name || (isHealing||isHealingTest?"Cura rápida":"Ataque"),
 
         attackSkill:
             attack.skill ||
@@ -9411,6 +9415,15 @@ function startAttackTargetSelection(
     messageId
 ){
 
+    /* Ataque e dano nunca podem disputar o mesmo clique de alvo. */
+    if(pendingDamageApplication){
+        cancelDamageTargetSelection();
+    }
+
+    if(pendingAttackApplication){
+        cancelAttackTargetSelection();
+    }
+
     refreshCurrentTableCampaign();
 
 
@@ -11721,6 +11734,15 @@ function startDamageTargetSelection(
     messageId
 ){
 
+    /* Encerra qualquer seleção anterior antes de armar o dano novo. */
+    if(pendingAttackApplication){
+        cancelAttackTargetSelection();
+    }
+
+    if(pendingDamageApplication){
+        cancelDamageTargetSelection();
+    }
+
     refreshCurrentTableCampaign();
 
 
@@ -11983,7 +12005,7 @@ function renderBodyDamageDistribution(){
     const state=pendingBodyDamageApplication,target=getPendingBodyDamageTarget();if(!state||!target)return;
     document.getElementById("bodyDamageSelector")?.remove();
     const parts=bodyDamageParts(target,state.type),modal=document.createElement("div");modal.id="bodyDamageSelector";modal.className="table-modal";
-    modal.innerHTML=`<div class="table-modal-content"><div class="table-modal-header"><div><span class="table-panel-label">DANO POR MEMBROS</span><h2>${escapeTableHTML(target.name||"Alvo")}</h2></div></div><div class="table-panel-card"><h3>Dano restante: ${state.remaining}</h3><p>Escolha um membro. Ele receberá o máximo possível e o restante continuará para o próximo.</p></div><div class="table-panel-list">${parts.map(part=>{const allocated=Number(state.allocations[part.id])||0,current=Math.max(0,part.current-allocated);return`<button type="button" class="table-panel-card body-damage-part" data-part="${part.id}" ${current<=0?"disabled":""} style="width:100%;text-align:left"><h3>${escapeTableHTML(part.label)}</h3><p>PV disponível: ${current}</p></button>`}).join("")}</div></div>`;
+    modal.innerHTML=`<div class="table-modal-content"><div class="table-modal-header"><div><span class="table-panel-label">DANO POR MEMBROS</span><h2>${escapeTableHTML(target.name||"Alvo")}</h2></div></div><div class="table-panel-card"><h3>Dano restante: ${state.remaining}</h3><p>Escolha um membro. Ele receberá o máximo possível e o restante continuará para o próximo.</p></div><div class="table-panel-list">${parts.map(part=>{const allocated=Number(state.allocations[part.id])||0,current=Math.max(0,part.current-allocated),availability=state.type==="enemy"?(current<=0?"Zerado":"PV disponível: ?"):`PV disponível: ${current}`;return`<button type="button" class="table-panel-card body-damage-part" data-part="${part.id}" ${current<=0?"disabled":""} style="width:100%;text-align:left"><h3>${escapeTableHTML(part.label)}</h3><p>${availability}</p></button>`}).join("")}</div></div>`;
     document.body.appendChild(modal);
     modal.querySelectorAll(".body-damage-part").forEach(button=>button.addEventListener("click",()=>allocatePendingBodyDamage(button.dataset.part)));
 }

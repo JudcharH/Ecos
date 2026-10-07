@@ -38,5 +38,12 @@ assert.match(side,/PV Temporário/);
 const grimoire=fs.readFileSync("grimorio-v25.js","utf8");
 assert.match(grimoire,/rollResistance\(target,r\.action,rit\.resistanceDT\)/);
 assert.match(grimoire,/applyRitualValue\(target,value,healing,r\)/);
+const tableCore=fs.readFileSync("mesa.js","utf8");
+const cinematic=fs.readFileSync("mesa-cinematica.js","utf8");
+assert.match(tableCore,/function startAttackTargetSelection\([\s\S]*?if\(pendingDamageApplication\)\{[\s\S]*?cancelDamageTargetSelection\(\)/);
+assert.match(tableCore,/function startDamageTargetSelection\([\s\S]*?if\(pendingAttackApplication\)\{[\s\S]*?cancelAttackTargetSelection\(\)/);
+assert.match(tableCore,/isHealingTest[\s\S]*?isHealing[\s\S]*?attack\.healing/);
+assert.match(tableCore,/state\.type==="enemy"\?\(current<=0\?"Zerado":"PV disponível: \?"\)/);
+assert.match(cinematic,/selecting-damage-target[\s\S]*?applyPendingDamageToTarget[\s\S]*?selecting-attack-target[\s\S]*?applyPendingAttackToTarget/);
 
 console.log(JSON.stringify({ok:true,criticalDamage:damage[2],temporaryPV:true,pairedLimbs:true,ritualResolution:true},null,2));
