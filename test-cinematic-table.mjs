@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import assert from "node:assert/strict";
+import vm from "node:vm";
 
 const html=fs.readFileSync("mesa.html","utf8");
 const css=fs.readFileSync("mesa-cinematica.css","utf8");
@@ -87,6 +88,7 @@ assert.match(js,/data-edit-quick/);
 assert.match(js,/function openQuickAttackEditor/);
 assert.match(js,/function openCinematicInventory/);
 assert.match(js,/data-skill-field="training"/);
+assert.match(js,/window\.ECO_CINEMATIC_SHEET=/);
 assert.match(css,/\.hud-inline-number/);
 assert.match(css,/\.cinematic-skill-row/);
 assert.match(css,/\.cinematic-slot\.current-turn \.cinematic-token:after/);
@@ -125,5 +127,17 @@ assert.match(grimoire,/function openRitualBuilderV25/);
 assert.match(grimoire,/Somente as palavras aprendidas/);
 assert.match(grimoire,/function openEnemyGrimoireV25/);
 assert.match(grimoire,/window\.openEnemyGrimoireV25/);
+
+const sandbox={window:{},document:{addEventListener(){}},requestAnimationFrame(){},saveDamagedCharacter(){return true},saveTableCampaign(){},structuredClone:globalThis.structuredClone,console};
+vm.createContext(sandbox);vm.runInContext(js,sandbox);
+const sheet=sandbox.window.ECO_CINEMATIC_SHEET,parts=sheet.bodyMaximumsFor(10,5);
+assert.equal(Object.values(parts).reduce((sum,value)=>sum+value,0),100);
+assert.equal(parts.leftArm,parts.rightArm);
+assert.equal(parts.leftLeg,parts.rightLeg);
+const levelCharacter={id:"test",level:1,attributes:{corpo:1,foco:1},lifeMode:"classic",status:{pvAtual:11,pvMax:11,pmAtual:8,pmMax:8},body:{head:2,chest:3,leftArm:1,rightArm:1,leftLeg:2,rightLeg:2},bodyMaximums:{head:2,chest:3,leftArm:1,rightArm:1,leftLeg:2,rightLeg:2},heart:{current:3,max:3}};
+sheet.changeCharacterLevel(levelCharacter,2);
+assert.equal(levelCharacter.status.pvMax,20);
+assert.equal(levelCharacter.status.pmMax,14);
+assert.equal(levelCharacter.status.pvAtual,20);
 
 console.log(JSON.stringify({ok:true,initiative:true,resultPanel:true,targetSelection:true,quickAttacks:3,optionalAnimationStates:11},null,2));

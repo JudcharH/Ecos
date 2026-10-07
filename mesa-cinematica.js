@@ -267,6 +267,8 @@ function scheduleResultRender(refreshCampaign=false){
 }
 function refresh(){decorateTokens();renderInitiative();renderHud();renderResult();document.body.classList.toggle("cinematic-master",currentTableRole==="master");document.body.classList.toggle("cinematic-player",currentTableRole==="player")}
 
+window.ECO_CINEMATIC_SHEET={version:1,bodyMaximumsFor,changeCharacterLevel,openQuickAttackEditor,openCinematicSkills,openCinematicInventory,persist:persistCinematicCharacter};
+
 document.addEventListener("DOMContentLoaded",()=>{
     window.openEnemyControlSheet=redirectLegacyEnemySheet;
     try{openEnemyControlSheet=redirectLegacyEnemySheet}catch(error){}
