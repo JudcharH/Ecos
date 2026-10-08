@@ -209,8 +209,10 @@ function renderCard(ability){
     </div>`;
 }
 
-function openAbilitiesV2(){
-    refreshCurrentTableCharacter();
+let abilityPanelCharacter=null;
+function openAbilitiesV2(character=null){
+    if(character){currentTableCharacter=character;abilityPanelCharacter=character;}
+    else{refreshCurrentTableCharacter();abilityPanelCharacter=currentTableCharacter;}
     const all=abilitiesOf(currentTableCharacter);
     const passives=all.filter(a=>abilityType(a)==="passive");
     const reactions=all.filter(a=>abilityType(a)==="reaction");
@@ -265,7 +267,8 @@ function openAttackSpecial(ability){
 
 function useAbilityV2(id){
     refreshCurrentTableCampaign();refreshCurrentTableCharacter();
-    const character=currentTableCharacter;
+    const character=abilityPanelCharacter||currentTableCharacter;
+    if(character)currentTableCharacter=character;
     const ability=abilityById(character,id);
     if(!ability) return;
     if(id==="ataque-especial"){openAttackSpecial(ability);return;}

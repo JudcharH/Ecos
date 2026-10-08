@@ -132,15 +132,41 @@ function openAbilityPicker(character){
 }
 function openCinematicAbilities(character){
     currentTableCharacter=character;
-    if(typeof window.openSystemBaseAbilitiesPanel==="function")window.openSystemBaseAbilitiesPanel();else openTablePanel("HABILIDADES","Habilidades","");
+    if(typeof window.openSystemBaseAbilitiesPanel==="function")window.openSystemBaseAbilitiesPanel(character);else openTablePanel("HABILIDADES","Habilidades","");
     if(tablePanelContent)tablePanelContent.dataset.ecoPanelKind="abilities";
     if(!tablePanelContent?.querySelector(".cinematic-add-owned")){const button=document.createElement("button");button.className="primary-button full-button cinematic-add-owned";button.textContent="＋ Adicionar habilidade";button.onclick=()=>openAbilityPicker(character);tablePanelContent?.prepend(button)}
 }
 function assimilationCatalog(){return [...(window.ECO_BLOOD_ASSIMILATIONS||[]),...(window.ECO_DEATH_ASSIMILATIONS||[])]}
+function acquireAssimilation(character,assimilation,bodyPart=""){
+    if(!character||!assimilation)return false;
+    const cost=Math.max(0,Number(assimilation.permanentCost?.value)||0),status=character.status||(character.status={});
+    if((assimilation.permanentCost?.type||"pv")==="pv"){
+        if(character.lifeMode==="body"){
+            const labels={head:"Cabeça",chest:"Torso",leftArm:"Braço esquerdo",rightArm:"Braço direito",leftLeg:"Perna esquerda",rightLeg:"Perna direita"};
+            if(!labels[bodyPart])return false;
+            character.body=character.body||{};character.bodyMaximums=character.bodyMaximums||{};
+            const maximum=Math.max(0,Number(character.bodyMaximums[bodyPart]??character.body[`${bodyPart}Max`]??character.body[bodyPart])||0);
+            if(maximum<=cost){addSystemChatMessage(`PV máximo de ${labels[bodyPart]} insuficiente para esta assimilação.`);return false}
+            const nextMaximum=maximum-cost;
+            character.bodyMaximums[bodyPart]=nextMaximum;character.body[`${bodyPart}Max`]=nextMaximum;character.body[bodyPart]=Math.min(Math.max(0,Number(character.body[bodyPart])||0),nextMaximum);
+            if(bodyPart==="chest"&&character.heart){character.heart.max=nextMaximum;character.heart.current=Math.min(Number(character.heart.current)||0,nextMaximum)}
+        }else{
+            const maximum=Math.max(0,Number(status.pvMax)||0);if(maximum<=cost){addSystemChatMessage("PV máximo insuficiente para esta assimilação.");return false}
+            status.pvMax=maximum-cost;status.pvAtual=Math.min(Math.max(0,Number(status.pvAtual)||0),status.pvMax);
+            if(character.heart){character.heart.max=Math.ceil(status.pvMax/4);character.heart.current=Math.min(Number(character.heart.current)||0,character.heart.max)}
+        }
+    }
+    character.assimilations=Array.isArray(character.assimilations)?character.assimilations:[];character.assimilations.push(structuredClone(assimilation));persistCinematicCharacter(character,{rerender:false});openCinematicAssimilations(character);return true;
+}
+function chooseAssimilationBodyPart(character,assimilation){
+    const labels=[["head","Cabeça"],["chest","Torso"],["leftArm","Braço esquerdo"],["rightArm","Braço direito"],["leftLeg","Perna esquerda"],["rightLeg","Perna direita"]],cost=Math.max(0,Number(assimilation.permanentCost?.value)||0),body=character.body||{},maximums=character.bodyMaximums||{};
+    openTablePanel("ASSIMILAÇÕES","Escolher membro",`<div class="table-panel-card"><h3>${esc(assimilation.name)}</h3><p>Escolha o membro que perderá <strong>${cost} PV máximos permanentes</strong>.</p></div><div class="table-panel-list">${labels.map(([key,label])=>{const maximum=Math.max(0,Number(maximums[key]??body[`${key}Max`]??body[key])||0);return`<button type="button" class="table-panel-card cinematic-assimilation-part" data-part="${key}" ${maximum<=cost?"disabled":""} style="width:100%;text-align:left"><h3>${label}</h3><p>Máximo atual: ${maximum} • após aquisição: ${Math.max(0,maximum-cost)}</p></button>`}).join("")}</div>`);
+    document.querySelectorAll(".cinematic-assimilation-part").forEach(button=>button.onclick=()=>acquireAssimilation(character,assimilation,button.dataset.part));
+}
 function openAssimilationPicker(character){
     const owned=new Set((character.assimilations||[]).map(item=>String(item.id||item.name).toLowerCase())),available=assimilationCatalog().filter(item=>!owned.has(String(item.id||item.name).toLowerCase()));
     openTablePanel("ASSIMILAÇÕES","Adicionar assimilação",`<div class="table-panel-list">${available.map((item,index)=>`<button class="table-panel-card cinematic-buy-assimilation" data-index="${index}" style="width:100%;text-align:left"><h3>${esc(item.name)}</h3><p>${esc(item.description)}</p><small>Custo permanente: ${Number(item.permanentCost?.value)||0} ${(item.permanentCost?.type||"pv").toUpperCase()}</small></button>`).join("")||"<p>Todas as assimilações disponíveis já foram adquiridas.</p>"}</div>`);
-    document.querySelectorAll(".cinematic-buy-assimilation").forEach(button=>button.onclick=()=>{const assimilation=available[Number(button.dataset.index)];if(!assimilation)return;const cost=Math.max(0,Number(assimilation.permanentCost?.value)||0),status=character.status||(character.status={});if((assimilation.permanentCost?.type||"pv")==="pv"){if(character.lifeMode==="body"){character.body=character.body||{};character.bodyMaximums=character.bodyMaximums||{};const maximum=Math.max(0,Number(character.bodyMaximums.chest??character.body.chestMax??character.body.chest)||0);if(maximum<=cost){addSystemChatMessage("PV do Torso insuficiente para esta assimilação.");return}character.bodyMaximums.chest=maximum-cost;character.body.chestMax=maximum-cost;character.body.chest=Math.min(Math.max(0,Number(character.body.chest)||0),maximum-cost);if(character.heart){character.heart.max=character.bodyMaximums.chest;character.heart.current=Math.min(Number(character.heart.current)||0,character.heart.max)}}else{const max=Math.max(0,Number(status.pvMax)||0);if(max<=cost){addSystemChatMessage("PV máximo insuficiente para esta assimilação.");return}status.pvMax=max-cost;status.pvAtual=Math.min(Math.max(0,Number(status.pvAtual)||0),status.pvMax)}}character.assimilations=Array.isArray(character.assimilations)?character.assimilations:[];character.assimilations.push(structuredClone(assimilation));persistCinematicCharacter(character,{rerender:false});openCinematicAssimilations(character)});
+    document.querySelectorAll(".cinematic-buy-assimilation").forEach(button=>button.onclick=()=>{const assimilation=available[Number(button.dataset.index)];if(!assimilation)return;if(character.lifeMode==="body"&&(assimilation.permanentCost?.type||"pv")==="pv")chooseAssimilationBodyPart(character,assimilation);else acquireAssimilation(character,assimilation)});
 }
 function openCinematicAssimilations(character){
     if(currentTableRole==="master")currentTableCharacter=character;
@@ -267,7 +293,7 @@ function scheduleResultRender(refreshCampaign=false){
 }
 function refresh(){decorateTokens();renderInitiative();renderHud();renderResult();document.body.classList.toggle("cinematic-master",currentTableRole==="master");document.body.classList.toggle("cinematic-player",currentTableRole==="player")}
 
-window.ECO_CINEMATIC_SHEET={version:1,bodyMaximumsFor,changeCharacterLevel,openQuickAttackEditor,openCinematicSkills,openCinematicInventory,persist:persistCinematicCharacter};
+window.ECO_CINEMATIC_SHEET={version:1,bodyMaximumsFor,changeCharacterLevel,openQuickAttackEditor,openCinematicSkills,openCinematicInventory,acquireAssimilation,persist:persistCinematicCharacter};
 
 document.addEventListener("DOMContentLoaded",()=>{
     window.openEnemyControlSheet=redirectLegacyEnemySheet;
