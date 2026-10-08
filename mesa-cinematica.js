@@ -3,6 +3,7 @@
 
 let cinematicSelection=null;
 let resultRenderFrame=0;
+let resultResetBoundaryId=null;
 const videoPattern=/\.(webm|mp4)(?:$|[?#])/i;
 
 function esc(value){return String(value??"").replace(/[&<>'"]/g,char=>({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}[char]))}
@@ -21,9 +22,9 @@ function entityForSlot(slot){
 }
 function latestEntityRoll(model,type){
     const id=String(type==="player"?(model.characterId||model.id):(model.enemyId||model.id));
-    const resetAt=Number(currentTableCampaign?.combat?.resultResetAt)||0;
-    return [...(currentTableCampaign?.chatMessages||[])].reverse().find(message=>message?.type==="roll"&&Number(message.createdAt)>resetAt&&(type==="player"?String(message.characterId||"")===id:String(message.enemyInstanceId||"")===id))||null;
+    return [...visibleCinematicRolls()].reverse().find(message=>(type==="player"?String(message.characterId||"")===id:String(message.enemyInstanceId||"")===id))||null;
 }
+function visibleCinematicRolls(){const rolls=(currentTableCampaign?.chatMessages||[]).filter(message=>message?.type==="roll");if(!resultResetBoundaryId)return rolls;const boundary=rolls.findIndex(message=>String(message.id)===String(resultResetBoundaryId));return boundary>=0?rolls.slice(boundary+1):rolls}
 function entityResultHtml(model,type){const roll=latestEntityRoll(model,type);if(!roll)return"";const critical=roll.critical===true||roll.playerCritical===true||roll.enemyCritical===true||/CRÍTICO/i.test(String(roll.label||""));return`<span class="cinematic-entity-result ${critical?"critical":""}" title="${esc(roll.label||"Resultado")}"><small>${esc(String(roll.label||"Teste").split("•")[0].trim())}</small><strong>${Number(roll.total)||0}</strong></span>`}
 function campaignPlayerFor(characterOrEntry){
     const id=characterOrEntry?.characterId??characterOrEntry?.id;
@@ -113,7 +114,13 @@ function persistCinematicCharacter(character,{rerender=true}={}){
     if(saved&&rerender)requestAnimationFrame(renderHud);
     return saved;
 }
-function bodyMaximumsFor(level,corpo){const total=Math.max(1,(9*Math.max(1,Number(level)||1))+(2*Math.max(0,Number(corpo)||0))),head=Math.round(total*.2),baseChest=Math.ceil(total*.25),remaining=Math.max(0,total-baseChest-head),limb=Math.floor(remaining/4),chest=baseChest+remaining-(limb*4);return{head,chest,leftArm:limb,rightArm:limb,leftLeg:limb,rightLeg:limb}}
+function bodyMaximumsFor(level,corpo){const total=Math.max(1,(9*Math.max(1,Number(level)||1))+(2*Math.max(0,Number(corpo)||0))),baseHead=Math.round(total*.2),chest=Math.ceil(total*.25),remaining=Math.max(0,total-chest-baseHead),limb=Math.floor(remaining/4),head=baseHead+remaining-(limb*4);return{head,chest,leftArm:limb,rightArm:limb,leftLeg:limb,rightLeg:limb}}
+function repairCharacterTorso(character){
+    if(!character||character.lifeMode!=="body")return false;
+    const corpo=Math.max(0,Number(character.attributes?.corpo??character.attributes?.for??character.attributes?.vig)||0),natural=bodyMaximumsFor(character.level,corpo).chest,deduction=(character.assimilations||[]).reduce((sum,item)=>sum+((item._ecoCostMode==="body"&&item._ecoCostPart==="chest")?Math.max(0,Number(item._ecoPermanentCost??item.permanentCost?.value)||0):0),0),expected=Math.max(1,natural-deduction);
+    character.body=character.body||{};character.bodyMaximums=character.bodyMaximums||{};const stored=Math.max(0,Number(character.bodyMaximums.chest??character.body.chestMax)||0),maximum=stored>0?Math.min(stored,expected):expected,current=Math.min(Math.max(0,Number(character.body.chest)||0),maximum),changed=stored!==maximum||Number(character.body.chest)!==current||Number(character.body.chestMax)!==maximum;
+    character.bodyMaximums.chest=maximum;character.body.chestMax=maximum;character.body.chest=current;character.heart=character.heart||{};character.heart.max=maximum;character.heart.current=Math.min(Math.max(0,Number(character.heart.current)||0),maximum);if(changed)persistCinematicCharacter(character,{rerender:false});return changed;
+}
 function updateCurrentAndMaximum(current,oldMaximum,newMaximum){const oldMax=Math.max(0,Number(oldMaximum)||0),oldCurrent=Math.max(0,Number(current)||0),newMax=Math.max(0,Number(newMaximum)||0);return{max:newMax,current:oldMax>0&&oldCurrent>=oldMax?newMax:Math.min(oldCurrent,newMax)}}
 function changeCharacterLevel(character,nextLevel){
     const oldLevel=Math.max(1,Number(character.level)||1),level=Math.max(1,Math.min(99,Number(nextLevel)||oldLevel));if(level===oldLevel)return;
@@ -189,7 +196,7 @@ function openAssimilationPicker(character){
 function openCinematicAssimilations(character){
     if(currentTableRole==="master")currentTableCharacter=character;
     const owned=Array.isArray(character.assimilations)?character.assimilations:[];
-    openTablePanel("ASSIMILAÇÕES","Assimilações",`<button id="cinematicAddAssimilation" class="primary-button full-button">＋ Adicionar assimilação</button><div class="table-panel-section cinematic-owned-assimilations"><h3 class="table-panel-section-title">Gerenciar aprendidas</h3><div class="table-panel-list">${owned.map((item,index)=>`<div class="table-panel-card"><h3>${esc(item.name||"Assimilação")}</h3><p>${esc(item.description||"")}</p><button type="button" class="danger-button cinematic-remove-assimilation" data-index="${index}">Remover</button></div>`).join("")||"<div class='editor-empty-state'><p>Nenhuma assimilação adquirida.</p></div>"}</div></div>`);
+    openTablePanel("ASSIMILAÇÕES","Assimilações",`<button id="cinematicAddAssimilation" class="primary-button full-button">＋ Adicionar assimilação</button><div class="table-panel-section cinematic-owned-assimilations"><h3 class="table-panel-section-title">Gerenciar aprendidas</h3><div class="table-panel-list">${owned.map((item,index)=>`<div class="table-panel-card"><h3>${esc(item.name||"Assimilação")}</h3><p>${esc(item.description||"")}</p><div class="ability-card-footer"><span>${Number(item._ecoPermanentCost??item.permanentCost?.value)||0} PV permanentes</span><button type="button" class="cinematic-remove-assimilation" data-index="${index}">Remover</button></div></div>`).join("")||"<div class='editor-empty-state'><p>Nenhuma assimilação adquirida.</p></div>"}</div></div>`);
     if(tablePanelContent)tablePanelContent.dataset.ecoPanelKind="assimilations";
     document.getElementById("cinematicAddAssimilation")?.addEventListener("click",()=>openAssimilationPicker(character));
     document.querySelectorAll(".cinematic-remove-assimilation").forEach(button=>button.onclick=()=>removeCinematicAssimilation(character,Number(button.dataset.index)));
@@ -226,6 +233,7 @@ const CINEMATIC_INVENTORY_CATALOG={
 function openCinematicInventoryPicker(character){openTablePanel("INVENTÁRIO","Adicionar item",`<div class="table-panel-list">${Object.entries(CINEMATIC_INVENTORY_CATALOG).map(([group,items])=>`<section class="table-panel-section"><h3 class="table-panel-section-title">${esc(group)}</h3>${Object.entries(items).map(([name,item])=>`<button class="table-panel-card cinematic-pick-item" data-group="${esc(group)}" data-name="${esc(name)}" style="width:100%;text-align:left"><h3>${esc(name)}</h3><p>${esc(item.damage?resolvedCharacterFormula(item.damage,character):item.description||`${item.defense||0} Defesa`)}${item.noSpace?" • 0 EP":` • ${item.ep||0} EP`}</p></button>`).join("")}</section>`).join("")}</div>`);document.querySelectorAll(".cinematic-pick-item").forEach(button=>button.onclick=()=>{const base=CINEMATIC_INVENTORY_CATALOG[button.dataset.group]?.[button.dataset.name];if(!base)return;character.inventory=Array.isArray(character.inventory)?character.inventory:[];if(base.noSpace&&character.inventory.some(item=>String(item.name).toLowerCase()===button.dataset.name.toLowerCase())){addSystemChatMessage(`${button.dataset.name} já está no inventário.`);return}character.inventory.push({id:`item_${Date.now()}_${Math.random().toString(36).slice(2,7)}`,name:button.dataset.name,mods:[],equipped:false,...structuredClone(base)});persistCinematicCharacter(character,{rerender:false});openCinematicInventory(character)})}
 function openCinematicInventory(character){const items=Array.isArray(character.inventory)?character.inventory:[];openTablePanel("INVENTÁRIO",character.name||"Personagem",`<button id="cinematicAddItem" class="primary-button full-button">＋ Adicionar item</button><div class="table-panel-list">${items.map((item,index)=>`<div class="table-panel-card"><h3>${esc(item.name||"Item")}</h3><p>${esc(item.damage?resolvedCharacterFormula(item.damage,character):item.description||item.type||"")}${item.noSpace?" • Sem espaço":item.ep!=null?` • ${item.ep} EP`:""}</p><button class="secondary-button cinematic-remove-item" data-index="${index}">Remover</button></div>`).join("")||"<div class='editor-empty-state'><p>Nenhum item no inventário.</p></div>"}</div>`);document.getElementById("cinematicAddItem")?.addEventListener("click",()=>openCinematicInventoryPicker(character));document.querySelectorAll(".cinematic-remove-item").forEach(button=>button.onclick=()=>{character.inventory.splice(Number(button.dataset.index),1);persistCinematicCharacter(character,{rerender:false});openCinematicInventory(character)})}
 function playerHud(model,masterViewing=false){
+    repairCharacterTorso(model);
     const status=model.status||{},pmNow=resource(model,"pmAtual",model.pm),pmMax=resource(model,"pmMax",model.pm),paNow=resource(model,"paAtual",model.pa),paMax=resource(model,"paMax",model.paMax??model.pa);
     const entries=Array.isArray(model.attacks)?model.attacks:([model.quickAttacks,model.ataquesRapidos].find(Array.isArray)||[]),attacks=entries.slice(0,3),healing=entries[3];
     const quick=`<div class="hud-quick-attacks">${[0,1,2].map(index=>{const attack=attacks[index];return `<div class="hud-quick-card" data-edit-quick="${index}" title="Clique duas vezes ou use ✎ para editar"><button class="hud-edit-quick" data-edit-quick-button="${index}" aria-label="Editar ataque">✎</button><strong>${esc(attack?.name||`Ataque ${index+1}`)}</strong><div>${attack?`<button data-quick="${index}" data-roll="attack">Ataque</button><button data-quick="${index}" data-roll="damage">Dano</button>`:"<small>Vazio</small>"}</div></div>`}).join("")}<div class="hud-quick-card hud-healing-card" data-edit-quick="3"><button class="hud-edit-quick" data-edit-quick-button="3" aria-label="Editar cura">✎</button><strong>${esc(healing?.name||"Cura rápida")}</strong><div>${healing?'<button data-quick="3" data-roll="healing-test">Testar</button><button data-quick="3" data-roll="healing">Curar</button>':"<small>Vazio</small>"}</div></div></div>`;
@@ -257,8 +265,8 @@ function openCinematicEnemyPanel(enemy,type){
 }
 function masterHud(){return `<div class="hud-identity"><span>MESTRE</span><strong>Controle do combate</strong><small>Selecione um personagem ou ameaça</small>${backButton()}<button type="button" class="hud-reset-results" data-reset-results>↻ Resetar resultados</button></div><div class="hud-actions"><button data-master="initiative">Iniciativa</button><button data-master="next-round">Passar rodada</button><button data-master="enemies">Ameaças</button><button data-master="npcs">Aliados</button><button data-master="map">Cenário</button><button data-master="music">Música</button><button data-master="dice">Dados</button><button data-master="notes">Anotações</button></div>`}
 function clearCinematicResults(){
-    if(!currentTableCampaign)return false;currentTableCampaign.combat=currentTableCampaign.combat||{};currentTableCampaign.combat.resultResetAt=Date.now();
-    if(resultRenderFrame){cancelAnimationFrame(resultRenderFrame);resultRenderFrame=0}saveTableCampaign?.();
+    if(!currentTableCampaign)return false;const rolls=(currentTableCampaign.chatMessages||[]).filter(message=>message?.type==="roll");resultResetBoundaryId=rolls.at(-1)?.id||null;
+    if(resultRenderFrame){cancelAnimationFrame(resultRenderFrame);resultRenderFrame=0}
     [["cinematicResult","RESULTADO"],["cinematicPreviousResult","ANTERIOR"]].forEach(([id,label])=>{const root=document.getElementById(id);if(!root)return;root.removeAttribute("data-signature");root.removeAttribute("data-history-signature");root.classList.remove("critical-result","result-flash");root.innerHTML=`<span>${label}</span><strong>—</strong><small></small>`});
     document.querySelectorAll(".cinematic-slot").forEach(slot=>{slot.dataset.cinematicSource=""});decorateTokens();renderHud();return true;
 }
@@ -310,7 +318,7 @@ function paintResult(root,view,animate=false){
 }
 function renderResult(){
     const root=document.getElementById("cinematicResult"),previousRoot=document.getElementById("cinematicPreviousResult");if(!root)return;
-    const resetAt=Number(currentTableCampaign?.combat?.resultResetAt)||0,rolls=(currentTableCampaign?.chatMessages||[]).filter(message=>message?.type==="roll"&&Number(message.createdAt)>resetAt),last=rolls.at(-1),previous=rolls.at(-2);if(!last)return;
+    const rolls=visibleCinematicRolls(),last=rolls.at(-1),previous=rolls.at(-2);if(!last)return;
     const currentView=resultView(last),previousView=resultView(previous),signature=`${currentView.signature}|${previousView?.signature||""}`;if(root.dataset.historySignature===signature)return;root.dataset.historySignature=signature;
     paintResult(root,currentView,true);
     if(previousView)paintResult(previousRoot,previousView,false);
@@ -322,7 +330,7 @@ function scheduleResultRender(refreshCampaign=false){
 function refresh(){decorateTokens();renderInitiative();renderHud();renderResult();document.body.classList.toggle("cinematic-master",currentTableRole==="master");document.body.classList.toggle("cinematic-player",currentTableRole==="player")}
 
 window.openCinematicAbilities=openCinematicAbilities;
-window.ECO_CINEMATIC_SHEET={version:1,bodyMaximumsFor,changeCharacterLevel,openQuickAttackEditor,openCinematicSkills,openCinematicInventory,acquireAssimilation,removeAssimilation:removeCinematicAssimilation,clearResults:clearCinematicResults,persist:persistCinematicCharacter};
+window.ECO_CINEMATIC_SHEET={version:1,bodyMaximumsFor,repairCharacterTorso,changeCharacterLevel,openQuickAttackEditor,openCinematicSkills,openCinematicInventory,acquireAssimilation,removeAssimilation:removeCinematicAssimilation,clearResults:clearCinematicResults,persist:persistCinematicCharacter};
 
 document.addEventListener("DOMContentLoaded",()=>{
     window.openEnemyControlSheet=redirectLegacyEnemySheet;
