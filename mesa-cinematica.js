@@ -21,7 +21,8 @@ function entityForSlot(slot){
 }
 function latestEntityRoll(model,type){
     const id=String(type==="player"?(model.characterId||model.id):(model.enemyId||model.id));
-    return [...(currentTableCampaign?.chatMessages||[])].reverse().find(message=>message?.type==="roll"&&(type==="player"?String(message.characterId||"")===id:String(message.enemyInstanceId||"")===id))||null;
+    const resetAt=Number(currentTableCampaign?.combat?.resultResetAt)||0;
+    return [...(currentTableCampaign?.chatMessages||[])].reverse().find(message=>message?.type==="roll"&&Number(message.createdAt)>resetAt&&(type==="player"?String(message.characterId||"")===id:String(message.enemyInstanceId||"")===id))||null;
 }
 function entityResultHtml(model,type){const roll=latestEntityRoll(model,type);if(!roll)return"";const critical=roll.critical===true||roll.playerCritical===true||roll.enemyCritical===true||/CRÍTICO/i.test(String(roll.label||""));return`<span class="cinematic-entity-result ${critical?"critical":""}" title="${esc(roll.label||"Resultado")}"><small>${esc(String(roll.label||"Teste").split("•")[0].trim())}</small><strong>${Number(roll.total)||0}</strong></span>`}
 function campaignPlayerFor(characterOrEntry){
@@ -248,7 +249,13 @@ function openCinematicEnemyPanel(enemy,type){
     if(type==="rituals"){if(typeof window.openEnemyGrimoireV25==="function")window.openEnemyGrimoireV25(enemy);else openEnemyGrimoire(enemy);return}
     if(type==="move"){startMoveEntity("enemy",enemy);return}if(type==="remove"){removeEntityFromScene("enemy",enemy);cinematicSelection=null;renderHud()}
 }
-function masterHud(){return `<div class="hud-identity"><span>MESTRE</span><strong>Controle do combate</strong><small>Selecione um personagem ou ameaça</small>${backButton()}</div><div class="hud-actions"><button data-master="initiative">Iniciativa</button><button data-master="next-round">Passar rodada</button><button data-master="enemies">Ameaças</button><button data-master="npcs">Aliados</button><button data-master="map">Cenário</button><button data-master="music">Música</button><button data-master="dice">Dados</button><button data-master="notes">Anotações</button></div>`}
+function masterHud(){return `<div class="hud-identity"><span>MESTRE</span><strong>Controle do combate</strong><small>Selecione um personagem ou ameaça</small>${backButton()}<button type="button" class="hud-reset-results" data-reset-results>↻ Resetar resultados</button></div><div class="hud-actions"><button data-master="initiative">Iniciativa</button><button data-master="next-round">Passar rodada</button><button data-master="enemies">Ameaças</button><button data-master="npcs">Aliados</button><button data-master="map">Cenário</button><button data-master="music">Música</button><button data-master="dice">Dados</button><button data-master="notes">Anotações</button></div>`}
+function clearCinematicResults(){
+    if(!currentTableCampaign)return false;currentTableCampaign.combat=currentTableCampaign.combat||{};currentTableCampaign.combat.resultResetAt=Date.now();
+    if(resultRenderFrame){cancelAnimationFrame(resultRenderFrame);resultRenderFrame=0}saveTableCampaign?.();
+    [["cinematicResult","RESULTADO"],["cinematicPreviousResult","ANTERIOR"]].forEach(([id,label])=>{const root=document.getElementById(id);if(!root)return;root.removeAttribute("data-signature");root.removeAttribute("data-history-signature");root.classList.remove("critical-result","result-flash");root.innerHTML=`<span>${label}</span><strong>—</strong><small></small>`});
+    document.querySelectorAll(".cinematic-slot").forEach(slot=>{slot.dataset.cinematicSource=""});decorateTokens();return true;
+}
 function redirectLegacyEnemySheet(enemy,position){
     if(!enemy)return;
     closeCurrentPanel();
@@ -271,6 +278,7 @@ function renderHud(){
     root.querySelectorAll("[data-master]").forEach(button=>button.onclick=()=>handleMenuAction(button.dataset.master));
     root.querySelectorAll("[data-leave-table]").forEach(button=>button.onclick=()=>document.getElementById("leaveTable")?.click());
     root.querySelectorAll("[data-master-reset]").forEach(button=>button.onclick=()=>{cinematicSelection=null;renderHud()});
+    root.querySelector("[data-reset-results]")?.addEventListener("click",clearCinematicResults);
     root.querySelectorAll("[data-player-move]").forEach(button=>button.onclick=()=>{const model=currentTableRole==="player"?currentTableCharacter:(cinematicSelection?.type==="player"?cinematicSelection.entity:null);if(model)openCinematicPlayerMovement(model)});
     root.querySelectorAll("[data-player-conditions]").forEach(button=>button.onclick=()=>{const model=currentTableRole==="player"?currentTableCharacter:(cinematicSelection?.type==="player"?liveCharacter(cinematicSelection.entity.characterId):null);if(model)openCinematicPlayerConditions(model)});
     root.querySelector('[data-open="abilities"]')?.addEventListener("click",()=>{const character=currentTableRole==="player"?currentTableCharacter:(cinematicSelection?.type==="player"?liveCharacter(cinematicSelection.entity.characterId):null);if(character)openCinematicAbilities(character)});
@@ -296,7 +304,7 @@ function paintResult(root,view,animate=false){
 }
 function renderResult(){
     const root=document.getElementById("cinematicResult"),previousRoot=document.getElementById("cinematicPreviousResult");if(!root)return;
-    const rolls=(currentTableCampaign?.chatMessages||[]).filter(message=>message?.type==="roll"),last=rolls.at(-1),previous=rolls.at(-2);if(!last)return;
+    const resetAt=Number(currentTableCampaign?.combat?.resultResetAt)||0,rolls=(currentTableCampaign?.chatMessages||[]).filter(message=>message?.type==="roll"&&Number(message.createdAt)>resetAt),last=rolls.at(-1),previous=rolls.at(-2);if(!last)return;
     const currentView=resultView(last),previousView=resultView(previous),signature=`${currentView.signature}|${previousView?.signature||""}`;if(root.dataset.historySignature===signature)return;root.dataset.historySignature=signature;
     paintResult(root,currentView,true);
     if(previousView)paintResult(previousRoot,previousView,false);
@@ -308,7 +316,7 @@ function scheduleResultRender(refreshCampaign=false){
 function refresh(){decorateTokens();renderInitiative();renderHud();renderResult();document.body.classList.toggle("cinematic-master",currentTableRole==="master");document.body.classList.toggle("cinematic-player",currentTableRole==="player")}
 
 window.openCinematicAbilities=openCinematicAbilities;
-window.ECO_CINEMATIC_SHEET={version:1,bodyMaximumsFor,changeCharacterLevel,openQuickAttackEditor,openCinematicSkills,openCinematicInventory,acquireAssimilation,removeAssimilation:removeCinematicAssimilation,persist:persistCinematicCharacter};
+window.ECO_CINEMATIC_SHEET={version:1,bodyMaximumsFor,changeCharacterLevel,openQuickAttackEditor,openCinematicSkills,openCinematicInventory,acquireAssimilation,removeAssimilation:removeCinematicAssimilation,clearResults:clearCinematicResults,persist:persistCinematicCharacter};
 
 document.addEventListener("DOMContentLoaded",()=>{
     window.openEnemyControlSheet=redirectLegacyEnemySheet;
