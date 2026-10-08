@@ -149,7 +149,7 @@ function trainingLabel(value){
 
 function damageTypeLabel(value){
     return {
-        balistico:"Balístico",impacto:"Impacto",perfuracao:"Perfuração",corte:"Corte",fogo:"Fogo"
+        balistico:"Balístico",impacto:"Impacto",perfuracao:"Perfuração",corte:"Corte",fogo:"Fogo",energia:"Energia",sangue:"Sangue",morte:"Morte",conhecimento:"Conhecimento",medo:"Medo"
     }[value]||titleCase(value||"Impacto");
 }
 

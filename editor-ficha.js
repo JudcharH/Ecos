@@ -2022,6 +2022,11 @@ function collectQuickAttacks(oldAttacks = []){
                 `attack${index}Skill`
             )?.value.trim() || "";
 
+        const damageType =
+            document.getElementById(
+                `attack${index}DamageType`
+            )?.value.trim() || "";
+
         const oldAttack =
             oldAttacks[index - 1] || {};
 
@@ -2049,6 +2054,9 @@ function collectQuickAttacks(oldAttacks = []){
 
             skill:
                 skill || oldAttack.skill || "",
+
+            damageType:
+                damageType || oldAttack.damageType || oldAttack.tipoDano || "impacto",
 
             linkedWeaponId:
                 String(name).trim().toLowerCase() === "desarmado"
@@ -2872,6 +2880,11 @@ function loadQuickAttacks(attacks){
                 `attack${index}Skill`
             );
 
+        const damageType =
+            document.getElementById(
+                `attack${index}DamageType`
+            );
+
 
         if(name){
 
@@ -2900,6 +2913,13 @@ function loadQuickAttacks(attacks){
 
             skill.value =
                 attack.skill || attack.skillName || attack.testSkill || "";
+
+        }
+
+        if(damageType){
+
+            damageType.value =
+                attack.damageType || attack.tipoDano || "impacto";
 
         }
 

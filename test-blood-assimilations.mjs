@@ -15,6 +15,8 @@ assert.match(engine,/function ensureUnarmed/);
 assert.match(engine,/amorProprioScene/);
 assert.match(engine,/linked==="desarmado"/);
 assert.match(engine,/lists\.forEach\(list=>list\[2\]/);
+assert.match(engine,/remove-element-assimilation/);
+assert.match(engine,/corte:"cortante",perfuracao:"perfurante"/);
 const editor=read("editor-ficha.js");
 assert.match(editor,/name:"Desarmado"/);
 assert.match(editor,/String\(list\[0\]\?\.damage\|\|""\)\.trim\(\)==="55"/);
