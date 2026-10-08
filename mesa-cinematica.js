@@ -128,13 +128,25 @@ function openCinematicSkills(character){
 function openAbilityPicker(character){
     const owned=new Set((character.abilities||[]).map(item=>String(item.id||item.name).toLowerCase())),catalog=Array.isArray(window.SYSTEM_BASE_V2_ABILITIES)?window.SYSTEM_BASE_V2_ABILITIES:[];
     openTablePanel("HABILIDADES","Adicionar habilidade",`<div class="table-panel-card"><p>Cada habilidade custa <strong>4 PM máximos permanentes</strong>.</p></div><div class="table-panel-list">${catalog.filter(item=>!owned.has(String(item.id||item.name).toLowerCase())).map((item,index)=>`<button class="table-panel-card cinematic-buy-ability" data-index="${index}" style="width:100%;text-align:left"><h3>${esc(item.name||"Habilidade")}</h3><p>${esc(item.description||item.effect||"")}</p></button>`).join("")||"<p>Todas as habilidades disponíveis já foram adquiridas.</p>"}</div>`);
-    const available=catalog.filter(item=>!owned.has(String(item.id||item.name).toLowerCase()));document.querySelectorAll(".cinematic-buy-ability").forEach(button=>button.onclick=()=>{const ability=available[Number(button.dataset.index)],status=character.status||(character.status={}),maximum=Math.max(0,Number(status.pmMax??status.pdMax)||0);if(!ability||maximum<4){addSystemChatMessage("PM máximo insuficiente para adquirir esta habilidade.");return}status.pmMax=maximum-4;status.pdMax=status.pmMax;status.pmAtual=Math.min(Math.max(0,Number(status.pmAtual??status.pdAtual)||0),status.pmMax);status.pdAtual=status.pmAtual;character.abilities=Array.isArray(character.abilities)?character.abilities:[];character.abilities.push(structuredClone(ability));persistCinematicCharacter(character,{rerender:false});openCinematicAbilities(character)});
+    const available=catalog.filter(item=>!owned.has(String(item.id||item.name).toLowerCase()));document.querySelectorAll(".cinematic-buy-ability").forEach(button=>button.onclick=()=>{const ability=available[Number(button.dataset.index)],status=character.status||(character.status={}),maximum=Math.max(0,Number(status.pmMax??status.pdMax)||0),cost=4;if(!ability||maximum<cost){addSystemChatMessage("PM máximo insuficiente para adquirir esta habilidade.");return}status.pmMax=maximum-cost;status.pdMax=status.pmMax;status.pmAtual=Math.min(Math.max(0,Number(status.pmAtual??status.pdAtual)||0),status.pmMax);status.pdAtual=status.pmAtual;character.abilities=Array.isArray(character.abilities)?character.abilities:[];character.abilities.push({...structuredClone(ability),_ecoAcquisitionCostPM:cost});persistCinematicCharacter(character);openCinematicAbilities(character)});
 }
 function openCinematicAbilities(character){
     currentTableCharacter=character;
     if(typeof window.openSystemBaseAbilitiesPanel==="function")window.openSystemBaseAbilitiesPanel(character);else openTablePanel("HABILIDADES","Habilidades","");
     if(tablePanelContent)tablePanelContent.dataset.ecoPanelKind="abilities";
     if(!tablePanelContent?.querySelector(".cinematic-add-owned")){const button=document.createElement("button");button.className="primary-button full-button cinematic-add-owned";button.textContent="＋ Adicionar habilidade";button.onclick=()=>openAbilityPicker(character);tablePanelContent?.prepend(button)}
+}
+function removeCinematicAssimilation(character,index){
+    const list=Array.isArray(character?.assimilations)?character.assimilations:[],assimilation=list[index];if(!assimilation)return false;
+    const cost=Math.max(0,Number(assimilation._ecoPermanentCost??assimilation.permanentCost?.value)||0),status=character.status||(character.status={});
+    if((assimilation.permanentCost?.type||"pv")==="pv"&&cost){
+        if((assimilation._ecoCostMode||character.lifeMode)==="body"){
+            const part=assimilation._ecoCostPart||"chest";character.body=character.body||{};character.bodyMaximums=character.bodyMaximums||{};
+            const maximum=Math.max(0,Number(character.bodyMaximums[part]??character.body[`${part}Max`]??character.body[part])||0)+cost;character.bodyMaximums[part]=maximum;character.body[`${part}Max`]=maximum;
+            if(part==="chest"&&character.heart)character.heart.max=maximum;
+        }else{status.pvMax=Math.max(0,Number(status.pvMax)||0)+cost;if(character.heart)character.heart.max=Math.ceil(status.pvMax/4)}
+    }
+    list.splice(index,1);persistCinematicCharacter(character);openCinematicAssimilations(character);return true;
 }
 function assimilationCatalog(){return [...(window.ECO_BLOOD_ASSIMILATIONS||[]),...(window.ECO_DEATH_ASSIMILATIONS||[])]}
 function acquireAssimilation(character,assimilation,bodyPart=""){
@@ -156,7 +168,7 @@ function acquireAssimilation(character,assimilation,bodyPart=""){
             if(character.heart){character.heart.max=Math.ceil(status.pvMax/4);character.heart.current=Math.min(Number(character.heart.current)||0,character.heart.max)}
         }
     }
-    character.assimilations=Array.isArray(character.assimilations)?character.assimilations:[];character.assimilations.push(structuredClone(assimilation));persistCinematicCharacter(character,{rerender:false});openCinematicAssimilations(character);return true;
+    character.assimilations=Array.isArray(character.assimilations)?character.assimilations:[];character.assimilations.push({...structuredClone(assimilation),_ecoPermanentCost:cost,_ecoCostMode:character.lifeMode,_ecoCostPart:bodyPart||null});persistCinematicCharacter(character);openCinematicAssimilations(character);return true;
 }
 function chooseAssimilationBodyPart(character,assimilation){
     const labels=[["head","Cabeça"],["chest","Torso"],["leftArm","Braço esquerdo"],["rightArm","Braço direito"],["leftLeg","Perna esquerda"],["rightLeg","Perna direita"]],cost=Math.max(0,Number(assimilation.permanentCost?.value)||0),body=character.body||{},maximums=character.bodyMaximums||{};
@@ -170,9 +182,11 @@ function openAssimilationPicker(character){
 }
 function openCinematicAssimilations(character){
     if(currentTableRole==="master")currentTableCharacter=character;
-    openTablePanel("ASSIMILAÇÕES","Assimilações",`<button id="cinematicAddAssimilation" class="primary-button full-button">＋ Adicionar assimilação</button><div class="table-panel-list">${(character.assimilations||[]).length?"":"<div class='editor-empty-state'><p>Nenhuma assimilação adquirida.</p></div>"}</div>`);
+    const owned=Array.isArray(character.assimilations)?character.assimilations:[];
+    openTablePanel("ASSIMILAÇÕES","Assimilações",`<button id="cinematicAddAssimilation" class="primary-button full-button">＋ Adicionar assimilação</button><div class="table-panel-section cinematic-owned-assimilations"><h3 class="table-panel-section-title">Gerenciar aprendidas</h3><div class="table-panel-list">${owned.map((item,index)=>`<div class="table-panel-card"><h3>${esc(item.name||"Assimilação")}</h3><p>${esc(item.description||"")}</p><button type="button" class="danger-button cinematic-remove-assimilation" data-index="${index}">Remover</button></div>`).join("")||"<div class='editor-empty-state'><p>Nenhuma assimilação adquirida.</p></div>"}</div></div>`);
     if(tablePanelContent)tablePanelContent.dataset.ecoPanelKind="assimilations";
     document.getElementById("cinematicAddAssimilation")?.addEventListener("click",()=>openAssimilationPicker(character));
+    document.querySelectorAll(".cinematic-remove-assimilation").forEach(button=>button.onclick=()=>removeCinematicAssimilation(character,Number(button.dataset.index)));
 }
 function openCinematicPlayerConditions(character){
     character=liveCharacter(character?.id||character?.characterId)||character;if(!character)return;
@@ -193,7 +207,7 @@ function rollCinematicPlayer(index,type){
 function openQuickAttackEditor(character,index){
     character.attacks=Array.isArray(character.attacks)?character.attacks:structuredClone([character.quickAttacks,character.ataquesRapidos].find(Array.isArray)||[]);const attack=character.attacks[index]||{id:`attack_${Date.now()}`,name:index===3?"Cura rápida":`Ataque ${index+1}`,roll:"1d12 + Corpo",damage:"",skill:index===3?"Medicina":"Luta"},healing=index===3;
     openTablePanel(healing?"CURA":"ATAQUE RÁPIDO",attack.name||`Ataque ${index+1}`,`<div class="cinematic-attack-editor"><label>Nome<input id="cinematicAttackName" value="${esc(attack.name||"")}"></label><label>Perícia<input id="cinematicAttackSkill" value="${esc(attack.skill||attack.skillName||(healing?"Medicina":"Luta"))}"></label><label>${healing?"Teste":"Fórmula de ataque"}<input id="cinematicAttackRoll" value="${esc(attack.roll||attack.attack||"")}"></label><label>${healing?"Fórmula de cura":"Fórmula de dano"}<input id="cinematicAttackDamage" value="${esc(attack.damage||attack.healing||"")}"></label>${healing?"":`<label>Tipo de dano<input id="cinematicAttackType" value="${esc(attack.damageType||attack.type||"")}"></label>`}<button id="saveCinematicAttack" class="primary-button full-button">Salvar ataque</button></div>`);
-    document.getElementById("saveCinematicAttack")?.addEventListener("click",()=>{const updated={...attack,id:attack.id||`attack_${Date.now()}`,name:document.getElementById("cinematicAttackName")?.value.trim()||attack.name,skill:document.getElementById("cinematicAttackSkill")?.value.trim()||(healing?"Medicina":"Luta"),roll:document.getElementById("cinematicAttackRoll")?.value.trim()||"1d12"};const effect=document.getElementById("cinematicAttackDamage")?.value.trim()||"";if(healing){updated.damage=effect;updated.healing=effect}else{updated.damage=effect;updated.damageType=document.getElementById("cinematicAttackType")?.value.trim()||""}if(String(updated.name).toLowerCase()==="desarmado")updated.linkedWeaponId="desarmado";character.attacks[index]=updated;persistCinematicCharacter(character);closeCurrentPanel();});
+    document.getElementById("saveCinematicAttack")?.addEventListener("click",()=>{const updated={...attack,id:attack.id||`attack_${Date.now()}`,name:document.getElementById("cinematicAttackName")?.value.trim()||attack.name,skill:document.getElementById("cinematicAttackSkill")?.value.trim()||(healing?"Medicina":"Luta"),roll:document.getElementById("cinematicAttackRoll")?.value.trim()||"1d12"};const effect=document.getElementById("cinematicAttackDamage")?.value.trim()||"";if(healing){updated.damage=effect;updated.healing=effect}else{updated.damage=effect;updated.damageType=document.getElementById("cinematicAttackType")?.value.trim()||""}if(String(updated.name).toLowerCase()==="desarmado")updated.linkedWeaponId="desarmado";character.attacks[index]=updated;character.quickAttacks=character.attacks;character.ataquesRapidos=character.attacks;persistCinematicCharacter(character);closeCurrentPanel();});
 }
 const CINEMATIC_INVENTORY_CATALOG={
     "Corpo a corpo":{"Desarmado":{kind:"melee",damage:"1d4 + Corpo",type:"Impacto",ep:0,noSpace:true,skill:"Luta"},"Faca":{kind:"melee",damage:"1d4 + Corpo",type:"Corte",ep:1},"Adaga":{kind:"melee",damage:"1d6 + Corpo",type:"Corte",ep:1},"Taco":{kind:"melee",damage:"1d6 + Corpo",type:"Impacto",ep:2},"Lança":{kind:"melee",damage:"1d6 + Corpo",type:"Perfuração",ep:2},"Marreta":{kind:"melee",damage:"2d8 + Corpo",type:"Impacto",ep:3},"Bastão":{kind:"melee",damage:"1d6 + Corpo",type:"Impacto",ep:2},"Nunchaku":{kind:"melee",damage:"1d6 + Corpo",type:"Impacto",ep:2},"Machadinha":{kind:"melee",damage:"1d6 + Corpo",type:"Corte",ep:2},"Machado":{kind:"melee",damage:"1d8 + Corpo",type:"Corte",ep:3},"Espada":{kind:"melee",damage:"1d10 + Corpo",type:"Corte",ep:3},"Maça":{kind:"melee",damage:"2d6 + Corpo",type:"Impacto",ep:2},"Florete":{kind:"melee",damage:"1d6 + Corpo",type:"Corte",ep:2},"Katana":{kind:"melee",damage:"1d10 + Corpo",type:"Corte",ep:3},"Acha":{kind:"melee",damage:"1d12 + Corpo",type:"Corte",ep:3},"Gadanho":{kind:"melee",damage:"2d4 + Corpo",type:"Corte",ep:2},"Motosserra":{kind:"melee",damage:"3d6 + Corpo",type:"Corte",ep:3},"Montante":{kind:"melee",damage:"2d8 + Corpo",type:"Corte",ep:2},"Corrente":{kind:"melee",damage:"1d8 + Corpo",type:"Impacto",ep:1}},
@@ -293,7 +307,8 @@ function scheduleResultRender(refreshCampaign=false){
 }
 function refresh(){decorateTokens();renderInitiative();renderHud();renderResult();document.body.classList.toggle("cinematic-master",currentTableRole==="master");document.body.classList.toggle("cinematic-player",currentTableRole==="player")}
 
-window.ECO_CINEMATIC_SHEET={version:1,bodyMaximumsFor,changeCharacterLevel,openQuickAttackEditor,openCinematicSkills,openCinematicInventory,acquireAssimilation,persist:persistCinematicCharacter};
+window.openCinematicAbilities=openCinematicAbilities;
+window.ECO_CINEMATIC_SHEET={version:1,bodyMaximumsFor,changeCharacterLevel,openQuickAttackEditor,openCinematicSkills,openCinematicInventory,acquireAssimilation,removeAssimilation:removeCinematicAssimilation,persist:persistCinematicCharacter};
 
 document.addEventListener("DOMContentLoaded",()=>{
     window.openEnemyControlSheet=redirectLegacyEnemySheet;

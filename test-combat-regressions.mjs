@@ -50,6 +50,15 @@ assert.match(tableCore,/function syncCombatFormulaSlot\(character,index,workingA
 assert.match(tableCore,/function resolveCombatFormula\(character,index,kind,workingFormula\)/);
 assert.match(tableCore,/window\.ECO_COMBAT_FORMULAS=/);
 assert.match(tableCore,/formulaBridge:formulaBridgeSnapshot/);
+assert.match(tableCore,/\.replace\(\/\[\(\)\]\/g,""\)/);
+assert.match(tableCore,/\\bCORPO\\b/);
+const diceStart=tableCore.indexOf("function rollDiceExpression(");
+const diceEnd=tableCore.indexOf("function rollQuickAttackDamage(",diceStart);
+const diceMath=Object.create(Math);diceMath.random=()=>0;
+const diceContext={Math:diceMath};vm.createContext(diceContext);vm.runInContext(`${tableCore.slice(diceStart,diceEnd)};this.rollDiceExpression=rollDiceExpression;`,diceContext);
+const minimum=diceContext.rollDiceExpression("(1d12 + 1d8 + 5)");
+assert.equal(minimum.total,7,"1d12 + 1d8 + 5 deve ter resultado mínimo 7");
+assert.equal(minimum.details.length,3,"todos os termos da fórmula devem ser processados");
 assert.match(blood,/ECO_COMBAT_FORMULAS\.addModifier\(character\.id,index,\{id:"assimilacao:ira"/);
 
 console.log(JSON.stringify({ok:true,criticalDamage:damage[2],temporaryPV:true,pairedLimbs:true,ritualResolution:true},null,2));

@@ -199,12 +199,12 @@ function renderCard(ability){
     let label=type==="passive"?"Passiva":type==="reaction"?"Reação":type==="hybrid"?"Passiva / ativação":"Ativa";
     if(cost.amount>0) label+=` • ${cost.amount} ${cost.resource.toUpperCase()}${cost.variable?" ou mais":""}`;
     const showButton=!NO_MANUAL_BUTTON.has(id)&&type!=="passive"&&type!=="reaction";
-    return `<div class="table-panel-card">
+    return `<div class="table-panel-card" data-ability-card="${escapeTableHTML(id)}">
         <h3>${escapeTableHTML(abilityName(ability))}</h3>
         <p>${escapeTableHTML(ability.description||ability.effect||"Sem descrição.")}</p>
         <div class="ability-card-footer">
             <span>${escapeTableHTML(label)}</span>
-            ${showButton?`<button type="button" class="primary-button use-ability-v2" data-id="${escapeTableHTML(id)}">Usar</button>`:""}
+            <span class="ability-card-actions">${showButton?`<button type="button" class="primary-button use-ability-v2" data-id="${escapeTableHTML(id)}">Usar</button>`:""}<button type="button" class="danger-button remove-ability-v2" data-id="${escapeTableHTML(id)}">Remover</button></span>
         </div>
     </div>`;
 }
@@ -223,6 +223,13 @@ function openAbilitiesV2(character=null){
         <div class="table-panel-section"><h3 class="table-panel-section-title">Reações</h3><div class="table-panel-list">${reactions.length?reactions.map(renderCard).join(""):'<div class="editor-empty-state"><p>Nenhuma habilidade de reação.</p></div>'}</div></div>
     `);
     document.querySelectorAll(".use-ability-v2").forEach(button=>button.addEventListener("click",()=>useAbilityV2(button.dataset.id)));
+    document.querySelectorAll(".remove-ability-v2").forEach(button=>button.addEventListener("click",()=>removeAbilityV2(button.dataset.id)));
+}
+function removeAbilityV2(id){
+    const character=abilityPanelCharacter||currentTableCharacter;if(!character)return false;
+    const keys=["abilities","acquiredAbilities","habilidades"],key=keys.find(name=>Array.isArray(character[name]))||"abilities",list=Array.isArray(character[key])?character[key]:[],index=list.findIndex(item=>abilityId(item)===id);if(index<0)return false;
+    const removed=list[index],cost=Math.max(0,Number(removed?._ecoAcquisitionCostPM)||4);list.splice(index,1);character.status=character.status||{};character.status.pmMax=Math.max(0,Number(character.status.pmMax??character.status.pdMax)||0)+cost;character.status.pdMax=character.status.pmMax;
+    saveDamagedCharacter(character);if(typeof window.openCinematicAbilities==="function")window.openCinematicAbilities(character);else openAbilitiesV2(character);return true;
 }
 
 function openAttackSpecial(ability){

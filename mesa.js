@@ -7835,7 +7835,8 @@ function rollDiceExpression(
             expression
         )
             .toLowerCase()
-            .replace(/\s+/g,"");
+            .replace(/\s+/g,"")
+            .replace(/[()]/g,"");
 
 
     /*
@@ -8114,7 +8115,10 @@ function resolveCharacterFormula(
             Number(
                 attributes.pre
             ) || 0
-        );
+        )
+        .replace(/\bCORPO\b/gi,Number(attributes.corpo??attributes.for??attributes.vig)||0)
+        .replace(/\bFOCO\b/gi,Number(attributes.foco??attributes.agi??attributes.pre)||0)
+        .replace(/\bNEXO\b/gi,Number(attributes.nexo??attributes.int)||0);
 
 }
 
