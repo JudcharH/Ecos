@@ -2607,16 +2607,18 @@ function openAttacksPanel(){
                     <p>
                         Ataque:
                         ${escapeTableHTML(
-                            attack.roll ||
+                            resolveCharacterFormula(attack.roll ||
                             "—"
+                            ,currentTableCharacter)
                         )}
                     </p>
 
                     <p>
                         Dano:
                         ${escapeTableHTML(
-                            attack.damage ||
+                            resolveCharacterFormula(attack.damage ||
                             "—"
+                            ,currentTableCharacter)
                         )}
                     </p>
 

@@ -182,7 +182,7 @@ function chooseAttack(title,onChoose){
             ${attacks.length?attacks.map((attack,index)=>`
                 <button type="button" class="table-panel-card ability-v2-attack" data-index="${index}">
                     <h3>${escapeTableHTML(attack.name||`Ataque ${index+1}`)}</h3>
-                    <p>${escapeTableHTML(attack.roll||attack.attack||attack.formula||"1d12")}</p>
+                    <p>${escapeTableHTML(typeof resolveCharacterFormula==="function"?resolveCharacterFormula(attack.roll||attack.attack||attack.formula||"1d12",currentTableCharacter):attack.roll||attack.attack||attack.formula||"1d12")}</p>
                 </button>
             `).join(""):'<div class="editor-empty-state"><p>Nenhum ataque pronto encontrado.</p></div>'}
         </div>
