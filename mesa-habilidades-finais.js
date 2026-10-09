@@ -22,10 +22,7 @@ function addCondition(character,condition){character.conditions=Array.isArray(ch
 function removeCondition(character,id){const before=Array.isArray(character.conditions)?character.conditions.length:0;character.conditions=(character.conditions||[]).filter(item=>slug(typeof item==="string"?item:item.id||item.name)!==slug(id));if(character.conditions.length!==before)saveDamagedCharacter(character);return before-character.conditions.length;}
 function heal(character,amount,source){
     const value=Math.max(0,Number(amount)||0);if(!character||!value)return 0;
-    if(character.lifeMode==="body"&&typeof bodyDamageParts==="function"){
-        const parts=bodyDamageParts(character,"player").map(part=>({...part,max:Math.max(0,Number(character.bodyMaximums?.[part.id]??character.body?.[`${part.id}Max`])||part.current)})).filter(part=>part.current<part.max&&part.state.type!=="missing").sort((a,b)=>(b.max-b.current)-(a.max-a.current));
-        const part=parts[0];if(!part)return 0;const restored=Math.min(value,part.max-part.current);if(part.state.type==="prosthetic")part.state.currentPV=part.current+restored;else character.body[part.id]=part.current+restored;saveDamagedCharacter(character);addSystemChatMessage(`${source}: ${character.name} recuperou ${restored} PV em ${part.label}.`);return restored;
-    }
+    if(character.lifeMode==="body"&&window.ECO_BLOOD_ASSIMILATION_AUTOMATION?.heal){const gradual=useBucket("recuperacao-gradual",character),canGradual=has(character,"recuperacao-gradual")&&!gradual.uses,total=value+(canGradual?attr(character,"corpo"):0);if(canGradual)gradual.state.uses[gradual.key]=1;return window.ECO_BLOOD_ASSIMILATION_AUTOMATION.heal(character,total,source);}
     character.status=character.status||{};const before=Math.max(0,Number(character.status.pvAtual)||0),maximum=Math.max(before,Number(character.status.pvMax)||0);let total=value;
     const state=abilityState(),gradual=useBucket("recuperacao-gradual",character),canGradual=has(character,"recuperacao-gradual")&&!gradual.uses;
     if(canGradual){total+=attr(character,"corpo");gradual.state.uses[gradual.key]=1;}

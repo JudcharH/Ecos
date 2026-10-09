@@ -13,7 +13,13 @@ const engine=read("mesa-assimilacoes-sangue.js");expected.forEach(id=>assert.ok(
 for(const hook of ["passTableRound=function","applyPendingDamageToTarget=function","rollQuickAttack=function","rollTableCharacterSkill=function","answerAttackReaction=function"])assert.ok(engine.includes(hook),`gancho ausente: ${hook}`);
 assert.match(engine,/function ensureUnarmed/);
 assert.match(engine,/amorProprioScene/);
-assert.match(engine,/linked==="desarmado"/);
+assert.match(engine,/slug\(attack\.name\)==="desarmado"/);
+assert.match(engine,/function healingNotice/);
+assert.match(engine,/blood-heal-part/);
+assert.match(engine,/effectiveAttribute:attr/);
+assert.match(engine,/skillBonus\(character,skillName\)/);
+assert.match(engine,/hematopoieseTarget/);
+assert.match(engine,/blockEnemyAbility/);
 assert.match(engine,/lists\.forEach\(list=>list\[2\]/);
 assert.match(engine,/remove-element-assimilation/);
 assert.match(engine,/corte:"cortante",perfuracao:"perfurante"/);

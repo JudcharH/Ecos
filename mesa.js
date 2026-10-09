@@ -8081,8 +8081,7 @@ function resolveCharacterFormula(
     character
 ){
 
-    const attributes =
-        character.attributes || {};
+    const attributes = character.attributes || {},effective=window.ECO_BLOOD_ASSIMILATION_AUTOMATION?.effectiveAttribute,attributeValue=name=>effective?effective(character,name):Number(attributes[name])||0;
 
 
     return String(
@@ -8118,9 +8117,9 @@ function resolveCharacterFormula(
                 attributes.pre
             ) || 0
         )
-        .replace(/\bCORPO\b/gi,Number(attributes.corpo??attributes.for??attributes.vig)||0)
-        .replace(/\bFOCO\b/gi,Number(attributes.foco??attributes.agi??attributes.pre)||0)
-        .replace(/\bNEXO\b/gi,Number(attributes.nexo??attributes.int)||0);
+        .replace(/\bCORPO\b/gi,effective?attributeValue("corpo"):Number(attributes.corpo??attributes.for??attributes.vig)||0)
+        .replace(/\bFOCO\b/gi,effective?attributeValue("foco"):Number(attributes.foco??attributes.agi??attributes.pre)||0)
+        .replace(/\bNEXO\b/gi,effective?attributeValue("nexo"):Number(attributes.nexo??attributes.int)||0);
 
 }
 
