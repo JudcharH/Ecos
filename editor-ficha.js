@@ -56,6 +56,8 @@ function loadCharacterCombatMedia(media={}){
     if(offsetY)offsetY.value=Number(media?.offsetY)||0;
     if(flip)flip.checked=Boolean(media?.flip);
 }
+function collectCharacterRestMedia(previous={}){return{...previous,image:document.getElementById("restMediaImage")?.value.trim()||"",scale:Math.max(40,Math.min(200,Number(document.getElementById("restMediaScale")?.value)||100)),flip:Boolean(document.getElementById("restMediaFlip")?.checked)}}
+function loadCharacterRestMedia(media={}){const image=document.getElementById("restMediaImage"),scale=document.getElementById("restMediaScale"),flip=document.getElementById("restMediaFlip");if(image)image.value=media?.image||"";if(scale)scale.value=Number(media?.scale)||100;if(flip)flip.checked=Boolean(media?.flip)}
 
 let linkedCampaignId = null;
 
@@ -1678,6 +1680,11 @@ const selectedSystem =
                 oldCharacter.combatMedia || {}
             ),
 
+        restMedia:
+            collectCharacterRestMedia(
+                oldCharacter.restMedia || {}
+            ),
+
         lifeMode:
             lifeMode?.value ||
             "classic",
@@ -2453,6 +2460,9 @@ characterWoundedPhotoBase64 =
 
 loadCharacterCombatMedia(
     editingCharacter.combatMedia || {}
+);
+loadCharacterRestMedia(
+    editingCharacter.restMedia || {}
 );
 
 

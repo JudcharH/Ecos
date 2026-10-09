@@ -1497,10 +1497,13 @@ const ATTACK_REACTION_ABILITY_IDS = [
 ==========================================================*/
 
 let activeSceneObjectURL="";
+function activeTableSceneMode(){const mode=String(currentTableCampaign?.sceneMode||"combat");return["combat","dialogue","rest"].includes(mode)?mode:"combat"}
+function tableSceneForMode(mode=activeTableSceneMode()){const scenes=currentTableCampaign?.sceneBackgrounds||{};return scenes[mode]||(mode==="combat"?(currentTableCampaign?.scene||currentTableCampaign?.background||""):"")}
+function setTableSceneForMode(mode,value){currentTableCampaign.sceneBackgrounds=currentTableCampaign.sceneBackgrounds||{};currentTableCampaign.sceneBackgrounds[mode]=value;if(mode==="combat")currentTableCampaign.scene=value}
 
 function renderEmptyScene(){
     if(!sceneBackground)return;
-    sceneBackground.innerHTML=`<div class="scene-placeholder"><span>✦</span><strong>Nenhum cenário definido</strong><small>O mestre pode adicionar um mapa ou imagem de cenário.</small></div>`;
+    const mode=activeTableSceneMode(),label=mode==="combat"?"combate":mode==="dialogue"?"diálogo":"descanso";sceneBackground.innerHTML=`<div class="scene-placeholder"><span>✦</span><strong>Nenhum cenário de ${label} definido</strong><small>O mestre pode adicionar uma imagem própria para este modo.</small></div>`;
 }
 
 async function loadScene(){
@@ -1511,10 +1514,7 @@ async function loadScene(){
 
     }
 
-    const scene =
-        currentTableCampaign.scene ||
-        currentTableCampaign.background ||
-        "";
+    const scene=tableSceneForMode();
 
     if(!scene){renderEmptyScene();return;}
 
@@ -3771,7 +3771,7 @@ function openMapPanel(){
 
     openTablePanel(
         "CENÁRIO",
-        "Mapa",
+        `Cenário de ${activeTableSceneMode()==="combat"?"Combate":activeTableSceneMode()==="dialogue"?"Diálogo":"Descanso"}`,
         `
 
         <div class="table-panel-section">
@@ -3783,7 +3783,7 @@ function openMapPanel(){
             <div class="table-panel-card">
 
                 <p>
-                    Troque a imagem exibida no centro da mesa.
+                    Cada tipo de cenário possui sua própria imagem. A troca afeta apenas o modo atual.
                 </p>
 
                 <button
@@ -3855,12 +3855,12 @@ sceneUploadInput?.addEventListener(
 
         }
 
-        const previousScene=currentTableCampaign.scene||"";
+        const mode=activeTableSceneMode(),previousScene=tableSceneForMode(mode);
         try{
-            const image=await tableSceneFileToBlob(file),sceneKey=`${currentTableCampaign.id}:${Date.now()}`;
+            const image=await tableSceneFileToBlob(file),sceneKey=`${currentTableCampaign.id}:${mode}:${Date.now()}`;
             await writeTableSceneBlob(sceneKey,image);
-            currentTableCampaign.scene=`eco-scene:${sceneKey}`;
-            if(saveTableCampaign()===false){currentTableCampaign.scene=previousScene;await deleteTableSceneBlob(sceneKey);throw new Error("Não foi possível salvar a referência da imagem.");}
+            setTableSceneForMode(mode,`eco-scene:${sceneKey}`);
+            if(saveTableCampaign()===false){setTableSceneForMode(mode,previousScene);await deleteTableSceneBlob(sceneKey);throw new Error("Não foi possível salvar a referência da imagem.");}
             if(String(previousScene).startsWith("eco-scene:"))await deleteTableSceneBlob(String(previousScene).slice(10));
             await loadScene();
             closeCurrentPanel();
@@ -3882,8 +3882,8 @@ sceneUploadInput?.addEventListener(
 
 async function removeScene(){
 
-    const previousScene=currentTableCampaign.scene||"";
-    currentTableCampaign.scene = "";
+    const mode=activeTableSceneMode(),previousScene=tableSceneForMode(mode);
+    setTableSceneForMode(mode,"");
 
     saveTableCampaign();
 

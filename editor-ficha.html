@@ -177,6 +177,18 @@ Não salvo
         </div>
     </details>
 
+    <details class="character-media-editor">
+        <summary>Arte do cenário de descanso</summary>
+        <p>Opcional. Esta arte aparece apenas no modo Descanso. Aceita imagem, GIF, WebP animado, WebM ou MP4; se ficar vazia, usa a arte parada ou a foto normal.</p>
+        <div class="character-media-grid">
+            <label>Arte de descanso<input id="restMediaImage" type="url" placeholder="https://.../descanso.webm"></label>
+        </div>
+        <div class="character-media-transform">
+            <label>Escala (%)<input id="restMediaScale" type="number" min="40" max="200" value="100"></label>
+            <label class="media-flip-label"><input id="restMediaFlip" type="checkbox"> Virar horizontalmente</label>
+        </div>
+    </details>
+
 
     <input
         type="file"
