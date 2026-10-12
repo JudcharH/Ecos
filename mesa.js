@@ -1536,9 +1536,10 @@ function pendingCharacterDamageReduction(character){
     const type=pendingDamageApplication?.damageType||pendingDamageApplication?.element||pendingDamageApplication?.type||"impacto";
     const typed=characterDamageReductionFor(character,type),context=currentTableCampaign?.combat?.damageContext;
     const contextMatches=context?.active===true&&context.consumed!==true&&context.targetCharacterId===character.id;
-    if(!contextMatches)return typed;
+    const prepared=Math.max(0,Number(window.ECO_BLOOD_ASSIMILATION_AUTOMATION?.consumePreparedRD?.(character))||0);
+    if(!contextMatches)return typed+prepared;
     const legacyBase=Math.max(0,Number(context.baseRD??character.damageReduction?.total)||0),contextTotal=Math.max(0,Number(context.damageReduction)||0);
-    return typed+Math.max(0,contextTotal-legacyBase);
+    return typed+prepared+Math.max(0,contextTotal-legacyBase);
 }
 window.ECO_CHARACTER_RD={types:CHARACTER_RD_TYPES,normalize:normalizeTableDamageType,ensure:ensureCharacterDamageReduction,effective:characterDamageReductionFor};
 
@@ -10398,6 +10399,9 @@ const reactionAbilityIds =
 
         });
 
+    const bloodApi=window.ECO_BLOOD_ASSIMILATION_AUTOMATION,bloodAssimilations=Array.isArray(character?.assimilations)?character.assimilations:[];
+    if(bloodApi&&bloodAssimilations.some(item=>normalizeEnemyAbilityId(item?.id||item?.name)==="pungencia"))availableAbilities.push({id:"pungencia",name:"Pungência",description:"Reação extra: gaste 1 PA para causar 2d6 de Sangue ao atacante. Depois escolha normalmente Esquivar, Bloquear, Contra-atacar ou Guardar.",activationCost:{type:"pa",value:1},bloodReaction:true});
+
 
     if(!availableAbilities.length){
 
@@ -10565,6 +10569,15 @@ ${
 function selectAttackReactionAbility(
     abilityId
 ){
+
+    if(abilityId==="pungencia"){
+        const character=currentTableCharacter;
+        if(window.ECO_BLOOD_ASSIMILATION_AUTOMATION?.usePungenciaReaction?.(character)){
+            const request=currentTableCampaign.combat?.pendingAttack;
+            if(request)openAttackReactionPanel(request);
+        }
+        return;
+    }
 
     showLocalReactionMessage(
         `A habilidade ${abilityId} será implementada na etapa de habilidades de reação.`
