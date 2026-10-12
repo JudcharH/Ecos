@@ -1501,6 +1501,47 @@ function activeTableSceneMode(){const mode=String(currentTableCampaign?.sceneMod
 function tableSceneForMode(mode=activeTableSceneMode()){const scenes=currentTableCampaign?.sceneBackgrounds||{};return scenes[mode]||(mode==="combat"?(currentTableCampaign?.scene||currentTableCampaign?.background||""):"")}
 function setTableSceneForMode(mode,value){currentTableCampaign.sceneBackgrounds=currentTableCampaign.sceneBackgrounds||{};currentTableCampaign.sceneBackgrounds[mode]=value;if(mode==="combat")currentTableCampaign.scene=value}
 
+const CHARACTER_RD_TYPES=["mundana","balistico","perfuracao","corte","impacto","fogo","sangue","energia","morte","conhecimento","medo"];
+const MUNDANE_DAMAGE_TYPES=new Set(["balistico","perfuracao","corte","impacto"]);
+function normalizeTableDamageType(value){
+    const normalized=String(value||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z]/g,"");
+    if(normalized.includes("bal"))return "balistico";
+    if(normalized.includes("perf"))return "perfuracao";
+    if(normalized.includes("cort"))return "corte";
+    if(normalized.includes("impact"))return "impacto";
+    if(normalized.includes("fogo"))return "fogo";
+    if(normalized.includes("sang"))return "sangue";
+    if(normalized.includes("energ"))return "energia";
+    if(normalized.includes("mort"))return "morte";
+    if(normalized.includes("conhec"))return "conhecimento";
+    if(normalized.includes("medo"))return "medo";
+    return normalized||"impacto";
+}
+function ensureCharacterDamageReduction(character){
+    const rd=character.damageReduction=character.damageReduction&&typeof character.damageReduction==="object"?character.damageReduction:{};
+    rd.byType=rd.byType&&typeof rd.byType==="object"?rd.byType:{};
+    const legacy=Math.max(0,Number(rd.total??rd.base)||0);
+    if(rd.byType.mundana===undefined)rd.byType.mundana=legacy;
+    CHARACTER_RD_TYPES.forEach(type=>rd.byType[type]=Math.max(0,Number(rd.byType[type])||0));
+    if(rd.total===undefined)rd.total=rd.byType.mundana;
+    if(rd.base===undefined)rd.base=rd.byType.mundana;
+    return rd;
+}
+function characterDamageReductionFor(character,damageType){
+    const rd=ensureCharacterDamageReduction(character),type=normalizeTableDamageType(damageType);
+    const mundane=Math.max(0,Number(rd.total??rd.byType.mundana)||0);
+    return Math.max(0,(MUNDANE_DAMAGE_TYPES.has(type)?mundane:0)+(type!=="mundana"?(Number(rd.byType[type])||0):0));
+}
+function pendingCharacterDamageReduction(character){
+    const type=pendingDamageApplication?.damageType||pendingDamageApplication?.element||pendingDamageApplication?.type||"impacto";
+    const typed=characterDamageReductionFor(character,type),context=currentTableCampaign?.combat?.damageContext;
+    const contextMatches=context?.active===true&&context.consumed!==true&&context.targetCharacterId===character.id;
+    if(!contextMatches)return typed;
+    const legacyBase=Math.max(0,Number(context.baseRD??character.damageReduction?.total)||0),contextTotal=Math.max(0,Number(context.damageReduction)||0);
+    return typed+Math.max(0,contextTotal-legacyBase);
+}
+window.ECO_CHARACTER_RD={types:CHARACTER_RD_TYPES,normalize:normalizeTableDamageType,ensure:ensureCharacterDamageReduction,effective:characterDamageReductionFor};
+
 function renderEmptyScene(){
     if(!sceneBackground)return;
     const mode=activeTableSceneMode(),label=mode==="combat"?"combate":mode==="dialogue"?"diálogo":"descanso";sceneBackground.innerHTML=`<div class="scene-placeholder"><span>✦</span><strong>Nenhum cenário de ${label} definido</strong><small>O mestre pode adicionar uma imagem própria para este modo.</small></div>`;
@@ -3776,6 +3817,14 @@ function openMapPanel(){
 
         <div class="table-panel-section">
 
+            <h3 class="table-panel-section-title">Tipo de cenário</h3>
+
+            <div class="hud-scene-switch table-scene-mode-switch">
+                <button type="button" data-map-scene-mode="combat" class="${activeTableSceneMode()==="combat"?"active":""}">Combate</button>
+                <button type="button" data-map-scene-mode="dialogue" class="${activeTableSceneMode()==="dialogue"?"active":""}">Diálogo</button>
+                <button type="button" data-map-scene-mode="rest" class="${activeTableSceneMode()==="rest"?"active":""}">Descanso</button>
+            </div>
+
             <h3 class="table-panel-section-title">
                 Cenário Atual
             </h3>
@@ -3812,6 +3861,17 @@ function openMapPanel(){
 
         `
     );
+
+    document.querySelectorAll("[data-map-scene-mode]").forEach(button=>button.addEventListener("click",async()=>{
+        const mode=button.dataset.mapSceneMode;
+        if(!["combat","dialogue","rest"].includes(mode)||mode===activeTableSceneMode())return;
+        currentTableCampaign.sceneMode=mode;
+        saveTableCampaign();
+        await loadScene();
+        renderCombatPositions();
+        document.dispatchEvent(new CustomEvent("eco:campaign-render"));
+        openMapPanel();
+    }));
 
     document
         .getElementById(
@@ -11876,6 +11936,8 @@ function startDamageTargetSelection(
 
         element:message.element||message.damageElement||null,
 
+        damageType:message.damageType||message.tipoDano||message.element||message.damageElement||"impacto",
+
         isRitual:message.isRitual===true||message.rollKind==="ritual-damage"
 
     };
@@ -12002,7 +12064,7 @@ function applyPendingDamageToTarget(
 
 
     if(lifeMode === "body"){
-        const originalDamage=Math.max(0,Number(pendingDamageApplication.damage)||0),normalRD=Math.max(0,Number(character.damageReduction?.total)||0),context=currentTableCampaign.combat?.damageContext,contextMatches=context?.active===true&&context.targetCharacterId===character.id,damageReduction=contextMatches?Math.max(0,Number(context.damageReduction)||0):normalRD;
+        const originalDamage=Math.max(0,Number(pendingDamageApplication.damage)||0),damageReduction=pendingCharacterDamageReduction(character);
         startBodyDamageDistribution("player",character,originalDamage,damageReduction);
         return;
 
@@ -12143,40 +12205,12 @@ function applyClassicDamageToCharacter(
         );
 
 
-const normalDamageReduction =
-    Math.max(
-        0,
-        Number(
-            character
-                .damageReduction
-                ?.total
-        ) || 0
-    );
+const normalDamageReduction = pendingCharacterDamageReduction(character);
 
+const damageContext=currentTableCampaign?.combat?.damageContext;
+const canUseReactionRD=Boolean(damageContext&&damageContext.active===true&&damageContext.consumed!==true&&damageContext.targetCharacterId===character.id);
 
-const damageContext =
-    currentTableCampaign
-        ?.combat
-        ?.damageContext;
-
-
-const canUseReactionRD =
-    damageContext &&
-    damageContext.active === true &&
-    damageContext.consumed !== true &&
-    damageContext.targetCharacterId ===
-    character.id;
-
-
-const damageReduction =
-    canUseReactionRD
-        ? Math.max(
-            0,
-            Number(
-                damageContext.damageReduction
-            ) || 0
-        )
-        : normalDamageReduction;
+const damageReduction = normalDamageReduction;
 
 
     const reducedDamage =
