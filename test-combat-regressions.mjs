@@ -59,6 +59,7 @@ const diceContext={Math:diceMath};vm.createContext(diceContext);vm.runInContext(
 const minimum=diceContext.rollDiceExpression("(1d12 + 1d8 + 5)");
 assert.equal(minimum.total,7,"1d12 + 1d8 + 5 deve ter resultado mínimo 7");
 assert.equal(minimum.details.length,3,"todos os termos da fórmula devem ser processados");
-assert.match(blood,/ECO_COMBAT_FORMULAS\.addModifier\(character\.id,index,\{id:"assimilacao:ira"/);
+assert.match(blood,/own\.active\?\.ira&&usesLuta\)attack\.roll=/);
+assert.match(blood,/own\.active\?\.ira&&usesLuta\?Number\(own\.iraStacks\)/);
 
 console.log(JSON.stringify({ok:true,criticalDamage:damage[2],temporaryPV:true,pairedLimbs:true,ritualResolution:true},null,2));

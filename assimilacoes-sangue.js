@@ -3,7 +3,7 @@
 "use strict";
 const P=(id,name,cost,type,activationCost,description,extra={})=>({id,name,element:"sangue",permanentCost:{type:"pv",value:cost},activationType:type,activationCost:activationCost?{type:activationCost[0],value:activationCost[1]}:null,active:type==="Passiva",description,...extra});
 window.ECO_BLOOD_ASSIMILATIONS=[
-P("visceral","Visceral",5,"Ativação",["pa",1],"Cria garras e presas monstruosas. Enquanto estiver ativa, ataques desarmados recebem +1 dado de dano."),
+P("visceral","Visceral",5,"Ativação",["pa",1],"Escolha um dos três ataques rápidos. Enquanto estiver ativa, o ataque escolhido recebe +1 dado principal de dano."),
 P("dilaceramento","Dilaceramento",5,"Ativação",["pa",1],"Cria uma espada de sangue coagulado que causa 2d8 + Corpo de dano de Sangue."),
 P("redencao","Redenção",5,"Passiva",null,"Recupera 2d6 PV no início de cada rodada."),
 P("pungencia","Pungência",5,"Reação extra",["pa",1],"Ao sofrer um ataque corpo a corpo, causa 2d6 de Sangue ao atacante. Não substitui sua reação normal. Limite: 1 vez por rodada."),
@@ -25,11 +25,11 @@ P("ganancia","Ganância",4,"Ativação",null,"Uma vez por cena, escolha receber 
 P("instinto","Instinto",4,"Ativação",null,"Quando houver uma ameaça nas posições 1 ou 2, realize um ataque rápido sem gastar PA. Limite: 1 vez por rodada."),
 P("elo","Elo",4,"Ativação",["pa",1],"Escolha dois personagens aliados. Ambos recebem +2 Defesa até o fim da cena. Apenas um Elo pode permanecer ativo por usuário."),
 P("crescimento","Crescimento",4,"Passiva",null,"Após um descanso longo, permite regenerar um membro decepado. No PV clássico, recupera 20 PV adicionais."),
-P("frenesi","Frenesi",4,"Passiva",null,"Ao reduzir uma criatura a 0 PV, recupera 2d8 PV. Limite: 1 vez por rodada."),
-P("sangue-fervente","Sangue Fervente",4,"Passiva",null,"Após sofrer dano, o próximo ataque de Luta realizado até o fim da próxima rodada causa +1 dado principal de dano. Não acumula."),
-P("coagulacao-instantanea","Coagulação Instantânea",4,"Reação",["pa",1],"Ao receber Sangramento, impeça sua aplicação; se já estiver sangrando, remova uma aplicação. Limite: 1 vez por rodada."),
+P("frenesi","Frenesi",4,"Passiva / Ativação",null,"Uma vez por rodada, use o botão para gerar 2d8 de cura e distribuir os PV recuperados."),
+P("sangue-fervente","Sangue Fervente",4,"Passiva / Ativação",null,"Use o botão, escolha um ataque rápido e adicione +1 dado principal somente ao próximo dano desse ataque."),
+P("coagulacao-instantanea","Coagulação Instantânea",4,"Reação",null,"Ao receber Sangramento, impeça sua aplicação; se já estiver sangrando, remova uma aplicação. Não consome PA. Limite: 1 vez por rodada."),
 P("forma-aberrante","Forma Aberrante",5,"Ativação",["pa",1],"Enquanto ativa, recebe +3 em Manobra, +1 dado principal de dano em ataques desarmados e -3 em Discreto."),
-P("mutacao-reativa","Mutação Reativa",4,"Passiva",null,"Ao sofrer dano Cortante, Perfurante ou Impacto, até o próximo turno o dano seguinte do mesmo tipo é reduzido pela metade. Uma ativação por rodada."),
+P("mutacao-reativa","Mutação Reativa",4,"Passiva / Ativação",null,"Prepare a mutação. O próximo dano sofrido é reduzido pela metade."),
 P("hemorragia-voluntaria","Hemorragia Voluntária",4,"Ativação",null,"Antes de um ataque corpo a corpo, perca até Corpo PV. O ataque recebe o dobro como dano de Sangue. Uma vez por rodada e não pode reduzir abaixo de 1 PV."),
 P("sangue-de-guerra","Sangue de Guerra",4,"Passiva",null,"Enquanto Machucado, recebe +3 em Fortitude e ignora penalidades de ataque de Enfraquecido e Cansado."),
 P("surto-hematico","Surto Hemático",4,"Passiva",null,"Na primeira vez por cena que ficar Machucado, recebe 2 PA temporários até o fim da próxima rodada.")
