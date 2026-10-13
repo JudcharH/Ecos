@@ -10306,6 +10306,17 @@ function openAttackReactionPanel(
 
 </button>
 
+<button
+    type="button"
+    class="attack-reaction-button"
+    data-reaction="assimilation">
+
+    <strong>Assimilação</strong>
+
+    <span>Usar uma Assimilação de reação</span>
+
+</button>
+
 
                 <button
                     type="button"
@@ -10347,6 +10358,14 @@ function openAttackReactionPanel(
 if(reaction === "ability"){
 
     openAttackReactionAbilityPanel();
+
+    return;
+
+}
+
+if(reaction === "assimilation"){
+
+    openAttackReactionAssimilationPanel();
 
     return;
 
@@ -10401,10 +10420,6 @@ const reactionAbilityIds =
             );
 
         });
-
-    const bloodApi=window.ECO_BLOOD_ASSIMILATION_AUTOMATION,bloodAssimilations=Array.isArray(character?.assimilations)?character.assimilations:[];
-    if(bloodApi&&bloodAssimilations.some(item=>normalizeEnemyAbilityId(typeof item==="string"?item:item?.id||item?.name)==="pungencia"))availableAbilities.push({id:"pungencia",name:"Pungência",description:"Reação extra: gaste 1 PA para causar 2d6 de Sangue ao atacante. Depois escolha normalmente Esquivar, Bloquear, Contra-atacar ou Guardar.",activationCost:{type:"pa",value:1},bloodReaction:true});
-
 
     if(!availableAbilities.length){
 
@@ -10569,18 +10584,101 @@ ${
 
 }
 
+function openAttackReactionAssimilationPanel(){
+
+    refreshCurrentTableCharacter();
+
+    const character = currentTableCharacter;
+    const assimilations = Array.isArray(character?.assimilations)
+        ? character.assimilations
+        : [];
+    const hasPungencia = assimilations.some(item =>
+        normalizeEnemyAbilityId(
+            typeof item === "string"
+                ? item
+                : item?.id || item?.name
+        ) === "pungencia"
+    );
+    const pa = Math.max(
+        0,
+        Number(character?.status?.paAtual) || 0
+    );
+
+    openTablePanel(
+        "REAÇÃO",
+        "Assimilações",
+        `
+            <div class="table-panel-list">
+                ${
+                    hasPungencia
+                        ? `
+                            <button
+                                type="button"
+                                class="table-panel-card reaction-assimilation-choice"
+                                data-assimilation-id="pungencia"
+                                ${pa < 1 ? "disabled" : ""}>
+                                <h3>Pungência</h3>
+                                <p>
+                                    Gaste 1 PA para causar 2d6 de Sangue ao atacante.
+                                    Depois escolha sua reação normal.
+                                </p>
+                                <span class="reaction-ability-cost">1 PA</span>
+                            </button>
+                        `
+                        : `
+                            <div class="editor-empty-state">
+                                <p>Nenhuma Assimilação de reação disponível.</p>
+                            </div>
+                        `
+                }
+            </div>
+            <button
+                type="button"
+                id="returnToAttackReaction"
+                class="secondary-button full-button">
+                Voltar
+            </button>
+        `
+    );
+
+    document
+        .querySelector(".reaction-assimilation-choice")
+        ?.addEventListener("click", () => {
+
+            if(
+                window.ECO_BLOOD_ASSIMILATION_AUTOMATION
+                    ?.usePungenciaReaction?.(character)
+            ){
+
+                const request =
+                    currentTableCampaign.combat?.pendingAttack;
+
+                if(request){
+                    openAttackReactionPanel(request);
+                }
+
+            }
+
+        });
+
+    document
+        .getElementById("returnToAttackReaction")
+        ?.addEventListener("click", () => {
+
+            const request =
+                currentTableCampaign.combat?.pendingAttack;
+
+            if(request){
+                openAttackReactionPanel(request);
+            }
+
+        });
+
+}
+
 function selectAttackReactionAbility(
     abilityId
 ){
-
-    if(abilityId==="pungencia"){
-        const character=currentTableCharacter;
-        if(window.ECO_BLOOD_ASSIMILATION_AUTOMATION?.usePungenciaReaction?.(character)){
-            const request=currentTableCampaign.combat?.pendingAttack;
-            if(request)openAttackReactionPanel(request);
-        }
-        return;
-    }
 
     showLocalReactionMessage(
         `A habilidade ${abilityId} será implementada na etapa de habilidades de reação.`
