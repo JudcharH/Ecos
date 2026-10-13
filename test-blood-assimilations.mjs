@@ -22,6 +22,7 @@ assert.match(engine,/effectiveAttribute:attr/);
 assert.match(engine,/function skillBonusValue\(character,skillName,consume=false\)/);
 assert.match(engine,/peekSkillBonus:/);
 assert.match(engine,/previewAttackFormula/);
+assert.match(engine,/attackModifierSummary/);
 assert.match(engine,/processPendingHealing:deliverPendingHealing/);
 assert.match(engine,/Hematopoiese de/);
 assert.match(read("mesa.js"),/preparedDamageReduction/);

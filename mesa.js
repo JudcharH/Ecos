@@ -3171,7 +3171,11 @@ function addCombatFormulaModifier(characterId,index,modifier){
     const normalized={...modifier,id:String(modifier?.id||modifier?.source||`modifier_${Date.now()}`),createdAt:Date.now()};slot.modifiers=(slot.modifiers||[]).filter(item=>item.id!==normalized.id);slot.modifiers.push(normalized);saveTableCampaign();return true;
 }
 function removeCombatFormulaModifier(characterId,index,id){const slot=combatFormulaBridge()?.[String(characterId)]?.[Number(index)];if(!slot)return false;slot.modifiers=(slot.modifiers||[]).filter(item=>item.id!==String(id));saveTableCampaign();return true}
-window.ECO_COMBAT_FORMULAS={sync:syncCombatFormulaSlot,resolve:resolveCombatFormula,addModifier:addCombatFormulaModifier,removeModifier:removeCombatFormulaModifier,state:combatFormulaBridge};
+function previewCombatFormulaModifiers(character,index,kind){
+    const attack=characterAttackEntries(character)[Number(index)]||{},slot=syncCombatFormulaSlot(character,Number(index),attack);if(!slot)return{dice:0,bonus:0,formulas:[]};
+    return activeCombatFormulaModifiers(slot,kind).reduce((summary,modifier)=>{summary.dice+=Math.max(0,Number(modifier.extraDice)||0);summary.bonus+=Number(modifier.flat)||0;if(modifier.formula)summary.formulas.push(String(modifier.formula));return summary},{dice:0,bonus:0,formulas:[]});
+}
+window.ECO_COMBAT_FORMULAS={sync:syncCombatFormulaSlot,resolve:resolveCombatFormula,previewModifiers:previewCombatFormulaModifiers,addModifier:addCombatFormulaModifier,removeModifier:removeCombatFormulaModifier,state:combatFormulaBridge};
 function rollQuickAttack(
     index,
     type
