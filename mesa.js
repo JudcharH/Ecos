@@ -3197,6 +3197,17 @@ function stepQuickDamageDie(formula,steps=1){
     const order=[4,6,8,10,12];
     return String(formula||"").replace(/(\d*)d(\d+)/i,(match,count,sides)=>{const index=order.indexOf(Number(sides));if(index<0)return match;return`${count||1}d${order[Math.min(order.length-1,index+Math.max(0,Number(steps)||0))]}`;});
 }
+function applyPreparedAbilityFormula(character,index,kind,formula){
+    const state=currentTableCampaign?.combat?.abilityState,prepared=state?.nextAttack;
+    if(!prepared||!character)return{formula:String(formula||""),consumed:false};
+    if(prepared.characterId&&String(prepared.characterId)!==String(character.id))return{formula:String(formula||""),consumed:false};
+    if(prepared.attackIndex!=null&&Number(prepared.attackIndex)!==Number(index))return{formula:String(formula||""),consumed:false};
+    const field=kind==="damage"?"damageBonus":"attackBonus",usedField=kind==="damage"?"damageConsumed":"attackConsumed",bonus=Number(prepared[field])||0;
+    if(!bonus||prepared[usedField])return{formula:String(formula||""),consumed:false};
+    prepared[usedField]=true;
+    if((!Number(prepared.attackBonus)||prepared.attackConsumed)&&(!Number(prepared.damageBonus)||prepared.damageConsumed))delete state.nextAttack;
+    return{formula:`(${String(formula||"0")}) ${bonus>=0?"+":"-"} ${Math.abs(bonus)}`,consumed:true,source:prepared.source||"habilidade",bonus};
+}
 window.ECO_COMBAT_FORMULAS={sync:syncCombatFormulaSlot,resolve:resolveCombatFormula,previewModifiers:previewCombatFormulaModifiers,addModifier:addCombatFormulaModifier,removeModifier:removeCombatFormulaModifier,state:combatFormulaBridge};
 function rollQuickAttack(
     index,
@@ -3260,6 +3271,8 @@ function rollQuickAttack(
 
     const bridgeKind=isHealing?"healing":type==="damage"?"damage":"attack";
     formula=resolveCombatFormula(currentTableCharacter,index,bridgeKind,formula);
+    const preparedAbility=(!isHealing&&!isHealingTest&&(type==="attack"||type==="damage"))?applyPreparedAbilityFormula(currentTableCharacter,index,type,formula):{formula};
+    formula=preparedAbility.formula;
     const formulaBridgeSnapshot=combatFormulaBridge()?.[String(currentTableCharacter.id)]?.[Number(index)]?.resolved?.[bridgeKind]||null;
 
 
@@ -3299,9 +3312,12 @@ function rollQuickAttack(
     }
 
     let playerCritical=false;
+    const ricocheteState=currentTableCampaign?.combat?.abilityState?.ricochete;
+    const ricocheteActive=type==="attack"&&ricocheteState?.active&&String(ricocheteState.characterId)===String(currentTableCharacter.id)&&Number(ricocheteState.attackIndex)===Number(index);
     if(type==="attack" || isHealingTest){
         const mainRoll=Number(result.details?.find(part=>part.type==="dice")?.rolls?.[0])||0;
-        playerCritical=mainRoll>=Math.max(2,Number(attack.criticalOn)||12);
+        const threshold=typeof window.ECO_PLAYER_CRITICAL_THRESHOLD==="function"?window.ECO_PLAYER_CRITICAL_THRESHOLD(currentTableCharacter,attack):Math.max(2,12-Math.max(0,Number(attack.criticalMargin)||0));
+        playerCritical=mainRoll>=threshold;
     }
 
 
@@ -3368,11 +3384,18 @@ addRollChatMessage(
 
         formulaBridge:formulaBridgeSnapshot,
 
+        preparedAbility:preparedAbility.consumed?{source:preparedAbility.source,bonus:preparedAbility.bonus}:null,
+
+        desprevenido:ricocheteActive,
+
         applied:
             false
     }
 
 );
+
+    if(ricocheteActive)delete currentTableCampaign.combat.abilityState.ricochete;
+    if(preparedAbility.consumed||ricocheteActive)saveTableCampaign();
 
 }
 
@@ -4538,10 +4561,8 @@ function triggerPlayerAttackOpportunities(enemy,fromPosition,toPosition){
         const abilities=[character.abilities,character.acquiredAbilities,character.habilidades,character.systemData?.abilities].find(Array.isArray)||[],hasOpportunity=abilities.some(item=>normalizeEnemyAbilityId(typeof item==="string"?item:item?.id||item?.abilityId||item?.name)==="ataque-de-oportunidade"),hasCacada=abilities.some(item=>normalizeEnemyAbilityId(typeof item==="string"?item:item?.id||item?.abilityId||item?.name)==="cacada"),prepared=abilityState.attackOpportunity;
         const attacks=getCharacterReadyAttacks(character)||[],eligible=attacks.map((attack,index)=>({attack,index,positions:Array.isArray(attack.targetPositions)&&attack.targetPositions.length?attack.targetPositions.map(Number):(String(attack.skill||attack.skillName||"").toLowerCase()==="pontaria"?[1,2,3,4,5,6]:[1,2])})).filter(item=>item.positions.includes(fromPosition)&&!item.positions.includes(toPosition));
         if(hasCacada&&eligible.length){abilityState.cacadaTargets=abilityState.cacadaTargets||{};abilityState.cacadaTargets[String(enemy.enemyId||enemy.id)]={characterId:character.id,enemyId:enemy.enemyId||enemy.id,round,active:true,createdAt:Date.now()};addSystemChatMessage(`${character.name} marcou ${enemy.name||"a ameaça"} com Caçada. O próximo dano causado por ele também aplicará Vulnerável.`);}
-        if(!hasOpportunity||!prepared?.active||String(prepared.characterId)!==String(character.id)||triggers[character.id]?.usedAt&&Number(triggers[character.id].round)===round)return;
-        const preparedIndex=Number(prepared.attackIndex),preparedEligible=eligible.some(item=>Number(item.index)===preparedIndex);
-        if(!preparedEligible)return;
-        triggers[character.id]={active:true,characterId:character.id,enemyId:enemy.enemyId||enemy.id,enemyName:enemy.name||"Ameaça",fromPosition,toPosition,attackIndexes:[preparedIndex],round,createdAt:Date.now()};
+        if(!hasOpportunity||!eligible.length||triggers[character.id]?.usedAt&&Number(triggers[character.id].round)===round)return;
+        triggers[character.id]={active:true,characterId:character.id,enemyId:enemy.enemyId||enemy.id,enemyName:enemy.name||"Ameaça",fromPosition,toPosition,attackIndexes:eligible.map(item=>item.index),round,createdAt:Date.now()};
         currentTableCampaign.actionNotification={id:`opportunity_${Date.now()}_${Math.random().toString(36).slice(2,7)}`,kind:"Reação",icon:"↯",title:`Ataque de Oportunidade disponível para ${character.name}`,detail:`${enemy.name||"A ameaça"} saiu da posição ${fromPosition}. O ataque considera o alvo Desprevenido.`,createdAt:Date.now()};
     });
 }
@@ -9718,9 +9739,9 @@ function startAttackTargetSelection(
             ? message.targetPositions.map(Number)
             : [1,2,3,4,5,6]
 
-        ,forcedTargetEnemyId:message.opportunityTargetEnemyId||null
+        ,forcedTargetEnemyId:message.opportunityTargetEnemyId||message.forcedTargetEnemyId||null
 
-        ,desprevenido:message.opportunityDesprevenido===true
+        ,desprevenido:message.opportunityDesprevenido===true||message.desprevenido===true
 
     };
 
@@ -9898,6 +9919,12 @@ function applyPendingAttackToTarget(
     }
 
     if(type==="enemy"){
+        const advanced=currentTableCampaign?.combat?.advancedAbilities,rompedor=advanced?.rompedorTarget;
+        if(rompedor?.active&&String(rompedor.characterId)===String(pendingAttackApplication.attackerCharacterId)&&String(rompedor.enemyId)===String(entity?.enemyId||entity?.id)){
+            pendingAttackApplication.noBlock=true;
+            const message=(currentTableCampaign.chatMessages||[]).find(item=>item.id===pendingAttackApplication.messageId);if(message)message.noBlock=true;
+            delete advanced.rompedorTarget;saveTableCampaign();
+        }
         resolveAttackAgainstEnemy(entity);
         return;
     }
@@ -9931,6 +9958,13 @@ function applyPendingAttackToTarget(
 
         return;
 
+    }
+
+    if(pendingAttackApplication.attackerEnemyId){
+        const lock=currentTableCampaign?.combat?.abilityState?.caiDentro?.[String(pendingAttackApplication.attackerEnemyId)],round=Math.max(0,Number(currentTableCampaign?.combat?.round)||0);
+        if(lock?.active&&Number(lock.round)===round&&String(lock.characterId)!==String(targetCharacter.id)){
+            addLocalAttackNotice(`${pendingAttackApplication.attackerName||"A ameaça"} está sob Cai Dentro e só pode atacar ${lock.characterName||"o personagem que a desafiou"} nesta rodada.`);return;
+        }
     }
 
     if(pendingAttackApplication.attackerEnemyId&&!pendingAttackApplication.protectedCostPaid){
@@ -9989,7 +10023,7 @@ function resolveAttackAgainstEnemy(enemy){
     if(enemyHasAbility(enemy,"espinhoso")&&pendingAttackApplication.attackerCharacterId){const attacker=getLiveCharacter(pendingAttackApplication.attackerCharacterId);if(attacker)damageCharacterFromAbility(attacker,Math.max(0,Number(enemy.corpo)||0),`Espinhoso de ${enemy.name||"Ameaça"}`);}
     if(enemyHasAbility(enemy,"toque-da-morte")&&normalizeEnemyAbilityId(pendingAttackApplication.attackSkill)==="luta"&&pendingAttackApplication.attackerCharacterId){const attacker=getLiveCharacter(pendingAttackApplication.attackerCharacterId);if(attacker){attacker.age=(Number(attacker.age)||0)+3;saveDamagedCharacter(attacker);addSystemChatMessage(`${attacker.name||"O atacante"} envelheceu 3 anos ao atacar ${enemy.name||"a ameaça"} com Luta.`);}}
     currentTableCampaign.combat=currentTableCampaign.combat||{};
-    currentTableCampaign.combat.pendingEnemyAttack={id:`enemy_attack_${Date.now()}_${Math.random().toString(36).slice(2,8)}`,active:true,resolved:false,messageId:pendingAttackApplication.messageId,attackName:pendingAttackApplication.attackName,attackResult:Math.max(0,Number(pendingAttackApplication.attackResult)||0),attackerCharacterId:pendingAttackApplication.attackerCharacterId||null,attackerName:pendingAttackApplication.attackerName||"Atacante",targetEnemyId:enemy.enemyId||enemy.id,targetName:enemy.name||"Ameaça",desprevenido:pendingAttackApplication.desprevenido===true,createdAt:Date.now()};
+    currentTableCampaign.combat.pendingEnemyAttack={id:`enemy_attack_${Date.now()}_${Math.random().toString(36).slice(2,8)}`,active:true,resolved:false,messageId:pendingAttackApplication.messageId,attackName:pendingAttackApplication.attackName,attackResult:Math.max(0,Number(pendingAttackApplication.attackResult)||0),attackerCharacterId:pendingAttackApplication.attackerCharacterId||null,attackerName:pendingAttackApplication.attackerName||"Atacante",targetEnemyId:enemy.enemyId||enemy.id,targetName:enemy.name||"Ameaça",desprevenido:pendingAttackApplication.desprevenido===true,noBlock:pendingAttackApplication.noBlock===true,createdAt:Date.now()};
     saveTableCampaign();cancelAttackTargetSelection();addSystemChatMessage(`${pendingAttackApplication?.attackerName||"O atacante"} atacou ${enemy.name||"a ameaça"}. Aguardando reação da criatura.`);checkPendingEnemyAttackReaction();
 }
 
@@ -10002,6 +10036,7 @@ function checkPendingEnemyAttackReaction(){
     if(request.desprevenido===true){answerEnemyAttackReaction("surprised");return;}
     const pa=Math.max(0,Number(enemy.status?.paAtual??enemy.paAtual??enemy.pa)||0),state=enemyAbilityState(enemy),majorReady=state.esquivaMaiorArmed&&enemyHasAbility(enemy,"esquiva-maior");
     openTablePanel("REAÇÃO",enemy.name||"Ameaça",`<div class="table-panel-card"><h3>${escapeTableHTML(request.attackerName||"Atacante")} atacou</h3><p>Ataque: <strong>${Number(request.attackResult)||0}</strong></p><p>Defesa: <strong>${Number(enemy.defense)||0}</strong> • RD: <strong>${Number(enemy.rd)||0}</strong> • PA: <strong>${pa}</strong></p>${majorReady?'<p><strong>Esquiva Maior preparada:</strong> ao escolher Esquivar, a RD do próximo dano será dobrada.</p>':""}</div><div class="attack-reaction-grid"><button type="button" class="attack-reaction-button enemy-reaction-choice" data-reaction="dodge" ${pa<1?"disabled":""}><strong>Esquivar</strong><span>1 PA • Presteza na Defesa</span></button><button type="button" class="attack-reaction-button enemy-reaction-choice" data-reaction="block" ${pa<1?"disabled":""}><strong>Bloquear</strong><span>1 PA • RD + Corpo</span></button><button type="button" class="attack-reaction-button enemy-reaction-choice" data-reaction="counter" ${pa<1?"disabled":""}><strong>Contra-atacar</strong><span>1 PA • ataca se o golpe errar</span></button><button type="button" class="attack-reaction-button enemy-reaction-choice" data-reaction="guard"><strong>Guardar</strong><span>Sem custo</span></button></div>`);
+    if(request.noBlock){const block=document.querySelector('.enemy-reaction-choice[data-reaction="block"]');if(block){block.disabled=true;const label=block.querySelector("span");if(label)label.textContent="Indisponível por Rompedor de Defesas";}}
     document.querySelectorAll(".enemy-reaction-choice").forEach(button=>button.addEventListener("click",()=>answerEnemyAttackReaction(button.dataset.reaction)));
 }
 
@@ -10029,6 +10064,7 @@ function answerEnemyAttackReaction(reactionType){
     if(request.desprevenido===true)enemy.conditions=(enemy.conditions||[]).filter(condition=>!(normalizeEnemyAbilityId(typeof condition==="string"?condition:condition.id||condition.name)==="desprevenido"&&condition.source==="ataque-de-oportunidade"));
     saveTableCampaign();closeCurrentPanel();renderPublicChat();if(dodgeResult)addRollChatMessage(`Esquiva • ${enemy.name}`,dodgeResult.formula||"Presteza",dodgeResult.total,enemyRollDetail(dodgeResult));addSystemChatMessage(`${enemy.name} escolheu ${majorTriggered?"Esquiva Maior":reactionName}. Ataque ${Number(request.attackResult)||0} contra Defesa ${finalDefense}: ${hit?"acertou":"errou"}.${hit?` RD para o próximo dano: ${reactionRD}.`:""}`);
     if(reactionType==="counter"&&!hit)rollEnemySkill(enemy,"Luta",{label:`Contra-ataque • ${enemy.name}`,rollKind:"attack",attackName:"Contra-ataque",enemyInstanceId:enemy.enemyId||enemy.id,attackVariant:"counter",applied:false});
+    setTimeout(()=>window.ECO_CONTINUE_WIDE_ATTACK?.(),0);
 }
 
 /*==========================================================

@@ -6,6 +6,7 @@
 
     const REACTION_IDS = [
         "desvio-absoluto",
+        "pele-dura",
         "revidar",
         "devolver-ataque"
     ];
@@ -18,6 +19,7 @@
 
     const DEFAULT_COSTS = {
         "desvio-absoluto": { resource:"pa", amount:2 },
+        "pele-dura": { resource:"pa", amount:1 },
         "revidar": { resource:"pa", amount:1 },
         "devolver-ataque": { resource:"pa", amount:1 },
         "postura-defensiva": { resource:"pa", amount:1 },
@@ -1080,6 +1082,15 @@
                 title:`${character.name} utilizou ${abilityName(ability)}`,
                 detail:"O ataque errou automaticamente."
             });
+            return;
+        }
+
+        if(normalizedId === "pele-dura"){
+            const round=Math.max(0,Number(currentTableCampaign.combat?.round)||0),uses=currentTableCampaign.combat.reactionAbilityUses||(currentTableCampaign.combat.reactionAbilityUses={}),key=`pele-dura:${character.id}:${round}`;
+            if(uses[key]){character.status=character.status||{};character.status.paAtual=Math.max(0,Number(character.status.paAtual)||0)+cost;saveDamagedCharacter(character);addSystemChatMessage("Pele Dura já foi utilizada nesta rodada.");return;}
+            uses[key]=Date.now();
+            finishOriginalAttack(request,character,{abilityId:normalizedId,abilityName:abilityName(ability),paCost:cost,damageMultiplier:0.5});
+            publishNotice({kind:"Reação",icon:"🛡",title:`${character.name} utilizou ${abilityName(ability)}`,detail:"O dano deste ataque será reduzido pela metade."});
             return;
         }
 

@@ -35,7 +35,6 @@ const REACTION_IDS=new Set([
     "ataque-de-oportunidade",
     "revidar",
     "devolver-ataque",
-    "cai-dentro",
     "inspirar-confianca",
     "brecha-na-guarda",
     "desvio-absoluto"
@@ -244,7 +243,9 @@ function chooseAbilityHealingTarget(title,onChoose){
 }
 function generalAbilitySkillBonus(character,skillName){
     const id=slug(skillName),entry=currentTableCampaign?.combat?.abilityState?.skillBonuses?.[character?.id]?.[id],round=roundNumber();
-    return entry&&Number(entry.expiresRound)>=round?Number(entry.bonus)||0:0;
+    let bonus=entry&&Number(entry.expiresRound)>=round?Number(entry.bonus)||0:0;
+    if(id==="fortitude"&&hasAbility(character,"corpo-treinado"))bonus+=3;
+    return bonus;
 }
 window.ECO_GENERAL_ABILITY_SKILL_BONUS=generalAbilitySkillBonus;
 
@@ -298,12 +299,10 @@ function useAbilityV2(id){
     if(!ability) return;
     if(id==="ataque-especial"){openAttackSpecial(ability);return;}
     if(id==="tecnica-secreta"){
-        if(!spend(character,"pm",4)) return;
         chooseAttack("Ataque Giratório",(attack,index)=>{
-            combatState().wideAttack={active:true,characterId:character.id,attackIndex:index,attackName:attack.name||"Ataque",createdAt:Date.now()};
-            saveTableCampaign();
-            notify(`${character.name} preparou Ataque Giratório`,`O próximo ataque corpo a corpo poderá atingir um alvo adicional.`,"🌀");
-            closeCurrentPanel();
+            const enemies=currentTableCampaign.enemies||[];
+            openTablePanel("HABILIDADE","Ataque Giratório — dois alvos",`<div class="table-panel-list">${enemies.map(enemy=>`<label class="table-panel-card"><input type="checkbox" name="wideAttackTarget" value="${escapeTableHTML(enemy.enemyId||enemy.id)}"><h3>${escapeTableHTML(enemy.name||"Ameaça")}</h3><p>Posição ${enemy.position||"—"}</p></label>`).join("")}</div><button id="confirmWideAttack" class="primary-button full-button">Atacar os dois alvos</button>`);
+            document.getElementById("confirmWideAttack")?.addEventListener("click",()=>{const targets=[...document.querySelectorAll('input[name="wideAttackTarget"]:checked')].map(input=>input.value);if(targets.length!==2){addSystemChatMessage("Escolha exatamente dois alvos para Ataque Giratório.");return}if(!spend(character,"pm",4))return;combatState().wideAttack={active:true,characterId:character.id,attackIndex:index,attackName:attack.name||"Ataque",targets,remaining:[...targets],createdAt:Date.now()};saveTableCampaign();notify(`${character.name} utilizou Ataque Giratório`,`Cada alvo poderá escolher sua própria reação.`,"🌀");closeCurrentPanel();window.ECO_CONTINUE_WIDE_ATTACK?.();});
         });
         return;
     }
@@ -350,6 +349,16 @@ function useAbilityV2(id){
     if(id==="movimento-fantasma"){
         if(!spend(character,"pm",3))return;const state=combatState();state.skillBonuses=state.skillBonuses||{};state.skillBonuses[character.id]=state.skillBonuses[character.id]||{};state.skillBonuses[character.id].discreto={bonus:5,source:"Movimento Fantasma",expiresRound:roundNumber()};saveTableCampaign();notify(`${character.name} utilizou Movimento Fantasma`,`+5 em Discreto até o fim da rodada e não provoca Ataques de Oportunidade.`,"👻");openAbilitiesV2();return;
     }
+    if(id==="cai-dentro"){
+        const enemies=currentTableCampaign.enemies||[];
+        openTablePanel("HABILIDADE","Cai Dentro",`<div class="table-panel-list">${enemies.map(enemy=>`<button type="button" class="table-panel-card cai-dentro-target" data-id="${escapeTableHTML(enemy.enemyId||enemy.id)}"><h3>${escapeTableHTML(enemy.name||"Ameaça")}</h3><p>Na rodada atual, só poderá atacar ${escapeTableHTML(character.name||"você")}.</p></button>`).join("")||"<p>Nenhuma ameaça disponível.</p>"}</div>`);
+        document.querySelectorAll(".cai-dentro-target").forEach(button=>button.onclick=()=>{const enemy=enemies.find(item=>String(item.enemyId||item.id)===String(button.dataset.id));if(!enemy||!spend(character,"pa",1))return;const state=combatState();state.caiDentro=state.caiDentro||{};state.caiDentro[String(enemy.enemyId||enemy.id)]={characterId:character.id,characterName:character.name,round:roundNumber(),active:true};saveTableCampaign();notify(`${character.name} utilizou Cai Dentro`,`${enemy.name||"A ameaça"} só pode atacar ${character.name} nesta rodada.`,"🎯");closeCurrentPanel();});
+        return;
+    }
+    if(id==="ricochete"){
+        chooseAttack("Ricochete — escolha o disparo",(attack,index)=>{if(!spend(character,"pa",1))return;combatState().ricochete={active:true,characterId:character.id,attackIndex:index,createdAt:Date.now()};saveTableCampaign();notify(`${character.name} preparou Ricochete`,`${attack.name||"O próximo disparo"} deixará o alvo Desprevenido durante esse ataque.`,"↗");closeCurrentPanel();});
+        return;
+    }
     const cost=parseCost(ability);
     if(cost.amount&&!spend(character,cost.resource,cost.amount)) return;
     notify(`${character.name} utilizou ${abilityName(ability)}`,cost.amount?`Custo: ${cost.amount} ${cost.resource.toUpperCase()}.`:"Sem custo.");
@@ -369,12 +378,17 @@ function attackEntry(character,message){
     return list[Number(message?.attackIndex)]||list.find(a=>a.name===message?.attackName)||null;
 }
 function criticalThreshold(character,entry){
-    let threshold=Math.max(2,Number(entry?.criticalOn)||12);
+    const direct=Number(entry?.criticalOn),baseMargin=Math.max(0,Number(entry?.criticalMargin)||0);
+    let threshold=Number.isFinite(direct)&&direct>=2&&direct<=12?direct:Math.max(2,12-baseMargin);
+    const skill=slug(entry?.skill||entry?.skillName||"Luta");
+    if(skill==="luta"&&hasAbility(character,"especialista-em-criticos"))threshold=Math.max(2,threshold-1);
     const state=currentTableCampaign?.combat?.abilityState||{};
     const temporary=state.temporaryCriticalMargin;
     if(temporary?.active&&temporary.characterId===character?.id) threshold=Math.max(2,threshold-Number(temporary.amount||0));
     return threshold;
 }
+window.ECO_PLAYER_CRITICAL_THRESHOLD=criticalThreshold;
+window.ECO_CONTINUE_WIDE_ATTACK=function(){refreshCurrentTableCampaign();refreshCurrentTableCharacter();const wide=combatState().wideAttack;if(!wide?.active||String(wide.characterId)!==String(currentTableCharacter?.id)||currentTableCampaign.combat?.pendingEnemyAttack?.active)return;const enemyId=wide.remaining?.shift();if(!enemyId){delete combatState().wideAttack;saveTableCampaign();return}const enemy=(currentTableCampaign.enemies||[]).find(item=>String(item.enemyId||item.id)===String(enemyId));if(!enemy){saveTableCampaign();return window.ECO_CONTINUE_WIDE_ATTACK()}rollQuickAttack(Number(wide.attackIndex),"attack");refreshCurrentTableCampaign();const message=[...(currentTableCampaign.chatMessages||[])].reverse().find(item=>item.type==="roll"&&item.rollKind==="attack"&&item.applied!==true&&Number(item.attackIndex)===Number(wide.attackIndex));if(message){message.forcedTargetEnemyId=enemyId;message.skipPACost=true;saveTableCampaign();startAttackTargetSelection(message.id);applyPendingAttackToTarget("enemy",enemy)}if(!wide.remaining.length)wide.active=false;saveTableCampaign();};
 function applyCriticalToLatestRoll(){
     refreshCurrentTableCampaign();refreshCurrentTableCharacter();
     const messages=currentTableCampaign?.chatMessages||[];

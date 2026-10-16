@@ -277,7 +277,7 @@ function patchRollBonuses(){
 
         if(nextMeta.rollKind==="attack"){
             const prepared=state.nextAttack;
-            if(prepared&&(!prepared.characterId||prepared.characterId===characterId)&&(prepared.attackIndex==null||Number(prepared.attackIndex)===Number(nextMeta.attackIndex))){
+            if(prepared&&!prepared.attackConsumed&&(!prepared.characterId||prepared.characterId===characterId)&&(prepared.attackIndex==null||Number(prepared.attackIndex)===Number(nextMeta.attackIndex))){
                 const bonus=Math.max(0,Number(prepared.attackBonus)||0);
                 if(bonus){
                     nextTotal+=bonus;

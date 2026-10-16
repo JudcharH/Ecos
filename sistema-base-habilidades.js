@@ -14,7 +14,7 @@ const DISCARDED_ABILITY_IDS=new Set([
     "ultima-barreira","ancorado-corporal","dominio-de-terreno","inspirar-confianca",
     "ordem-de-ataque","ordem-de-reacao","nos-olhos-do-monstro","canalizacao-profunda",
     "eco-ritualistico","convergencia-elemental","reciclar-energia","coracao-resistente",
-    "socorro-urgente","reflexo-instantaneo","passo-lateral","avanco-coordenado",
+    "socorro-urgente","reflexo-instantaneo","parede-humana","passo-lateral","avanco-coordenado",
     "retirada-estrategica","salto-impulsivo"
 ]);
 
@@ -29,6 +29,7 @@ const ABILITY_REVISIONS={
     "resistente":{description:"Passiva. Enquanto possuir esta habilidade, recebe automaticamente RD 3 contra todos os tipos de dano."},
     "casca-grossa":{description:"Passiva. No sistema clássico, recebe +12 PV máximos. No sistema de membros, cada membro recebe +2 PV máximos."},
     "corpo-treinado":{description:"Passiva. Recebe +3 em testes de Fortitude."},
+    "cai-dentro":{description:"Ativação. Gaste 1 PA e escolha uma ameaça. Nesta rodada, ela só pode escolher você como alvo de ataques.",abilityType:"active",useCost:{type:"pa",value:1}},
     "esquiva-aprimorada":{description:"Passiva. Recebe +2 em testes de Presteza."},
     "guarda-alta":{description:"Passiva. Enquanto não realizar ataques, recebe +4 Defesa. Este efeito não concede RD."},
     "inquebravel":{description:"Enquanto estiver Machucado, recebe +2 Defesa e RD 4."},
