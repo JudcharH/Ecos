@@ -14,7 +14,8 @@ const DISCARDED_ABILITY_IDS=new Set([
     "ultima-barreira","ancorado-corporal","dominio-de-terreno","inspirar-confianca",
     "ordem-de-ataque","ordem-de-reacao","nos-olhos-do-monstro","canalizacao-profunda",
     "eco-ritualistico","convergencia-elemental","reciclar-energia","coracao-resistente",
-    "socorro-urgente"
+    "socorro-urgente","reflexo-instantaneo","passo-lateral","avanco-coordenado",
+    "retirada-estrategica","salto-impulsivo"
 ]);
 
 const ABILITY_REVISIONS={
