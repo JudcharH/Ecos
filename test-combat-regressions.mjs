@@ -40,6 +40,8 @@ assert.match(grimoire,/rollResistance\(target,r\.action,rit\.resistanceDT\)/);
 assert.match(grimoire,/applyRitualValue\(target,value,healing,r\)/);
 const tableCore=fs.readFileSync("mesa.js","utf8");
 const cinematic=fs.readFileSync("mesa-cinematica.js","utf8");
+assert.match(tableCore,/source:"ataque-de-oportunidade",temporary:true/);
+assert.match(tableCore,/request\.desprevenido===true\)enemy\.conditions=.*filter/);
 assert.match(tableCore,/function startAttackTargetSelection\([\s\S]*?if\(pendingDamageApplication\)\{[\s\S]*?cancelDamageTargetSelection\(\)/);
 assert.match(tableCore,/function startDamageTargetSelection\([\s\S]*?if\(pendingAttackApplication\)\{[\s\S]*?cancelAttackTargetSelection\(\)/);
 assert.match(tableCore,/isHealingTest[\s\S]*?isHealing[\s\S]*?attack\.healing/);

@@ -1643,7 +1643,6 @@ function openCharacterPanel(){
 
     }
 
-
     const character =
         currentTableCharacter;
 
@@ -3270,7 +3269,7 @@ function rollQuickAttack(
     let playerCritical=false;
     if(type==="attack" || isHealingTest){
         const mainRoll=Number(result.details?.find(part=>part.type==="dice")?.rolls?.[0])||0;
-        playerCritical=mainRoll===12;
+        playerCritical=mainRoll>=Math.max(2,Number(attack.criticalOn)||12);
     }
 
 
@@ -3328,6 +3327,10 @@ addRollChatMessage(
         targetPositions:Array.isArray(attack.targetPositions)
             ? attack.targetPositions.map(Number).filter(position=>position>=1&&position<=6)
             : (String(attack.skill||attack.skillName||"").toLowerCase()==="pontaria"?[1,2,3,4,5,6]:[1,2]),
+
+        ignoreRD:Math.max(0,Number(attack.ignoreRD)||0),
+
+        weaponMods:[...(attack.weaponMods||[])],
 
         playerCritical,
 
@@ -9948,6 +9951,7 @@ function applyPendingAttackToTarget(
 
 function resolveAttackAgainstEnemy(enemy){
     if(!enemy||!pendingAttackApplication)return;
+    if(pendingAttackApplication.desprevenido===true){enemy.conditions=Array.isArray(enemy.conditions)?enemy.conditions:[];enemy.conditions=enemy.conditions.filter(condition=>!(normalizeEnemyAbilityId(typeof condition==="string"?condition:condition.id||condition.name)==="desprevenido"&&condition.source==="ataque-de-oportunidade"));enemy.conditions.push({id:"desprevenido",name:"Desprevenido",icon:"😶",description:"Não pode reagir e sofre -5 Defesa contra este Ataque de Oportunidade.",source:"ataque-de-oportunidade",temporary:true});}
     if(enemyHasAbility(enemy,"espinhoso")&&pendingAttackApplication.attackerCharacterId){const attacker=getLiveCharacter(pendingAttackApplication.attackerCharacterId);if(attacker)damageCharacterFromAbility(attacker,Math.max(0,Number(enemy.corpo)||0),`Espinhoso de ${enemy.name||"Ameaça"}`);}
     if(enemyHasAbility(enemy,"toque-da-morte")&&normalizeEnemyAbilityId(pendingAttackApplication.attackSkill)==="luta"&&pendingAttackApplication.attackerCharacterId){const attacker=getLiveCharacter(pendingAttackApplication.attackerCharacterId);if(attacker){attacker.age=(Number(attacker.age)||0)+3;saveDamagedCharacter(attacker);addSystemChatMessage(`${attacker.name||"O atacante"} envelheceu 3 anos ao atacar ${enemy.name||"a ameaça"} com Luta.`);}}
     currentTableCampaign.combat=currentTableCampaign.combat||{};
@@ -9988,6 +9992,7 @@ function answerEnemyAttackReaction(reactionType){
     request.active=false;request.resolved=true;request.hit=hit;request.reaction={type:reactionType,name:majorTriggered?"Esquiva Maior":reactionName,paCost:cost,baseDefense,finalDefense,baseRD,reactionRD,majorTriggered,answeredAt:Date.now()};
     const message=(currentTableCampaign.chatMessages||[]).find(item=>item.id===request.messageId);if(message){message.applied=true;message.appliedAt=Date.now();message.attackApplication={targetEnemyId:enemy.enemyId||enemy.id,targetName:enemy.name||"Ameaça",attackResult:Number(request.attackResult)||0,finalDefense,reaction:majorTriggered?"Esquiva Maior":reactionName,hit};}
     currentTableCampaign.combat.damageContext=hit?{id:`damage_${Date.now()}`,active:true,targetEnemyId:enemy.enemyId||enemy.id,targetName:enemy.name||"Ameaça",reaction:majorTriggered?"esquiva-maior":reactionType,damageReduction:reactionRD,consumed:false,createdAt:Date.now()}:null;
+    if(request.desprevenido===true)enemy.conditions=(enemy.conditions||[]).filter(condition=>!(normalizeEnemyAbilityId(typeof condition==="string"?condition:condition.id||condition.name)==="desprevenido"&&condition.source==="ataque-de-oportunidade"));
     saveTableCampaign();closeCurrentPanel();renderPublicChat();if(dodgeResult)addRollChatMessage(`Esquiva • ${enemy.name}`,dodgeResult.formula||"Presteza",dodgeResult.total,enemyRollDetail(dodgeResult));addSystemChatMessage(`${enemy.name} escolheu ${majorTriggered?"Esquiva Maior":reactionName}. Ataque ${Number(request.attackResult)||0} contra Defesa ${finalDefense}: ${hit?"acertou":"errou"}.${hit?` RD para o próximo dano: ${reactionRD}.`:""}`);
     if(reactionType==="counter"&&!hit)rollEnemySkill(enemy,"Luta",{label:`Contra-ataque • ${enemy.name}`,rollKind:"attack",attackName:"Contra-ataque",enemyInstanceId:enemy.enemyId||enemy.id,attackVariant:"counter",applied:false});
 }
@@ -12113,6 +12118,8 @@ function startDamageTargetSelection(
             ? message.targetPositions.map(Number)
             : [1,2,3,4,5,6]
 
+        ,ignoreRD:Math.max(0,Number(message.ignoreRD)||0)
+
     };
 
 
@@ -12330,7 +12337,7 @@ function applyDamageToEnemy(enemy){
     if(!enemy||!pendingDamageApplication)return;
     const enemyId=enemy.enemyId||enemy.id;
     enemy=(currentTableCampaign.enemies||[]).find(item=>String(item.enemyId||item.id)===String(enemyId))||enemy;
-    const originalDamage=Math.max(0,Number(pendingDamageApplication.damage)||0),context=currentTableCampaign.combat?.damageContext,contextMatches=context?.active===true&&String(context.targetEnemyId)===String(enemy.enemyId||enemy.id),ritualImmune=enemyHasAbility(enemy,"apice-do-poder")&&pendingDamageApplication.isRitual&&normalizeEnemyAbilityId(pendingDamageApplication.element)===normalizeEnemyAbilityId(enemy.element),baseReduction=ritualImmune?originalDamage:(contextMatches?Math.max(0,Number(context.damageReduction)||0):Math.max(0,Number(enemy.rd)||0)),spectralReduction=ritualImmune?0:consumeFantasmagorico(enemy),damageReduction=Math.min(originalDamage,baseReduction+spectralReduction),finalDamage=Math.max(0,originalDamage-damageReduction);
+    const originalDamage=Math.max(0,Number(pendingDamageApplication.damage)||0),context=currentTableCampaign.combat?.damageContext,contextMatches=context?.active===true&&String(context.targetEnemyId)===String(enemy.enemyId||enemy.id),ritualImmune=enemyHasAbility(enemy,"apice-do-poder")&&pendingDamageApplication.isRitual&&normalizeEnemyAbilityId(pendingDamageApplication.element)===normalizeEnemyAbilityId(enemy.element),ignoredRD=Math.max(0,Number(pendingDamageApplication.ignoreRD)||0),rawReduction=contextMatches?Math.max(0,Number(context.damageReduction)||0):Math.max(0,Number(enemy.rd)||0),baseReduction=ritualImmune?originalDamage:Math.max(0,rawReduction-ignoredRD),spectralReduction=ritualImmune?0:consumeFantasmagorico(enemy),damageReduction=Math.min(originalDamage,baseReduction+spectralReduction),finalDamage=Math.max(0,originalDamage-damageReduction);
     if(enemy.lifeMode==="body"){startBodyDamageDistribution("enemy",enemy,originalDamage,damageReduction);return;}
     enemy.status=enemy.status&&typeof enemy.status==="object"?enemy.status:{};
     const before=Math.max(0,Number(enemy.status.pvAtual??enemy.pv)||0);
