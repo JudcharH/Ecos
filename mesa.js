@@ -1943,11 +1943,11 @@ function trySoMaisUmPasso(character){
     const abilities=[character?.abilities,character?.acquiredAbilities,character?.habilidades].find(Array.isArray)||[];
     if(!abilities.some(ability=>normalizeEnemyAbilityId(typeof ability==="string"?ability:ability.id||ability.name)==="so-mais-um-passo"))return false;
     const combat=currentTableCampaign?.combat;if(!combat)return false;
-    combat.abilityState=combat.abilityState||{};combat.abilityState.heartSurvival=combat.abilityState.heartSurvival||{};
-    const key=character.id,uses=Math.max(0,Number(combat.abilityState.heartSurvival[key])||0),limit=Math.max(1,Number(character.attributes?.corpo??character.attributes?.for)||1);
+    combat.abilityState=combat.abilityState||{};combat.abilityState.torsoSurvival=combat.abilityState.torsoSurvival||{};
+    const key=character.id,uses=Math.max(0,Number(combat.abilityState.torsoSurvival[key])||0),limit=Math.max(1,Number(character.attributes?.corpo??character.attributes?.for)||1);
     if(uses>=limit)return false;
-    combat.abilityState.heartSurvival[key]=uses+1;character.heart.current=1;
-    addSystemChatMessage(`${character.name} utilizou Só Mais um Passo e permaneceu com 1 PV no Coração (${uses+1}/${limit}).`);
+    combat.abilityState.torsoSurvival[key]=uses+1;if(character.lifeMode==="body"){character.body=character.body||{};character.body.chest=1}else{character.status=character.status||{};character.status.pvAtual=1}
+    addSystemChatMessage(`${character.name} utilizou Só Mais um Passo e permaneceu com 1 PV no ${character.lifeMode==="body"?"Torso":"PV clássico"} (${uses+1}/${limit}).`);
     return true;
 }
 
@@ -6116,10 +6116,10 @@ function triggerEnemyLastBreath(enemy){if(!enemy||!enemyHasAbility(enemy,"ultimo
 function damageCharacterFromAbility(character,amount,source){
     if(!character)return 0;const value=Math.max(0,Number(amount)||0);if(!value)return 0;
     if(character.lifeMode==="body"){
-        ensureCharacterHeart(character);if(Math.max(0,Number(character.body?.chest)||0)<=0){const before=Math.max(0,Number(character.heart.current)||0),dealt=Math.min(before,value);character.heart.current=Math.max(0,before-dealt);if(character.heart.current<=0&&dealt>0&&!trySoMaisUmPasso(character))markCharacterDead(character);saveDamagedCharacter(character);addSystemChatMessage(`${source} causou ${dealt} de dano no Coração de ${character.name}.`);return dealt;}
-        const parts=bodyDamageParts(character,"player").filter(part=>part.current>0).sort((a,b)=>b.current-a.current),part=parts[0];if(!part)return 0;const dealt=Math.min(value,part.current);if(part.state.type==="prosthetic")part.state.currentPV=part.current-dealt;else character.body[part.id]=part.current-dealt;let heartDamage=0;if(part.id==="chest"&&part.current-dealt<=0&&value>dealt){const before=Math.max(0,Number(character.heart.current)||0);heartDamage=Math.min(before,value-dealt);character.heart.current=Math.max(0,before-heartDamage);if(character.heart.current<=0&&heartDamage>0&&!trySoMaisUmPasso(character))markCharacterDead(character);}saveDamagedCharacter(character);addSystemChatMessage(`${source} causou ${dealt} de dano em ${BODY_PART_LABELS[part.id]} de ${character.name}${heartDamage?` e ${heartDamage} no Coração`:""}.`);return dealt+heartDamage;
+        ensureCharacterHeart(character);if(Math.max(0,Number(character.body?.chest)||0)<=0){const before=Math.max(0,Number(character.heart.current)||0),dealt=Math.min(before,value);character.heart.current=Math.max(0,before-dealt);if(character.heart.current<=0&&dealt>0)markCharacterDead(character);saveDamagedCharacter(character);addSystemChatMessage(`${source} causou ${dealt} de dano no Coração de ${character.name}.`);return dealt;}
+        const parts=bodyDamageParts(character,"player").filter(part=>part.current>0).sort((a,b)=>b.current-a.current),part=parts[0];if(!part)return 0;const dealt=Math.min(value,part.current);if(part.state.type==="prosthetic")part.state.currentPV=part.current-dealt;else character.body[part.id]=part.current-dealt;let heartDamage=0;if(part.id==="chest"&&part.current-dealt<=0){if(!trySoMaisUmPasso(character)&&value>dealt){const before=Math.max(0,Number(character.heart.current)||0);heartDamage=Math.min(before,value-dealt);character.heart.current=Math.max(0,before-heartDamage);if(character.heart.current<=0&&heartDamage>0)markCharacterDead(character);}}saveDamagedCharacter(character);addSystemChatMessage(`${source} causou ${dealt} de dano em ${BODY_PART_LABELS[part.id]} de ${character.name}${heartDamage?` e ${heartDamage} no Coração`:""}.`);return dealt+heartDamage;
     }
-    ensureCharacterHeart(character);const before=Math.max(0,Number(character.status.pvAtual)||0),pvDamage=Math.min(before,value),overflow=Math.max(0,value-pvDamage),heartBefore=Math.max(0,Number(character.heart.current)||0),heartDamage=Math.min(heartBefore,overflow);character.status.pvAtual=Math.max(0,before-pvDamage);character.heart.current=Math.max(0,heartBefore-heartDamage);if(character.heart.current<=0&&heartDamage>0&&!trySoMaisUmPasso(character))markCharacterDead(character);saveDamagedCharacter(character);addSystemChatMessage(`${source} causou ${pvDamage} de dano em ${character.name}${heartDamage?` e ${heartDamage} no Coração`:""}.`);return pvDamage+heartDamage;
+    ensureCharacterHeart(character);const before=Math.max(0,Number(character.status.pvAtual)||0),pvDamage=Math.min(before,value),overflow=Math.max(0,value-pvDamage),heartBefore=Math.max(0,Number(character.heart.current)||0);character.status.pvAtual=Math.max(0,before-pvDamage);const survived=before>0&&character.status.pvAtual<=0&&trySoMaisUmPasso(character),heartDamage=survived?0:Math.min(heartBefore,overflow);character.heart.current=Math.max(0,heartBefore-heartDamage);if(character.heart.current<=0&&heartDamage>0)markCharacterDead(character);saveDamagedCharacter(character);addSystemChatMessage(`${source} causou ${pvDamage} de dano em ${character.name}${heartDamage?` e ${heartDamage} no Coração`:""}.`);return pvDamage+heartDamage;
 }
 function spendEnemyActionPoints(enemy,cost=1){
     const amount=Math.max(0,Number(cost)||0),current=enemyCurrentActionPoints(enemy);
@@ -12340,6 +12340,15 @@ function allocatePendingBodyDamage(partId){
     const state=pendingBodyDamageApplication,target=getPendingBodyDamageTarget();if(!state||!target)return;
     const part=bodyDamageParts(target,state.type).find(item=>item.id===partId);if(!part)return;
     const already=Number(state.allocations[partId])||0,applied=applyDamageAmountToBodyPart(part.current-already,state.remaining);if(applied<=0)return;
+    const availableBefore=Math.max(0,part.current-already);
+    if(state.type==="player"&&partId==="chest"&&applied>=availableBefore&&trySoMaisUmPasso(target)){
+        const actualApplied=Math.max(0,availableBefore-1);
+        state.allocations[partId]=already+actualApplied;
+        state.remaining=0;
+        state.torsoSurvived=true;
+        finishBodyDamageDistribution();
+        return;
+    }
     state.allocations[partId]=already+applied;state.remaining=Math.max(0,state.remaining-applied);
     if(state.type==="player"&&partId==="chest"&&part.current-already-applied<=0&&state.remaining>0){applyPendingDamageToHeart();finishBodyDamageDistribution();return;}
     const available=bodyDamageParts(target,state.type).reduce((sum,item)=>sum+Math.max(0,item.current-(Number(state.allocations[item.id])||0)),0);
@@ -12348,6 +12357,7 @@ function allocatePendingBodyDamage(partId){
 function finishBodyDamageDistribution(){
     const state=pendingBodyDamageApplication,target=getPendingBodyDamageTarget();if(!state||!target)return;
     bodyDamageParts(target,state.type).forEach(part=>{const amount=Number(state.allocations[part.id])||0;if(!amount)return;if(part.state.type==="prosthetic")part.state.currentPV=Math.max(0,part.current-amount);else target.body[part.id]=Math.max(0,part.current-amount);});
+    if(state.type==="player"&&state.torsoSurvived)target.body.chest=1;
     if(state.type==="player"){target.status=target.status||{};target.body.temporaryPV=Math.max(0,state.temporaryBefore-state.temporaryAbsorbed);target.status.pvTemp=target.body.temporaryPV;saveDamagedCharacter(target);const sourceMessage=(currentTableCampaign.chatMessages||[]).find(item=>item.id===state.messageId);applyApplicatorCondition(target,sourceMessage?.enemyInstanceId);}else{const remainingBodyPV=bodyDamageParts(target,"enemy").reduce((sum,part)=>sum+Math.max(0,Number(part.current)||0),0);if(remainingBodyPV<=0)triggerEnemyLastBreath(target);saveTableCampaign();}
     const context=currentTableCampaign.combat?.damageContext;if(context?.active===true){context.active=false;context.consumed=true;context.consumedAt=Date.now();}
     const message=(currentTableCampaign.chatMessages||[]).find(item=>item.id===state.messageId),appliedDamage=state.reducedDamage-state.remaining;
@@ -12510,8 +12520,9 @@ const damageReduction = normalDamageReduction;
             damageAfterTemporary
         );
 
-    character.heart.current=Math.max(0,heartBefore-heartDamage);
-    if(character.heart.current<=0&&heartDamage>0&&!trySoMaisUmPasso(character))markCharacterDead(character);
+    const survivedTorso=currentPVBefore>0&&character.status.pvAtual<=0&&trySoMaisUmPasso(character),appliedHeartDamage=survivedTorso?0:heartDamage;
+    character.heart.current=Math.max(0,heartBefore-appliedHeartDamage);
+    if(character.heart.current<=0&&appliedHeartDamage>0)markCharacterDead(character);
 
 
     const application =
@@ -12525,9 +12536,9 @@ const damageReduction = normalDamageReduction;
 
             temporaryAbsorbed,
 
-            actualPVLost,
+            actualPVLost:survivedTorso?Math.max(0,currentPVBefore-1):actualPVLost,
 
-            heartDamage,
+            heartDamage:appliedHeartDamage,
 
             heartBefore,
 

@@ -13,7 +13,8 @@ const DISCARDED_ABILITY_IDS=new Set([
     "determinacao-fisica","determinacao","levantar-escudo","escudo-de-emergencia",
     "ultima-barreira","ancorado-corporal","dominio-de-terreno","inspirar-confianca",
     "ordem-de-ataque","ordem-de-reacao","nos-olhos-do-monstro","canalizacao-profunda",
-    "eco-ritualistico","convergencia-elemental"
+    "eco-ritualistico","convergencia-elemental","reciclar-energia","coracao-resistente",
+    "socorro-urgente"
 ]);
 
 const ABILITY_REVISIONS={
@@ -43,7 +44,7 @@ const ABILITY_REVISIONS={
     "prontidao":{description:"Passiva. No início da primeira rodada, todos os aliados, exceto você, recebem +1 PA temporário."},
     "brecha-na-guarda":{description:"Quando um aliado adjacente acerta um inimigo, você pode realizar um ataque contra esse inimigo. Limite: 1 vez por rodada."},
     "oficial-comandante":{description:"Passiva. No início da primeira rodada, aliados, exceto você, recebem PM temporário igual ao seu Foco."},
-    "so-mais-um-passo":{description:"Quando um dano zeraria seu Coração, ele permanece com 1 PV e ignora o excedente. Usos por cena iguais a Corpo."},
+    "so-mais-um-passo":{description:"Quando um dano zeraria seu Torso, ele permanece com 1 PV e ignora todo o dano excedente. No sistema clássico, o PV atual permanece em 1. Usos por cena iguais a Corpo."},
     "segunda-chance":{description:"Ao zerar o Torso e receber Morrendo, ganha 1 PA para realizar uma ação."},
     "equipe-de-trauma":{description:"Gaste 1 PA para remover uma condição de um alvo adjacente. Sem limite de usos.",useCost:{type:"pa",value:1}},
     "elemento-favorito":{description:"Recebe 1 palavra agora e outra no nível 10. Se adquirido no nível 10 ou maior, recebe as 2 palavras imediatamente."},

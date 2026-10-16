@@ -8,11 +8,13 @@ const sandbox={window:{},document:{readyState:"loading",addEventListener(){},que
 vm.createContext(sandbox);
 vm.runInContext(read("sistema-base-habilidades.js"),sandbox);
 const abilities=sandbox.window.SYSTEM_BASE_V2_ABILITIES;
-assert.equal(abilities.length,132,"a biblioteca deve refletir as remoções ofensivas, defensivas, de suporte e paranormais aprovadas");
-assert.equal(new Set(abilities.map(item=>item.id)).size,132,"IDs de habilidades devem ser únicos");
+assert.equal(abilities.length,129,"a biblioteca deve refletir todas as remoções aprovadas");
+assert.equal(new Set(abilities.map(item=>item.id)).size,129,"IDs de habilidades devem ser únicos");
 assert.ok(abilities.every(item=>item.id&&item.name&&item.description),"toda habilidade precisa de nome, ID e descrição");
-for(const removed of ["em-furia","golpe-arriscado","duplo-golpe","retribuir","maquina-de-matar","lobo-solitario","incansavel","atirar-para-matar","levantar-escudo","escudo-de-emergencia","ultima-barreira","ancorado-corporal","dominio-de-terreno","inspirar-confianca","ordem-de-ataque","ordem-de-reacao","nos-olhos-do-monstro","canalizacao-profunda","eco-ritualistico","convergencia-elemental"])assert.ok(!abilities.some(item=>item.id===removed),`habilidade removida ainda disponível: ${removed}`);
+for(const removed of ["em-furia","golpe-arriscado","duplo-golpe","retribuir","maquina-de-matar","lobo-solitario","incansavel","atirar-para-matar","levantar-escudo","escudo-de-emergencia","ultima-barreira","ancorado-corporal","dominio-de-terreno","inspirar-confianca","ordem-de-ataque","ordem-de-reacao","nos-olhos-do-monstro","canalizacao-profunda","eco-ritualistico","convergencia-elemental","reciclar-energia","coracao-resistente","socorro-urgente"])assert.ok(!abilities.some(item=>item.id===removed),`habilidade removida ainda disponível: ${removed}`);
 assert.equal(abilities.find(item=>item.id==="sacar-e-atacar")?.name,"SAQUE RÁPIDO");
+assert.match(abilities.find(item=>item.id==="so-mais-um-passo")?.description||"",/Torso/);
+assert.doesNotMatch(abilities.find(item=>item.id==="so-mais-um-passo")?.description||"",/zeraria seu Coração/);
 
 const finals=read("mesa-habilidades-finais.js");
 const requiredHooks=["buildAutomationCatalog","finishDamageApplication=function","rollQuickAttack=function","rollTableCharacterSkill=function","answerAttackReaction=function","openMedicalReserve","openPrioritySwap","openOrderAttack","openEstancar","openPulse"];
@@ -21,6 +23,8 @@ const finalApproved=["aparar-golpe","fortaleza-compartilhada","guarda-sacrificia
 finalApproved.forEach(id=>assert.ok(finals.includes(id),`habilidade aprovada sem rota: ${id}`));
 
 const allTableCode=fs.readdirSync(new URL(".",root)).filter(name=>/^mesa.*\.js$/.test(name)).map(read).join("\n");
+assert.ok(allTableCode.includes("abilityState.torsoSurvival"),"Só Mais um Passo deve controlar usos no Torso");
+assert.ok(allTableCode.includes("state.torsoSurvived"),"dano por membros deve preservar o Torso em 1 PV");
 const coverage=abilities.map(ability=>({id:ability.id,explicit:allTableCode.includes(ability.id),fallback:true}));
 assert.ok(coverage.every(item=>item.explicit||item.fallback),"toda habilidade deve possuir rota automática ou guiada");
 
