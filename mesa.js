@@ -1548,7 +1548,9 @@ function pendingCharacterDamageReduction(character){
     if(preparedEntries.length){character.status.preparedDamageReduction=[];saveDamagedCharacter(character);const sources=preparedEntries.map(item=>item?.source).filter(Boolean).join(" e ");addSystemChatMessage(`${character.name} recebeu RD ${prepared}${sources?` de ${sources}`:""} contra este dano.`);}
     if(!contextMatches)return typed+prepared;
     const legacyBase=Math.max(0,Number(context.baseRD??character.damageReduction?.total)||0),contextTotal=Math.max(0,Number(context.damageReduction)||0);
-    return typed+prepared+Math.max(0,contextTotal-legacyBase);
+    const baseReduction=typed+prepared+Math.max(0,contextTotal-legacyBase),original=Math.max(0,Number(pendingDamageApplication?.damage)||0),flat=Math.max(0,Number(context.flatReduction)||0),multiplier=Number.isFinite(Number(context.damageMultiplier))?Math.max(0,Number(context.damageMultiplier)):1;
+    const finalDamage=Math.floor(Math.max(0,Math.max(0,original-baseReduction)-flat)*multiplier);
+    return Math.max(0,original-finalDamage);
 }
 window.ECO_CHARACTER_RD={types:CHARACTER_RD_TYPES,normalize:normalizeTableDamageType,ensure:ensureCharacterDamageReduction,effective:characterDamageReductionFor};
 
@@ -10060,11 +10062,11 @@ function answerEnemyAttackReaction(reactionType){
     if(hit){enemy.combatPressure=pressure+2;}
     request.active=false;request.resolved=true;request.hit=hit;request.reaction={type:reactionType,name:majorTriggered?"Esquiva Maior":reactionName,paCost:cost,baseDefense,finalDefense,baseRD,reactionRD,majorTriggered,answeredAt:Date.now()};
     const message=(currentTableCampaign.chatMessages||[]).find(item=>item.id===request.messageId);if(message){message.applied=true;message.appliedAt=Date.now();message.attackApplication={targetEnemyId:enemy.enemyId||enemy.id,targetName:enemy.name||"Ameaça",attackResult:Number(request.attackResult)||0,finalDefense,reaction:majorTriggered?"Esquiva Maior":reactionName,hit};}
-    currentTableCampaign.combat.damageContext=hit?{id:`damage_${Date.now()}`,active:true,targetEnemyId:enemy.enemyId||enemy.id,targetName:enemy.name||"Ameaça",reaction:majorTriggered?"esquiva-maior":reactionType,damageReduction:reactionRD,consumed:false,createdAt:Date.now()}:null;
+    currentTableCampaign.combat.damageContext=hit?{id:`damage_${Date.now()}`,active:true,attackRequestId:request.id,wideAttack:request.wideAttack===true,targetEnemyId:enemy.enemyId||enemy.id,targetName:enemy.name||"Ameaça",reaction:majorTriggered?"esquiva-maior":reactionType,damageReduction:reactionRD,consumed:false,createdAt:Date.now()}:null;
     if(request.desprevenido===true)enemy.conditions=(enemy.conditions||[]).filter(condition=>!(normalizeEnemyAbilityId(typeof condition==="string"?condition:condition.id||condition.name)==="desprevenido"&&condition.source==="ataque-de-oportunidade"));
     saveTableCampaign();closeCurrentPanel();renderPublicChat();if(dodgeResult)addRollChatMessage(`Esquiva • ${enemy.name}`,dodgeResult.formula||"Presteza",dodgeResult.total,enemyRollDetail(dodgeResult));addSystemChatMessage(`${enemy.name} escolheu ${majorTriggered?"Esquiva Maior":reactionName}. Ataque ${Number(request.attackResult)||0} contra Defesa ${finalDefense}: ${hit?"acertou":"errou"}.${hit?` RD para o próximo dano: ${reactionRD}.`:""}`);
     if(reactionType==="counter"&&!hit)rollEnemySkill(enemy,"Luta",{label:`Contra-ataque • ${enemy.name}`,rollKind:"attack",attackName:"Contra-ataque",enemyInstanceId:enemy.enemyId||enemy.id,attackVariant:"counter",applied:false});
-    setTimeout(()=>window.ECO_CONTINUE_WIDE_ATTACK?.(),0);
+    if(request.wideAttack===true&&!hit)setTimeout(()=>window.ECO_CONTINUE_WIDE_ATTACK?.(request.id),0);
 }
 
 /*==========================================================
@@ -12398,12 +12400,13 @@ function finishBodyDamageDistribution(){
     bodyDamageParts(target,state.type).forEach(part=>{const amount=Number(state.allocations[part.id])||0;if(!amount)return;if(part.state.type==="prosthetic")part.state.currentPV=Math.max(0,part.current-amount);else target.body[part.id]=Math.max(0,part.current-amount);});
     if(state.type==="player"&&state.torsoSurvived)target.body.chest=1;
     if(state.type==="player"){target.status=target.status||{};target.body.temporaryPV=Math.max(0,state.temporaryBefore-state.temporaryAbsorbed);target.status.pvTemp=target.body.temporaryPV;saveDamagedCharacter(target);const sourceMessage=(currentTableCampaign.chatMessages||[]).find(item=>item.id===state.messageId);applyApplicatorCondition(target,sourceMessage?.enemyInstanceId);}else{const remainingBodyPV=bodyDamageParts(target,"enemy").reduce((sum,part)=>sum+Math.max(0,Number(part.current)||0),0);if(remainingBodyPV<=0)triggerEnemyLastBreath(target);saveTableCampaign();}
-    const context=currentTableCampaign.combat?.damageContext;if(context?.active===true){context.active=false;context.consumed=true;context.consumedAt=Date.now();}
+    const context=currentTableCampaign.combat?.damageContext,wideRequestId=context?.wideAttack===true?context.attackRequestId:null;if(context?.active===true){context.active=false;context.consumed=true;context.consumedAt=Date.now();}
     const message=(currentTableCampaign.chatMessages||[]).find(item=>item.id===state.messageId),appliedDamage=state.reducedDamage-state.remaining;
     if(message){message.applied=true;message.appliedAt=Date.now();message.appliedTarget={type:state.type,characterId:state.type==="player"?target.id:null,enemyId:state.type==="enemy"?(target.enemyId||target.id):null,name:target.name||"Alvo"};message.damageApplication={originalDamage:state.originalDamage,damageReduction:state.damageReduction,finalDamage:appliedDamage,bodyDamage:true,allocations:{...state.allocations},unallocatedDamage:state.remaining};}
     saveTableCampaign();document.getElementById("bodyDamageSelector")?.remove();pendingBodyDamageApplication=null;renderCombatPositions();renderPublicChat();refreshOpenCharacterPanel();
     const allocationText=Object.entries(state.allocations).filter(([,amount])=>amount>0).map(([id,amount])=>`${BODY_PART_LABELS[id]}: ${amount}`).join(" • ");
     addSystemChatMessage(`${target.name||"O alvo"} recebeu ${appliedDamage} de dano nos membros${allocationText?` (${allocationText})`:""}.${state.remaining>0?` Restaram ${state.remaining} de dano sem membro disponível.`:""}`);
+    if(wideRequestId)setTimeout(()=>window.ECO_CONTINUE_WIDE_ATTACK?.(wideRequestId),0);
 }
 
 function consumeFantasmagorico(enemy){
@@ -12434,10 +12437,10 @@ function applyDamageToEnemy(enemy){
     enemy.status.pvAtual=Math.max(0,before-finalDamage);
     enemy.status.pvMax=Math.max(0,Number(enemy.status.pvMax??enemy.pv)||0);
     if(enemy.status.pvAtual<=0)triggerEnemyLastBreath(enemy);
-    if(contextMatches){context.active=false;context.consumed=true;context.consumedAt=Date.now();}
+    const wideRequestId=contextMatches&&context.wideAttack===true?context.attackRequestId:null;if(contextMatches){context.active=false;context.consumed=true;context.consumedAt=Date.now();}
     const after=enemy.status.pvAtual,message=(currentTableCampaign.chatMessages||[]).find(item=>item.id===pendingDamageApplication.messageId);
     if(message){message.applied=true;message.appliedAt=Date.now();message.appliedTarget={type:"enemy",enemyId:enemy.enemyId||enemy.id,name:enemy.name||"Ameaça"};message.damageApplication={originalDamage,damageReduction,finalDamage,pvBefore:before,pvAfter:after};}
-    saveTableCampaign();cancelDamageTargetSelection();renderCombatPositions();renderPublicChat();addSystemChatMessage(`${enemy.name||"A ameaça"} recebeu ${finalDamage} de dano após RD ${damageReduction}. PV atual: ${before} → ${after}.`);
+    saveTableCampaign();cancelDamageTargetSelection();renderCombatPositions();renderPublicChat();addSystemChatMessage(`${enemy.name||"A ameaça"} recebeu ${finalDamage} de dano após RD ${damageReduction}. PV atual: ${before} → ${after}.`);if(wideRequestId)setTimeout(()=>window.ECO_CONTINUE_WIDE_ATTACK?.(wideRequestId),0);
 }
 
 /*==========================================================

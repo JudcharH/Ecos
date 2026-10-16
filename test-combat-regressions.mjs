@@ -42,6 +42,8 @@ const tableCore=fs.readFileSync("mesa.js","utf8");
 const cinematic=fs.readFileSync("mesa-cinematica.js","utf8");
 assert.match(tableCore,/source:"ataque-de-oportunidade",temporary:true/);
 assert.match(tableCore,/request\.desprevenido===true\)enemy\.conditions=.*filter/);
+assert.match(tableCore,/finalDefense=Math\.max\(0,baseDefense-5\)/,"Desprevenido deve reduzir a Defesa da ameaça em 5");
+assert.match(tableCore,/wideAttack===true&&!hit/,"Ataque Giratório só deve avançar imediatamente quando o primeiro alvo não exigir dano");
 assert.match(tableCore,/function includeQuickAttackTraining/);
 assert.match(tableCore,/characterHasCombatAbility\(currentTableCharacter,"golpe-pesado"\)/);
 assert.match(tableCore,/characterHasCombatAbility\(currentTableCharacter,"tiro-certeiro"\)/);

@@ -1086,9 +1086,10 @@
         }
 
         if(normalizedId === "pele-dura"){
-            const round=Math.max(0,Number(currentTableCampaign.combat?.round)||0),uses=currentTableCampaign.combat.reactionAbilityUses||(currentTableCampaign.combat.reactionAbilityUses={}),key=`pele-dura:${character.id}:${round}`;
-            if(uses[key]){character.status=character.status||{};character.status.paAtual=Math.max(0,Number(character.status.paAtual)||0)+cost;saveDamagedCharacter(character);addSystemChatMessage("Pele Dura já foi utilizada nesta rodada.");return;}
-            uses[key]=Date.now();
+            currentTableCampaign.combat.abilityState=currentTableCampaign.combat.abilityState||{};
+            const round=Math.max(0,Number(currentTableCampaign.combat?.round)||0),uses=currentTableCampaign.combat.reactionAbilityUses||(currentTableCampaign.combat.reactionAbilityUses={}),generalUses=currentTableCampaign.combat.abilityState.uses||(currentTableCampaign.combat.abilityState.uses={}),key=`pele-dura:${character.id}:${round}`;
+            if(uses[key]||generalUses[key]){character.status=character.status||{};character.status.paAtual=Math.max(0,Number(character.status.paAtual)||0)+cost;saveDamagedCharacter(character);addSystemChatMessage("Pele Dura já foi utilizada nesta rodada.");return;}
+            uses[key]=Date.now();generalUses[key]=Date.now();
             finishOriginalAttack(request,character,{abilityId:normalizedId,abilityName:abilityName(ability),paCost:cost,damageMultiplier:0.5});
             publishNotice({kind:"Reação",icon:"🛡",title:`${character.name} utilizou ${abilityName(ability)}`,detail:"O dano deste ataque será reduzido pela metade."});
             return;
@@ -1262,9 +1263,14 @@
         const dodge = type === "dodge";
         const character = currentTableCharacter;
         const always = dodge && hasAbility(character,"sempre-alerta");
-        const agility = Math.max(0,Number(character?.attributes?.agi) || 0);
+        const focus = Math.max(0,Number(character?.attributes?.foco??character?.foco) || 0);
+        const armedHardSkin=currentTableCampaign?.combat?.abilityState?.peleDura?.[character?.id];
 
         previousAnswerAttackReaction(type);
+
+        refreshCurrentTableCampaign();
+        const armedContext=currentTableCampaign?.combat?.damageContext;
+        if(armedHardSkin?.active&&armedContext?.active===true&&armedContext.targetCharacterId===character?.id){armedContext.damageMultiplier=0.5;armedContext.automaticAbility="pele-dura";delete currentTableCampaign.combat.abilityState.peleDura[character.id];saveTableCampaign();publishNotice({kind:"Habilidade",icon:"🛡",title:`${character.name} ativou Pele Dura`,detail:"O próximo dano foi reduzido pela metade."});}
 
         if(!always) return;
 
@@ -1272,14 +1278,14 @@
         const context = currentTableCampaign?.combat?.damageContext;
 
         if(context && context.active === true && context.targetCharacterId === character?.id){
-            context.flatReduction = agility * 2;
+            context.flatReduction = focus * 2;
             context.automaticAbility = "sempre-alerta";
             saveTableCampaign();
 
             publishNotice({
                 kind:"Passiva",icon:"👁",
                 title:`${character.name} ativou Sempre Alerta`,
-                detail:`O dano será reduzido em ${agility * 2}.`
+                detail:`O próximo dano será reduzido em ${focus * 2}.`
             });
         }
     };
@@ -1319,6 +1325,9 @@
 
     const previousApplyClassicDamageToCharacter = applyClassicDamageToCharacter;
     applyClassicDamageToCharacter = function(character){
+        return previousApplyClassicDamageToCharacter(character);
+        /* Compatibilidade histórica: o cálculo agora é centralizado em
+           pendingCharacterDamageReduction para PV clássico e membros. */
         const context = currentTableCampaign?.combat?.damageContext;
         const matches = context && context.active === true && context.consumed !== true && context.targetCharacterId === character?.id && pendingDamageApplication;
 

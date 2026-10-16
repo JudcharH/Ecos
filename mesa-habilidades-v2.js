@@ -14,7 +14,6 @@ const HYBRID_IDS=new Set([
     "carrasco",
     "retribuir",
     "disparo-surpresa",
-    "suportar-a-dor",
     "prontidao",
     "segunda-chance",
     "recuperando-folego",
@@ -245,6 +244,9 @@ function generalAbilitySkillBonus(character,skillName){
     const id=slug(skillName),entry=currentTableCampaign?.combat?.abilityState?.skillBonuses?.[character?.id]?.[id],round=roundNumber();
     let bonus=entry&&Number(entry.expiresRound)>=round?Number(entry.bonus)||0:0;
     if(id==="fortitude"&&hasAbility(character,"corpo-treinado"))bonus+=3;
+    if(id==="presteza"&&hasAbility(character,"esquiva-aprimorada"))bonus+=2;
+    const wounded=(character?.conditions||[]).some(condition=>slug(typeof condition==="string"?condition:condition?.id||condition?.name)==="machucado");
+    if(wounded&&hasAbility(character,"suportar-a-dor")&&(id==="fortitude"||id==="vontade"))bonus+=3;
     return bonus;
 }
 window.ECO_GENERAL_ABILITY_SKILL_BONUS=generalAbilitySkillBonus;
@@ -359,6 +361,12 @@ function useAbilityV2(id){
         chooseAttack("Ricochete — escolha o disparo",(attack,index)=>{if(!spend(character,"pa",1))return;combatState().ricochete={active:true,characterId:character.id,attackIndex:index,createdAt:Date.now()};saveTableCampaign();notify(`${character.name} preparou Ricochete`,`${attack.name||"O próximo disparo"} deixará o alvo Desprevenido durante esse ataque.`,"↗");closeCurrentPanel();});
         return;
     }
+    if(id==="pele-dura"){
+        const state=combatState(),round=roundNumber(),key=`pele-dura:${character.id}:${round}`;state.uses=state.uses||{};
+        if(state.uses[key]){addSystemChatMessage("Pele Dura já foi utilizada nesta rodada.");return;}
+        if(!spend(character,"pa",1))return;
+        state.uses[key]=Date.now();state.peleDura=state.peleDura||{};state.peleDura[character.id]={active:true,round,createdAt:Date.now()};saveTableCampaign();notify(`${character.name} ativou Pele Dura`,`O próximo dano recebido será reduzido pela metade.`,"🛡");openAbilitiesV2();return;
+    }
     const cost=parseCost(ability);
     if(cost.amount&&!spend(character,cost.resource,cost.amount)) return;
     notify(`${character.name} utilizou ${abilityName(ability)}`,cost.amount?`Custo: ${cost.amount} ${cost.resource.toUpperCase()}.`:"Sem custo.");
@@ -388,7 +396,7 @@ function criticalThreshold(character,entry){
     return threshold;
 }
 window.ECO_PLAYER_CRITICAL_THRESHOLD=criticalThreshold;
-window.ECO_CONTINUE_WIDE_ATTACK=function(){refreshCurrentTableCampaign();refreshCurrentTableCharacter();const wide=combatState().wideAttack;if(!wide?.active||String(wide.characterId)!==String(currentTableCharacter?.id)||currentTableCampaign.combat?.pendingEnemyAttack?.active)return;const enemyId=wide.remaining?.shift();if(!enemyId){delete combatState().wideAttack;saveTableCampaign();return}const enemy=(currentTableCampaign.enemies||[]).find(item=>String(item.enemyId||item.id)===String(enemyId));if(!enemy){saveTableCampaign();return window.ECO_CONTINUE_WIDE_ATTACK()}rollQuickAttack(Number(wide.attackIndex),"attack");refreshCurrentTableCampaign();const message=[...(currentTableCampaign.chatMessages||[])].reverse().find(item=>item.type==="roll"&&item.rollKind==="attack"&&item.applied!==true&&Number(item.attackIndex)===Number(wide.attackIndex));if(message){message.forcedTargetEnemyId=enemyId;message.skipPACost=true;saveTableCampaign();startAttackTargetSelection(message.id);applyPendingAttackToTarget("enemy",enemy)}if(!wide.remaining.length)wide.active=false;saveTableCampaign();};
+window.ECO_CONTINUE_WIDE_ATTACK=function(resolvedRequestId=null){refreshCurrentTableCampaign();refreshCurrentTableCharacter();const wide=combatState().wideAttack;if(!wide?.active||String(wide.characterId)!==String(currentTableCharacter?.id))return;if(wide.waitingRequestId){if(!resolvedRequestId||String(resolvedRequestId)!==String(wide.waitingRequestId))return;wide.waitingRequestId=null}if(currentTableCampaign.combat?.pendingEnemyAttack?.active)return;const enemyId=wide.remaining?.shift();if(!enemyId){delete combatState().wideAttack;saveTableCampaign();return}const enemy=(currentTableCampaign.enemies||[]).find(item=>String(item.enemyId||item.id)===String(enemyId));if(!enemy){saveTableCampaign();return window.ECO_CONTINUE_WIDE_ATTACK(resolvedRequestId)}const before=new Set((currentTableCampaign.chatMessages||[]).map(item=>item.id));rollQuickAttack(Number(wide.attackIndex),"attack");refreshCurrentTableCampaign();const message=[...(currentTableCampaign.chatMessages||[])].reverse().find(item=>!before.has(item.id)&&item.type==="roll"&&item.rollKind==="attack"&&Number(item.attackIndex)===Number(wide.attackIndex));if(!message){delete combatState().wideAttack;saveTableCampaign();return}message.forcedTargetEnemyId=enemyId;message.skipPACost=true;message.wideAttack=true;saveTableCampaign();startAttackTargetSelection(message.id);applyPendingAttackToTarget("enemy",enemy);refreshCurrentTableCampaign();const request=currentTableCampaign.combat?.pendingEnemyAttack;if(request?.active){wide.waitingRequestId=request.id;request.wideAttack=true}saveTableCampaign();};
 function applyCriticalToLatestRoll(){
     refreshCurrentTableCampaign();refreshCurrentTableCharacter();
     const messages=currentTableCampaign?.chatMessages||[];

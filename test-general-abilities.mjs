@@ -32,6 +32,10 @@ assert.ok(allTableCode.includes('"pele-dura"'),"Pele Dura deve aparecer entre as
 assert.ok(allTableCode.includes("ECO_CONTINUE_WIDE_ATTACK"),"Ataque Giratório deve resolver dois alvos com reações independentes");
 assert.ok(allTableCode.includes("rompedorTarget"),"Rompedor de Defesas deve marcar uma ameaça até o próximo ataque");
 assert.ok(allTableCode.includes("quickCriticalMargin"),"Ataques rápidos devem permitir configurar margem de crítico");
+assert.ok(allTableCode.includes('id==="presteza"&&hasAbility(character,"esquiva-aprimorada")'),"Esquiva Aprimorada deve ficar visível em Presteza");
+assert.ok(allTableCode.includes('hasAbility(character,"suportar-a-dor")'),"Suportar a Dor deve automatizar Fortitude e Vontade quando Machucado");
+assert.ok(allTableCode.includes('attributes?.foco??character?.foco'),"Sempre Alerta deve usar Foco no sistema atual");
+assert.ok(allTableCode.includes('automaticAbility="pele-dura"'),"Pele Dura ativada deve reduzir o próximo dano");
 assert.ok(allTableCode.includes('state.skillBonuses[character.id].discreto={bonus:5'),"Movimento Fantasma deve conceder +5 visível em Discreto");
 assert.ok(allTableCode.includes('5+value'),"Defesa base deve ser recalculada como 5 + atributo");
 assert.ok(allTableCode.includes("window.removeAbilityV2=removeAbilityV2"),"remoção de habilidade deve estar disponível ao painel cinematográfico");
