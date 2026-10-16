@@ -11,7 +11,8 @@ const DISCARDED_ABILITY_IDS=new Set([
     "em-furia","golpe-arriscado","duplo-golpe","retribuir","tecnica-sublime",
     "maquina-de-matar","lobo-solitario","incansavel","atirar-para-matar",
     "determinacao-fisica","determinacao","levantar-escudo","escudo-de-emergencia",
-    "ultima-barreira","ancorado-corporal","dominio-de-terreno"
+    "ultima-barreira","ancorado-corporal","dominio-de-terreno","inspirar-confianca",
+    "ordem-de-ataque","ordem-de-reacao"
 ]);
 
 const ABILITY_REVISIONS={
@@ -39,7 +40,7 @@ const ABILITY_REVISIONS={
     "resgate":{description:"Passiva/ativação. Quando o torso de um aliado chega a 0, mova-se 1 posição sem custo. Curas manuais recebem bônus igual a Nexo x2.",abilityType:"hybrid"},
     "inspirar-confianca":{description:"Concede o bônus descrito a um aliado. Limite de usos por cena igual ao atributo Foco."},
     "prontidao":{description:"Passiva. No início da primeira rodada, todos os aliados, exceto você, recebem +1 PA temporário."},
-    "brecha-na-guarda":{description:"Quando um aliado acerta um inimigo, você pode realizar um ataque. Limite: 1 vez por rodada."},
+    "brecha-na-guarda":{description:"Quando um aliado adjacente acerta um inimigo, você pode realizar um ataque contra esse inimigo. Limite: 1 vez por rodada."},
     "oficial-comandante":{description:"Passiva. No início da primeira rodada, aliados, exceto você, recebem PM temporário igual ao seu Foco."},
     "so-mais-um-passo":{description:"Quando um dano zeraria seu Coração, ele permanece com 1 PV e ignora o excedente. Usos por cena iguais a Corpo."},
     "segunda-chance":{description:"Ao zerar o Torso e receber Morrendo, ganha 1 PA para realizar uma ação."},
