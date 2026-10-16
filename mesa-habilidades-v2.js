@@ -205,7 +205,7 @@ function renderCard(ability){
         <p>${escapeTableHTML(ability.description||ability.effect||"Sem descrição.")}</p>
         <div class="ability-card-footer">
             <span>${escapeTableHTML(label)}</span>
-            <span class="ability-card-actions">${showButton?`<button type="button" class="primary-button use-ability-v2" data-id="${escapeTableHTML(id)}">Usar</button>`:""}<button type="button" class="danger-button remove-ability-v2" data-id="${escapeTableHTML(id)}">Remover</button></span>
+            <span class="ability-card-actions">${showButton?`<button type="button" class="primary-button use-ability-v2" data-id="${escapeTableHTML(id)}">Usar</button>`:""}</span>
         </div>
     </div>`;
 }
@@ -224,7 +224,6 @@ function openAbilitiesV2(character=null){
         <div class="table-panel-section"><h3 class="table-panel-section-title">Reações</h3><div class="table-panel-list">${reactions.length?reactions.map(renderCard).join(""):'<div class="editor-empty-state"><p>Nenhuma habilidade de reação.</p></div>'}</div></div>
     `);
     document.querySelectorAll(".use-ability-v2").forEach(button=>button.addEventListener("click",()=>useAbilityV2(button.dataset.id)));
-    document.querySelectorAll(".remove-ability-v2").forEach(button=>button.addEventListener("click",()=>removeAbilityV2(button.dataset.id)));
 }
 function removeAbilityV2(id){
     const character=abilityPanelCharacter||currentTableCharacter;if(!character)return false;

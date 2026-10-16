@@ -1527,10 +1527,16 @@ function ensureCharacterDamageReduction(character){
     if(rd.base===undefined)rd.base=rd.byType.mundana;
     return rd;
 }
+function characterOwnsAbility(character,abilityId){
+    const normalize=value=>String(value||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"");
+    const wanted=normalize(abilityId),collections=[character?.abilities,character?.acquiredAbilities,character?.habilidades,character?.systemData?.abilities];
+    return collections.some(collection=>Array.isArray(collection)&&collection.some(item=>normalize(typeof item==="string"?item:item?.id||item?.abilityId||item?.name)===wanted));
+}
 function characterDamageReductionFor(character,damageType){
     const rd=ensureCharacterDamageReduction(character),type=normalizeTableDamageType(damageType);
     const mundane=Math.max(0,Number(rd.total??rd.byType.mundana)||0);
-    return Math.max(0,(MUNDANE_DAMAGE_TYPES.has(type)?mundane:0)+(type!=="mundana"?(Number(rd.byType[type])||0):0));
+    const resistant=characterOwnsAbility(character,"resistente")?3:0;
+    return Math.max(0,(MUNDANE_DAMAGE_TYPES.has(type)?mundane:0)+(type!=="mundana"?(Number(rd.byType[type])||0):0)+resistant);
 }
 function pendingCharacterDamageReduction(character){
     const type=pendingDamageApplication?.damageType||pendingDamageApplication?.element||pendingDamageApplication?.type||"impacto";

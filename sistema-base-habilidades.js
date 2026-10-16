@@ -10,7 +10,8 @@ const OFFICIAL_ABILITIES=[{"id":"ataque-especial","name":"ATAQUE ESPECIAL","perm
 const DISCARDED_ABILITY_IDS=new Set([
     "em-furia","golpe-arriscado","duplo-golpe","retribuir","tecnica-sublime",
     "maquina-de-matar","lobo-solitario","incansavel","atirar-para-matar",
-    "determinacao-fisica","determinacao"
+    "determinacao-fisica","determinacao","levantar-escudo","escudo-de-emergencia",
+    "ultima-barreira","ancorado-corporal","dominio-de-terreno"
 ]);
 
 const ABILITY_REVISIONS={
@@ -21,7 +22,13 @@ const ABILITY_REVISIONS={
     "maquina-de-matar":{description:"Passiva. O dano de todas as suas armas aumenta em 1 passo.",criticalMargin:0},
     "tiro-certeiro":{description:"Passiva. Ataques com Pontaria somam Foco novamente ao dano, totalizando Foco x2.",abilityType:"passive"},
     "cacada":{description:"Quando um inimigo sair voluntariamente do alcance de um ataque seu, o próximo dano que você causar nele também aplica Vulnerável.",abilityType:"hybrid"},
-    "resistente":{description:"Passiva. Recebe 5 de RD total."},
+    "resistente":{description:"Passiva. Enquanto possuir esta habilidade, recebe automaticamente RD 3 contra todos os tipos de dano."},
+    "casca-grossa":{description:"Passiva. No sistema clássico, recebe +12 PV máximos. No sistema de membros, cada membro recebe +2 PV máximos."},
+    "corpo-treinado":{description:"Passiva. Recebe +3 em testes de Fortitude."},
+    "esquiva-aprimorada":{description:"Passiva. Recebe +2 em testes de Presteza."},
+    "guarda-alta":{description:"Passiva. Enquanto não realizar ataques, recebe +4 Defesa. Este efeito não concede RD."},
+    "inquebravel":{description:"Enquanto estiver Machucado, recebe +2 Defesa e RD 4."},
+    "escudo-vivo":{description:"Enquanto permanecer adjacente a um aliado, ele recebe +2 em Defesa."},
     "pele-dura":{description:"Reação. Gaste 1 PA para reduzir pela metade o dano recebido. Limite: 1 vez por rodada.",useCost:{type:"pa",value:1},abilityType:"reaction"},
     "segunda-respiracao":{description:"Recupera 8 PV. Limite de usos por cena igual ao atributo Corpo."},
     "defesa-perfeita":{description:"Passiva. Ataques bem-sucedidos contra você não geram a penalidade cumulativa de -2 na Defesa."},
@@ -66,16 +73,16 @@ revisedAbilities.push({
     permanentCost:{type:"pd",value:4},
     useCost:null,
     abilityType:"passive",
-    description:"Enquanto não houver aliados adjacentes, recebe +3 nos testes de ataque e +3 na Defesa.",
+    description:"Enquanto não houver aliados adjacentes, recebe +2 nos testes de ataque e +2 na Defesa.",
     source:"sistema-base-v2",
-    rules:{Custo:"4 PM Permanentes",Tipo:"Passiva",Condição:"Sem aliados adjacentes",Efeito:"+3 em ataques e +3 na Defesa."}
+    rules:{Custo:"4 PM Permanentes",Tipo:"Passiva",Condição:"Sem aliados adjacentes",Efeito:"+2 em ataques e +2 na Defesa."}
 });
 [
     ["golpe-crescente","GOLPE CRESCENTE","hybrid",null,"Ao acertar o mesmo alvo em rodadas consecutivas, recebe +1 dado de dano principal. O bônus termina ao errar ou trocar de alvo."],
     ["ataque-devastador","ATAQUE DEVASTADOR","active",{type:"pa",value:2},"Realiza um ataque que ignora RD igual a Corpo. Se errar, sofre -3 Defesa até o próximo turno. Limite: 1 vez por rodada."],
     ["escudo-de-emergencia","ESCUDO DE EMERGÊNCIA","reaction",{type:"pa",value:1},"Ao sofrer um crítico, reduz os dois dados adicionais do crítico para apenas um. Limite: 1 vez por rodada."],
     ["ultima-barreira","ÚLTIMA BARREIRA","passive",null,"Quando o PV clássico ou Torso chega a 0, recebe RD igual a Corpo contra o próximo dano direcionado ao Coração."],
-    ["posicao-segura","POSIÇÃO SEGURA","passive",null,"Se não tiver se movido no turno, recebe +3 Defesa até o início do próximo turno."],
+    ["posicao-segura","POSIÇÃO SEGURA","passive",null,"Se não tiver se movido no turno, recebe +2 Defesa até o início do próximo turno."],
     ["interposicao","INTERPOSIÇÃO","reaction",{type:"pa",value:1},"Recebe no lugar de um aliado adjacente um ataque que o atingiria e ainda pode escolher sua própria reação defensiva."],
     ["ordem-de-ataque","ORDEM DE ATAQUE","active",{type:"pa",value:1},"Um aliado recebe +3 no próximo ataque até o início do seu próximo turno. Usos por cena iguais a Foco."],
     ["formacao-tatica","FORMAÇÃO TÁTICA","passive",null,"No começo da rodada, escolha dois aliados adjacentes. Ambos recebem +2 Defesa enquanto permanecerem adjacentes."],
@@ -95,11 +102,11 @@ revisedAbilities.push({
     ["retirada-estrategica","RETIRADA ESTRATÉGICA","reaction",{type:"pa",value:1},"Quando um inimigo entra na sua posição, recue uma posição. Limite: 1 vez por rodada."],
     ["salto-impulsivo","SALTO IMPULSIVO","active",{type:"pa",value:1},"Move-se duas posições, ignorando uma posição ocupada ou terreno difícil, mas não barreiras completas."],
     ["cacador-movel","CAÇADOR MÓVEL","passive",null,"Após acertar um ataque, move-se uma posição em direção ao alvo. Limite: 1 vez por rodada e apenas se ainda não se moveu depois do ataque."]
-].forEach(([id,name,abilityType,useCost,description])=>revisedAbilities.push({
+].forEach(([id,name,abilityType,useCost,description])=>{if(DISCARDED_ABILITY_IDS.has(id))return;revisedAbilities.push({
     id,name,abilityType,useCost,description,
     permanentCost:{type:"pd",value:4},source:"sistema-base-v2",
     rules:{Custo:"4 PM Permanentes",Tipo:abilityType,Efeito:description}
-}));
+})});
 [
     ["aparar-golpe","APARAR GOLPE","reaction",{type:"pa",value:1},"Ao sofrer um ataque corpo a corpo, role Luta e reduza o dano pelo resultado do dado de treinamento. Limite: 1 vez por rodada."],
     ["ancorado-corporal","ANCORADO CORPORAL","passive",null,"Recebe +5 contra agarrões, empurrões e quedas. Ao vencer, não pode ser movido nem receber Caído pelo efeito."],
@@ -116,11 +123,11 @@ revisedAbilities.push({
     ["aura-revigorante","AURA REVIGORANTE","passive",null,"No início de cada rodada, você e aliados adjacentes recebem PV temporário igual a Nexo. Não acumula e permanece somente enquanto estiverem adjacentes."],
     ["cicatrizacao-de-repouso","CICATRIZAÇÃO DE REPOUSO","passive",null,"Após uma rodada completa sem sofrer dano, recupera Corpo + Nexo PV no início do turno. Em membros, cura o membro natural mais danificado."],
     ["reserva-medica","RESERVA MÉDICA","hybrid",null,"No início da cena recebe uma reserva de Nexo x4 PV. Durante seu turno, cure aliados adjacentes livremente, sem gastar PA ou PM. Não cura o próprio usuário nem o Coração."]
-].forEach(([id,name,abilityType,useCost,description])=>revisedAbilities.push({
+].forEach(([id,name,abilityType,useCost,description])=>{if(DISCARDED_ABILITY_IDS.has(id))return;revisedAbilities.push({
     id,name,abilityType,useCost,description,
     permanentCost:{type:"pd",value:4},source:"sistema-base-v2",
     rules:{Custo:"4 PM Permanentes",Tipo:abilityType,Efeito:description}
-}));
+})});
 OFFICIAL_ABILITIES.splice(0,OFFICIAL_ABILITIES.length,...revisedAbilities);
 
 function normalizeAbilityId(value){

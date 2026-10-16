@@ -39,7 +39,7 @@ assert.match(read("mesa.js"),/function openAttackReactionAssimilationPanel/);
 assert.doesNotMatch(read("mesa.js"),/abilityId==="pungencia"/);
 for(const removed of ["empatia","olfato-rubro","vinganca","orgaos-redundantes","simbiose-carmesim","banquete-de-carne","contracao-monstruosa","pulso-carniceiro","transfusao-violenta","coracao-predador"])assert.ok(!list.some(item=>item.id===removed),`Assimilação removida ainda presente: ${removed}`);
 assert.match(engine,/lists\.forEach\(list=>list\[2\]/);
-assert.match(engine,/remove-element-assimilation/);
+assert.doesNotMatch(engine,/remove-element-assimilation/);
 assert.match(engine,/corte:"cortante",perfuracao:"perfurante"/);
 const editor=read("editor-ficha.js");
 assert.match(editor,/name:"Desarmado"/);
