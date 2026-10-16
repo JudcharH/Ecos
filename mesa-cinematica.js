@@ -274,28 +274,37 @@ function composeQuickFormula(part){
     if(ability)pieces.push(String(ability));if(assimilation)pieces.push(String(assimilation));return pieces.join(" + ").replace(/\+\s*-/g,"- ");
 }
 function increaseQuickMainDie(formula,count){return String(formula||"").replace(/(\d*)d(\d+)/i,(match,quantity,sides)=>`${(Number(quantity)||1)+Math.max(0,Number(count)||0)}d${sides}`)}
-function quickAbilityStateModifier(character,kind){
+function stepCinematicMainDie(formula,steps=1){const order=[4,6,8,10,12];return String(formula||"").replace(/(\d*)d(\d+)/i,(match,quantity,sides)=>{const index=order.indexOf(Number(sides));return index<0?match:`${quantity||1}d${order[Math.min(order.length-1,index+Math.max(0,Number(steps)||0))]}`})}
+function cinematicHasAbility(character,id){const wanted=normalizeEnemyAbilityId(id),list=[character?.abilities,character?.acquiredAbilities,character?.habilidades,character?.systemData?.abilities].find(Array.isArray)||[];return list.some(item=>normalizeEnemyAbilityId(typeof item==="string"?item:item?.id||item?.abilityId||item?.name)===wanted)}
+function cinematicTrainingDie(character,attack){const wanted=normalizeEnemyAbilityId(attack?.skill||attack?.skillName||"Luta"),skills=Array.isArray(character?.skills)?character.skills:[],skill=skills.find(item=>normalizeEnemyAbilityId(item?.id||item?.name)===wanted),training=String(skill?.training||skill?.treino||"0");return /^1d(?:4|8|12)$/i.test(training)?training.toLowerCase():""}
+function includeCinematicTraining(dice,character,attack){const training=cinematicTrainingDie(character,attack),list=String(dice||"").match(/\d*d\d+/gi)||[];return training&&list.length<2?`${dice} + ${training}`:String(dice||"")}
+function quickAbilityStateModifier(character,kind,index){
     const combat=currentTableCampaign?.combat||{},advanced=combat.advancedAbilities||{},general=combat.abilityState||{},finalState=combat.finalAbilityState||{};
     let dice=0,bonus=0;
     if(kind==="attack"){
         if(advanced.arriscado?.active&&advanced.arriscado.characterId===character?.id)bonus+=Number(advanced.arriscado.attackBonus)||0;
-        if(general.nextAttack&&(!general.nextAttack.characterId||general.nextAttack.characterId===character?.id))bonus+=Number(general.nextAttack.attackBonus)||0;
+        if(general.nextAttack&&(!general.nextAttack.characterId||general.nextAttack.characterId===character?.id)&&(general.nextAttack.attackIndex==null||Number(general.nextAttack.attackIndex)===Number(index)))bonus+=Number(general.nextAttack.attackBonus)||0;
         bonus+=Number(finalState.attackOrders?.[character?.id]?.bonus)||0;
         const assist=combat.npcAssists?.[character?.id];if(assist&&Number(assist.round)===Number(combat.round))bonus+=Number(assist.attackBonus)||0;
     }else if(kind==="damage"){
         if(advanced.executor?.active&&advanced.executor.characterId===character?.id)dice+=Number(advanced.executor.stacks)||0;
         if(advanced.furia?.active&&advanced.furia.characterId===character?.id)dice+=Number(advanced.furia.extraDice)||0;
         if(advanced.demolidor?.active&&advanced.demolidor.characterId===character?.id)dice+=Number(advanced.demolidor.extraDice)||0;
-        if(general.nextAttack&&(!general.nextAttack.characterId||general.nextAttack.characterId===character?.id))bonus+=Number(general.nextAttack.damageBonus)||0;
-        if(general.pendingDamageBonus&&(!general.pendingDamageBonus.characterId||general.pendingDamageBonus.characterId===character?.id))bonus+=Number(general.pendingDamageBonus.amount)||0;
+        if(general.nextAttack&&(!general.nextAttack.characterId||general.nextAttack.characterId===character?.id)&&(general.nextAttack.attackIndex==null||Number(general.nextAttack.attackIndex)===Number(index)))bonus+=Number(general.nextAttack.damageBonus)||0;
+        if(general.pendingDamageBonus&&(!general.pendingDamageBonus.characterId||general.pendingDamageBonus.characterId===character?.id)&&(general.pendingDamageBonus.attackIndex==null||Number(general.pendingDamageBonus.attackIndex)===Number(index)))bonus+=Number(general.pendingDamageBonus.amount)||0;
         const assist=combat.npcAssists?.[character?.id];if(assist&&Number(assist.round)===Number(combat.round))dice+=Number(assist.damageDice)||0;
     }
     return{dice,bonus};
 }
 function quickFormulaBreakdown(character,index,kind){
     const attack=[character?.attacks,character?.quickAttacks,character?.ataquesRapidos].find(Array.isArray)?.[index];if(!attack)return null;
-    const part=ensureQuickFormulaParts(attack)[kind],blood=window.ECO_BLOOD_ASSIMILATION_AUTOMATION?.attackModifierSummary?.(character,index)?.[kind]||{},bridge=window.ECO_COMBAT_FORMULAS?.previewModifiers?.(character,index,kind)||{},abilities=quickAbilityStateModifier(character,kind),attribute=quickAttackAttribute(attack),attributeValue=window.ECO_BLOOD_ASSIMILATION_AUTOMATION?.effectiveAttribute?.(character,attribute)??(Number(character?.attributes?.[attribute]??character?.[attribute])||0);
-    return{dice:increaseQuickMainDie(part.dice,(Number(blood.dice)||0)+(Number(bridge.dice)||0)+(Number(abilities.dice)||0)),attribute,attributeValue:Number(attributeValue)||0,ability:(Number(part.ability)||0)+(Number(bridge.bonus)||0)+(Number(abilities.bonus)||0),assimilation:(Number(part.assimilation)||0)+(Number(blood.bonus)||0),extraFormulas:bridge.formulas||[]};
+    const part=ensureQuickFormulaParts(attack)[kind],blood=window.ECO_BLOOD_ASSIMILATION_AUTOMATION?.attackModifierSummary?.(character,index)?.[kind]||{},bridge=window.ECO_COMBAT_FORMULAS?.previewModifiers?.(character,index,kind)||{},abilities=quickAbilityStateModifier(character,kind,index),attribute=quickAttackAttribute(attack),attributeValue=window.ECO_BLOOD_ASSIMILATION_AUTOMATION?.effectiveAttribute?.(character,attribute)??(Number(character?.attributes?.[attribute]??character?.[attribute])||0),skill=normalizeEnemyAbilityId(attack.skill||attack.skillName||"Luta");
+    let dice=increaseQuickMainDie(part.dice,(Number(blood.dice)||0)+(Number(bridge.dice)||0)+(Number(abilities.dice)||0));
+    if(kind==="attack")dice=includeCinematicTraining(dice,character,attack);
+    if(kind==="damage"&&skill==="luta"&&cinematicHasAbility(character,"golpe-pesado"))dice=stepCinematicMainDie(dice,1);
+    let ability=(Number(part.ability)||0)+(Number(bridge.bonus)||0)+(Number(abilities.bonus)||0);
+    if(kind==="damage"&&skill==="pontaria"&&cinematicHasAbility(character,"tiro-certeiro"))ability+=Number(attributeValue)||0;
+    return{dice,attribute,attributeValue:Number(attributeValue)||0,ability,assimilation:(Number(part.assimilation)||0)+(Number(blood.bonus)||0),extraFormulas:bridge.formulas||[]};
 }
 function quickFormulaSummary(character,index,kind){const part=quickFormulaBreakdown(character,index,kind);if(!part)return"";const extras=part.extraFormulas.length?` + ${part.extraFormulas.join(" + ")}`:"",attributeCode=part.attribute==="foco"?"F":"C";return`F1 ${part.dice}${extras} | F2 ${attributeCode}(${part.attributeValue}) + H(${part.ability}) + A(${part.assimilation})`}
 function openQuickAttackEditor(character,index){

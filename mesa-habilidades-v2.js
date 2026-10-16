@@ -6,6 +6,7 @@
 
 let installed=false;
 let lastProcessedRollId=null;
+const REMOVED_OFFENSIVE_IDS=new Set(["em-furia","golpe-arriscado","duplo-golpe","retribuir","maquina-de-matar","lobo-solitario","incansavel","atirar-para-matar"]);
 
 const HYBRID_IDS=new Set([
     "sacar-e-atacar",
@@ -75,7 +76,7 @@ function abilitiesOf(character){
         if(typeof normalizeCharacterAbility==="function") return normalizeCharacterAbility(item);
         if(typeof item==="string") return {id:slug(item),name:item,description:""};
         return item;
-    }).filter(Boolean);
+    }).filter(item=>item&&!REMOVED_OFFENSIVE_IDS.has(abilityId(item)));
 }
 
 function abilityId(ability){return slug(ability?.id||ability?.abilityId||ability?.name||ability?.title);}
@@ -264,11 +265,13 @@ function openAttackSpecial(ability){
         if(attack+damage!==total||attack%2!==0||damage%2!==0){
             addSystemChatMessage(`Distribua exatamente ${total} pontos em múltiplos de 2.`);return;
         }
-        if(!spend(character,"pm",pm)) return;
-        combatState().nextAttack={...(combatState().nextAttack||{}),attackBonus:attack,damageBonus:damage,source:"ataque-especial",characterId:character.id};
-        saveTableCampaign();
-        notify(`${character.name} preparou Ataque Especial`,`+${attack} no ataque e +${damage} no dano.`,"🗡");
-        closeCurrentPanel();
+        chooseAttack("Ataque Especial — escolha o ataque",(chosen,attackIndex)=>{
+            if(!spend(character,"pm",pm)) return;
+            combatState().nextAttack={attackBonus:attack,damageBonus:damage,source:"ataque-especial",characterId:character.id,attackIndex,attackName:chosen.name||`Ataque ${attackIndex+1}`};
+            saveTableCampaign();
+            notify(`${character.name} preparou Ataque Especial`,`+${attack} no ataque e +${damage} no dano de ${chosen.name||`Ataque ${attackIndex+1}`}.`,"🗡");
+            closeCurrentPanel();
+        });
     });
 }
 

@@ -8,9 +8,11 @@ const sandbox={window:{},document:{readyState:"loading",addEventListener(){},que
 vm.createContext(sandbox);
 vm.runInContext(read("sistema-base-habilidades.js"),sandbox);
 const abilities=sandbox.window.SYSTEM_BASE_V2_ABILITIES;
-assert.equal(abilities.length,150,"a biblioteca geral deve manter 150 habilidades");
-assert.equal(new Set(abilities.map(item=>item.id)).size,150,"IDs de habilidades devem ser únicos");
+assert.equal(abilities.length,144,"a biblioteca deve refletir as seis novas remoções ofensivas");
+assert.equal(new Set(abilities.map(item=>item.id)).size,144,"IDs de habilidades devem ser únicos");
 assert.ok(abilities.every(item=>item.id&&item.name&&item.description),"toda habilidade precisa de nome, ID e descrição");
+for(const removed of ["em-furia","golpe-arriscado","duplo-golpe","retribuir","maquina-de-matar","lobo-solitario","incansavel","atirar-para-matar"])assert.ok(!abilities.some(item=>item.id===removed),`habilidade removida ainda disponível: ${removed}`);
+assert.equal(abilities.find(item=>item.id==="sacar-e-atacar")?.name,"SAQUE RÁPIDO");
 
 const finals=read("mesa-habilidades-finais.js");
 const requiredHooks=["buildAutomationCatalog","finishDamageApplication=function","rollQuickAttack=function","rollTableCharacterSkill=function","answerAttackReaction=function","openMedicalReserve","openPrioritySwap","openOrderAttack","openEstancar","openPulse"];
@@ -22,4 +24,4 @@ const allTableCode=fs.readdirSync(new URL(".",root)).filter(name=>/^mesa.*\.js$/
 const coverage=abilities.map(ability=>({id:ability.id,explicit:allTableCode.includes(ability.id),fallback:true}));
 assert.ok(coverage.every(item=>item.explicit||item.fallback),"toda habilidade deve possuir rota automática ou guiada");
 
-console.log(JSON.stringify({ok:true,total:abilities.length,unique:150,approvedRoutes:finalApproved.length,hooks:requiredHooks.length},null,2));
+console.log(JSON.stringify({ok:true,total:abilities.length,unique:new Set(abilities.map(item=>item.id)).size,approvedRoutes:finalApproved.length,hooks:requiredHooks.length},null,2));

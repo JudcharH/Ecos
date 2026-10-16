@@ -3174,6 +3174,23 @@ function previewCombatFormulaModifiers(character,index,kind){
     const attack=characterAttackEntries(character)[Number(index)]||{},slot=syncCombatFormulaSlot(character,Number(index),attack);if(!slot)return{dice:0,bonus:0,formulas:[]};
     return activeCombatFormulaModifiers(slot,kind).reduce((summary,modifier)=>{summary.dice+=Math.max(0,Number(modifier.extraDice)||0);summary.bonus+=Number(modifier.flat)||0;if(modifier.formula)summary.formulas.push(String(modifier.formula));return summary},{dice:0,bonus:0,formulas:[]});
 }
+function characterHasCombatAbility(character,id){
+    const wanted=normalizeEnemyAbilityId(id),lists=[character?.abilities,character?.acquiredAbilities,character?.habilidades,character?.systemData?.abilities],list=lists.find(Array.isArray)||[];
+    return list.some(item=>normalizeEnemyAbilityId(typeof item==="string"?item:item?.id||item?.abilityId||item?.name)===wanted);
+}
+function quickAttackTrainingDie(character,attack){
+    const wanted=normalizeEnemyAbilityId(attack?.skill||attack?.skillName||"Luta"),skills=Array.isArray(character?.skills)?character.skills:[],skill=skills.find(item=>normalizeEnemyAbilityId(item?.id||item?.name)===wanted),training=String(skill?.training||skill?.treino||"0");
+    return /^1d(?:4|8|12)$/i.test(training)?training.toLowerCase():"";
+}
+function includeQuickAttackTraining(formula,character,attack){
+    const training=quickAttackTrainingDie(character,attack),dice=String(formula||"").match(/\d*d\d+/gi)||[];
+    if(!training||dice.length>1)return String(formula||"");
+    return String(formula||"").replace(/\d*d\d+/i,match=>`${match} + ${training}`);
+}
+function stepQuickDamageDie(formula,steps=1){
+    const order=[4,6,8,10,12];
+    return String(formula||"").replace(/(\d*)d(\d+)/i,(match,count,sides)=>{const index=order.indexOf(Number(sides));if(index<0)return match;return`${count||1}d${order[Math.min(order.length-1,index+Math.max(0,Number(steps)||0))]}`;});
+}
 window.ECO_COMBAT_FORMULAS={sync:syncCombatFormulaSlot,resolve:resolveCombatFormula,previewModifiers:previewCombatFormulaModifiers,addModifier:addCombatFormulaModifier,removeModifier:removeCombatFormulaModifier,state:combatFormulaBridge};
 function rollQuickAttack(
     index,
@@ -3217,6 +3234,12 @@ function rollQuickAttack(
         formula=skill==="pontaria"
             ? String(formula).replace(/\bCorpo\b/gi,"Foco")
             : String(formula).replace(/\bFoco\b/gi,"Corpo");
+        if(type==="attack")formula=includeQuickAttackTraining(formula,currentTableCharacter,attack);
+        if(type==="damage"&&skill==="luta"&&characterHasCombatAbility(currentTableCharacter,"golpe-pesado"))formula=stepQuickDamageDie(formula,1);
+        if(type==="damage"&&skill==="pontaria"&&characterHasCombatAbility(currentTableCharacter,"tiro-certeiro")){
+            const foco=Number(currentTableCharacter?.attributes?.foco??currentTableCharacter?.foco)||0;
+            if(foco)formula=`(${formula}) + ${foco}`;
+        }
     }
 
 
@@ -4503,11 +4526,13 @@ function triggerPlayerAttackOpportunities(enemy,fromPosition,toPosition){
     const abilityState=currentTableCampaign.combat.abilityState||(currentTableCampaign.combat.abilityState={}),triggers=abilityState.attackOpportunityTriggers||(abilityState.attackOpportunityTriggers={}),round=Math.max(0,Number(currentTableCampaign.combat.round)||0);
     (currentTableCampaign.players||[]).forEach(entry=>{
         const character=getLiveCharacter(entry.characterId);if(!character)return;
-        const abilities=[character.abilities,character.acquiredAbilities,character.habilidades,character.systemData?.abilities].find(Array.isArray)||[],hasOpportunity=abilities.some(item=>normalizeEnemyAbilityId(typeof item==="string"?item:item?.id||item?.abilityId||item?.name)==="ataque-de-oportunidade");
-        if(!hasOpportunity||triggers[character.id]?.usedAt&&Number(triggers[character.id].round)===round)return;
+        const abilities=[character.abilities,character.acquiredAbilities,character.habilidades,character.systemData?.abilities].find(Array.isArray)||[],hasOpportunity=abilities.some(item=>normalizeEnemyAbilityId(typeof item==="string"?item:item?.id||item?.abilityId||item?.name)==="ataque-de-oportunidade"),hasCacada=abilities.some(item=>normalizeEnemyAbilityId(typeof item==="string"?item:item?.id||item?.abilityId||item?.name)==="cacada"),prepared=abilityState.attackOpportunity;
         const attacks=getCharacterReadyAttacks(character)||[],eligible=attacks.map((attack,index)=>({attack,index,positions:Array.isArray(attack.targetPositions)&&attack.targetPositions.length?attack.targetPositions.map(Number):(String(attack.skill||attack.skillName||"").toLowerCase()==="pontaria"?[1,2,3,4,5,6]:[1,2])})).filter(item=>item.positions.includes(fromPosition)&&!item.positions.includes(toPosition));
-        if(!eligible.length)return;
-        triggers[character.id]={active:true,characterId:character.id,enemyId:enemy.enemyId||enemy.id,enemyName:enemy.name||"Ameaça",fromPosition,toPosition,attackIndexes:eligible.map(item=>item.index),round,createdAt:Date.now()};
+        if(hasCacada&&eligible.length){abilityState.cacadaTargets=abilityState.cacadaTargets||{};abilityState.cacadaTargets[String(enemy.enemyId||enemy.id)]={characterId:character.id,enemyId:enemy.enemyId||enemy.id,round,active:true,createdAt:Date.now()};addSystemChatMessage(`${character.name} marcou ${enemy.name||"a ameaça"} com Caçada. O próximo dano causado por ele também aplicará Vulnerável.`);}
+        if(!hasOpportunity||!prepared?.active||String(prepared.characterId)!==String(character.id)||triggers[character.id]?.usedAt&&Number(triggers[character.id].round)===round)return;
+        const preparedIndex=Number(prepared.attackIndex),preparedEligible=eligible.some(item=>Number(item.index)===preparedIndex);
+        if(!preparedEligible)return;
+        triggers[character.id]={active:true,characterId:character.id,enemyId:enemy.enemyId||enemy.id,enemyName:enemy.name||"Ameaça",fromPosition,toPosition,attackIndexes:[preparedIndex],round,createdAt:Date.now()};
         currentTableCampaign.actionNotification={id:`opportunity_${Date.now()}_${Math.random().toString(36).slice(2,7)}`,kind:"Reação",icon:"↯",title:`Ataque de Oportunidade disponível para ${character.name}`,detail:`${enemy.name||"A ameaça"} saiu da posição ${fromPosition}. O ataque considera o alvo Desprevenido.`,createdAt:Date.now()};
     });
 }
@@ -12333,11 +12358,21 @@ function consumeFantasmagorico(enemy){
     state.fantasmagoricoUsedRound=round;state.fantasmagoricoSceneUses=used+1;
     return 15;
 }
+function consumeCacadaOnEnemyDamage(enemy,attackerCharacterId){
+    const state=currentTableCampaign?.combat?.abilityState,targets=state?.cacadaTargets,target=targets?.[String(enemy?.enemyId||enemy?.id)];
+    if(!target?.active||String(target.characterId)!==String(attackerCharacterId))return false;
+    enemy.conditions=Array.isArray(enemy.conditions)?enemy.conditions:[];
+    if(!enemy.conditions.some(condition=>normalizeEnemyAbilityId(typeof condition==="string"?condition:condition?.id||condition?.name)==="vulneravel"))enemy.conditions.push({id:"vulneravel",name:"Vulnerável",icon:"🎯",description:"Sofre os efeitos da condição Vulnerável.",source:"cacada"});
+    target.active=false;target.consumedAt=Date.now();
+    addSystemChatMessage(`${enemy.name||"A ameaça"} recebeu Vulnerável pelo efeito de Caçada.`);
+    return true;
+}
 function applyDamageToEnemy(enemy){
     if(!enemy||!pendingDamageApplication)return;
     const enemyId=enemy.enemyId||enemy.id;
     enemy=(currentTableCampaign.enemies||[]).find(item=>String(item.enemyId||item.id)===String(enemyId))||enemy;
     const originalDamage=Math.max(0,Number(pendingDamageApplication.damage)||0),context=currentTableCampaign.combat?.damageContext,contextMatches=context?.active===true&&String(context.targetEnemyId)===String(enemy.enemyId||enemy.id),ritualImmune=enemyHasAbility(enemy,"apice-do-poder")&&pendingDamageApplication.isRitual&&normalizeEnemyAbilityId(pendingDamageApplication.element)===normalizeEnemyAbilityId(enemy.element),ignoredRD=Math.max(0,Number(pendingDamageApplication.ignoreRD)||0),rawReduction=contextMatches?Math.max(0,Number(context.damageReduction)||0):Math.max(0,Number(enemy.rd)||0),baseReduction=ritualImmune?originalDamage:Math.max(0,rawReduction-ignoredRD),spectralReduction=ritualImmune?0:consumeFantasmagorico(enemy),damageReduction=Math.min(originalDamage,baseReduction+spectralReduction),finalDamage=Math.max(0,originalDamage-damageReduction);
+    consumeCacadaOnEnemyDamage(enemy,pendingDamageApplication.attackerCharacterId);
     if(enemy.lifeMode==="body"){startBodyDamageDistribution("enemy",enemy,originalDamage,damageReduction);return;}
     enemy.status=enemy.status&&typeof enemy.status==="object"?enemy.status:{};
     const before=Math.max(0,Number(enemy.status.pvAtual??enemy.pv)||0);

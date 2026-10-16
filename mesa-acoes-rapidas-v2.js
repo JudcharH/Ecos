@@ -189,7 +189,7 @@ function useSacarEAtacar(){
         return;
     }
 
-    chooseAttack("Sacar e Atacar — escolha o ataque",(attack,index)=>{
+    chooseAttack("Saque Rápido — escolha o ataque",(attack,index)=>{
         const beforePA=Number(character.status?.paAtual)||0;
         state.uses[key]=Date.now();
         if(typeof saveTableCampaign==="function") saveTableCampaign();
@@ -207,11 +207,11 @@ function useSacarEAtacar(){
         }
 
         notify(
-            `${character.name||"O personagem"} utilizou Sacar e Atacar`,
+            `${character.name||"O personagem"} utilizou Saque Rápido`,
             `${attack.name||`Ataque ${index+1}`} foi realizado sem gastar PA.`,
             "⚔"
         );
-        addSystemChatMessage?.(`${character.name||"O personagem"} utilizou Sacar e Atacar com ${attack.name||`Ataque ${index+1}`}.`);
+        addSystemChatMessage?.(`${character.name||"O personagem"} utilizou Saque Rápido com ${attack.name||`Ataque ${index+1}`}.`);
         if(typeof closeCurrentPanel==="function") closeCurrentPanel();
     });
 }
@@ -234,6 +234,7 @@ function armAttackOpportunity(){
             message.opportunityDesprevenido=true;
             message.targetPositions=[Number(trigger.toPosition)];
             trigger.active=false;trigger.usedAt=Date.now();
+            if(state.attackOpportunity?.characterId===character.id)state.attackOpportunity.active=false;
             saveTableCampaign();
             if(typeof closeCurrentPanel==="function")closeCurrentPanel();
             if(typeof startAttackTargetSelection==="function")startAttackTargetSelection(message.id);
@@ -276,7 +277,7 @@ function patchRollBonuses(){
 
         if(nextMeta.rollKind==="attack"){
             const prepared=state.nextAttack;
-            if(prepared&&(!prepared.characterId||prepared.characterId===characterId)){
+            if(prepared&&(!prepared.characterId||prepared.characterId===characterId)&&(prepared.attackIndex==null||Number(prepared.attackIndex)===Number(nextMeta.attackIndex))){
                 const bonus=Math.max(0,Number(prepared.attackBonus)||0);
                 if(bonus){
                     nextTotal+=bonus;
@@ -290,6 +291,7 @@ function patchRollBonuses(){
                         characterId,
                         amount:damageBonus,
                         source:prepared.source||"ataque-especial",
+                        attackIndex:prepared.attackIndex??nextMeta.attackIndex,
                         attackName:nextMeta.attackName||null,
                         createdAt:Date.now()
                     };
@@ -300,7 +302,7 @@ function patchRollBonuses(){
         }
         else if(nextMeta.rollKind==="damage"){
             const pending=state.pendingDamageBonus;
-            if(pending&&(!pending.characterId||pending.characterId===characterId)){
+            if(pending&&(!pending.characterId||pending.characterId===characterId)&&(pending.attackIndex==null||Number(pending.attackIndex)===Number(nextMeta.attackIndex))){
                 const bonus=Math.max(0,Number(pending.amount)||0);
                 if(bonus){
                     nextTotal+=bonus;
@@ -373,7 +375,7 @@ function enhanceAbilityPanel(){
         const button=document.createElement("button");
         button.type="button";
         button.className="primary-button";
-        button.textContent=id==="sacar-e-atacar"?"Usar":"Ativar";
+        button.textContent=id==="sacar-e-atacar"?"Usar":"Preparar / reagir";
         button.addEventListener("click",event=>{
             event.preventDefault();event.stopImmediatePropagation();
             if(id==="sacar-e-atacar") useSacarEAtacar();
