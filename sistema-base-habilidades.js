@@ -12,7 +12,8 @@ const DISCARDED_ABILITY_IDS=new Set([
     "maquina-de-matar","lobo-solitario","incansavel","atirar-para-matar",
     "determinacao-fisica","determinacao","levantar-escudo","escudo-de-emergencia",
     "ultima-barreira","ancorado-corporal","dominio-de-terreno","inspirar-confianca",
-    "ordem-de-ataque","ordem-de-reacao"
+    "ordem-de-ataque","ordem-de-reacao","nos-olhos-do-monstro","canalizacao-profunda",
+    "eco-ritualistico","convergencia-elemental"
 ]);
 
 const ABILITY_REVISIONS={

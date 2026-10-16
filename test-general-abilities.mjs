@@ -8,10 +8,10 @@ const sandbox={window:{},document:{readyState:"loading",addEventListener(){},que
 vm.createContext(sandbox);
 vm.runInContext(read("sistema-base-habilidades.js"),sandbox);
 const abilities=sandbox.window.SYSTEM_BASE_V2_ABILITIES;
-assert.equal(abilities.length,136,"a biblioteca deve refletir as remoções ofensivas, defensivas e de suporte aprovadas");
-assert.equal(new Set(abilities.map(item=>item.id)).size,136,"IDs de habilidades devem ser únicos");
+assert.equal(abilities.length,132,"a biblioteca deve refletir as remoções ofensivas, defensivas, de suporte e paranormais aprovadas");
+assert.equal(new Set(abilities.map(item=>item.id)).size,132,"IDs de habilidades devem ser únicos");
 assert.ok(abilities.every(item=>item.id&&item.name&&item.description),"toda habilidade precisa de nome, ID e descrição");
-for(const removed of ["em-furia","golpe-arriscado","duplo-golpe","retribuir","maquina-de-matar","lobo-solitario","incansavel","atirar-para-matar","levantar-escudo","escudo-de-emergencia","ultima-barreira","ancorado-corporal","dominio-de-terreno","inspirar-confianca","ordem-de-ataque","ordem-de-reacao"])assert.ok(!abilities.some(item=>item.id===removed),`habilidade removida ainda disponível: ${removed}`);
+for(const removed of ["em-furia","golpe-arriscado","duplo-golpe","retribuir","maquina-de-matar","lobo-solitario","incansavel","atirar-para-matar","levantar-escudo","escudo-de-emergencia","ultima-barreira","ancorado-corporal","dominio-de-terreno","inspirar-confianca","ordem-de-ataque","ordem-de-reacao","nos-olhos-do-monstro","canalizacao-profunda","eco-ritualistico","convergencia-elemental"])assert.ok(!abilities.some(item=>item.id===removed),`habilidade removida ainda disponível: ${removed}`);
 assert.equal(abilities.find(item=>item.id==="sacar-e-atacar")?.name,"SAQUE RÁPIDO");
 
 const finals=read("mesa-habilidades-finais.js");
