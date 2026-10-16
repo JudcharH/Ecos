@@ -220,8 +220,29 @@ function armAttackOpportunity(){
     refreshAll();
     const character=currentTableCharacter;
     if(!character) return;
+    const state=abilityState(),trigger=state.attackOpportunityTriggers?.[character.id];
+    if(trigger?.active){
+        const eligible=new Set((trigger.attackIndexes||[]).map(Number));
+        chooseAttack(`Ataque de Oportunidade contra ${trigger.enemyName||"a ameaça"}`,(attack,index)=>{
+            if(!eligible.has(Number(index))){addSystemChatMessage?.("Este ataque não alcançava a posição que a ameaça abandonou.");return;}
+            const before=(currentTableCampaign.chatMessages||[]).length;
+            rollQuickAttack(index,"attack");
+            refreshAll();
+            const message=(currentTableCampaign.chatMessages||[]).slice(before).reverse().find(item=>item.type==="roll"&&item.rollKind==="attack");
+            if(!message)return;
+            message.opportunityTargetEnemyId=trigger.enemyId;
+            message.opportunityDesprevenido=true;
+            message.targetPositions=[Number(trigger.toPosition)];
+            trigger.active=false;trigger.usedAt=Date.now();
+            saveTableCampaign();
+            if(typeof closeCurrentPanel==="function")closeCurrentPanel();
+            if(typeof startAttackTargetSelection==="function")startAttackTargetSelection(message.id);
+            notify("Ataque de Oportunidade",`${trigger.enemyName||"A ameaça"} está Desprevenida: não pode reagir e sofre -5 na Defesa.`,"↯","Reação");
+        });
+        document.querySelectorAll(".quick-v2-ability-attack").forEach(button=>{if(!eligible.has(Number(button.dataset.index)))button.disabled=true;});
+        return;
+    }
     chooseAttack("Ataque de Oportunidade — escolha o ataque",(attack,index)=>{
-        const state=abilityState();
         state.attackOpportunity={
             active:true,
             characterId:character.id,

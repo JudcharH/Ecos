@@ -3211,6 +3211,15 @@ function rollQuickAttack(
             ? (attack.healing || attack.cure || attack.cura || attack.damage)
             : attack.roll;
 
+    /* Corrige fichas antigas sem apagar modificadores temporários que outras
+       habilidades acrescentaram à fórmula antes desta rolagem. */
+    if(!isHealing&&!isHealingTest){
+        const skill=String(attack.skill||attack.skillName||"Luta").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
+        formula=skill==="pontaria"
+            ? String(formula).replace(/\bCorpo\b/gi,"Foco")
+            : String(formula).replace(/\bFoco\b/gi,"Corpo");
+    }
+
 
     if(!formula){
 
@@ -3315,6 +3324,10 @@ addRollChatMessage(
             attack.skillName ||
             attack.testSkill ||
             null,
+
+        targetPositions:Array.isArray(attack.targetPositions)
+            ? attack.targetPositions.map(Number).filter(position=>position>=1&&position<=6)
+            : (String(attack.skill||attack.skillName||"").toLowerCase()==="pontaria"?[1,2,3,4,5,6]:[1,2]),
 
         playerCritical,
 
@@ -4454,7 +4467,7 @@ function placeEntityAtPosition(type,entity,position){
         });
         if(collision){alert("Não há espaço livre suficiente nessas posições.");return;}
         if(existing){
-            const moved=Number(existing.position)!==Number(position);
+            const previousPosition=Number(existing.position)||0,moved=previousPosition!==Number(position);
             existing.position=position;
             existing.occupiedPositions=occupied;
             if(moved&&enemyHasAbility(existing,"investida")){
@@ -4462,6 +4475,7 @@ function placeEntityAtPosition(type,entity,position){
                 state.investidaMovedRound=enemyCombatRound();
                 state.investidaArmed=false;
             }
+            if(moved)triggerPlayerAttackOpportunities(existing,previousPosition,Number(position));
         }else{
             const instanceId="enemy-instance-"+Date.now()+"-"+Math.random().toString(36).slice(2,7);
             const paMax=Math.max(0,Number(entity.pa)||0);
@@ -4478,6 +4492,21 @@ function placeEntityAtPosition(type,entity,position){
     saveTableCampaign();closeCurrentPositionModal();renderCombatPositions();
     addSystemChatMessage(`${entity.name||"Entidade"} foi colocado na posição ${position}.`);
     notifyCinematicUpdate("eco:campaign-render");
+}
+
+function triggerPlayerAttackOpportunities(enemy,fromPosition,toPosition){
+    if(!enemy||!fromPosition||fromPosition===toPosition)return;
+    currentTableCampaign.combat=currentTableCampaign.combat||{};
+    const abilityState=currentTableCampaign.combat.abilityState||(currentTableCampaign.combat.abilityState={}),triggers=abilityState.attackOpportunityTriggers||(abilityState.attackOpportunityTriggers={}),round=Math.max(0,Number(currentTableCampaign.combat.round)||0);
+    (currentTableCampaign.players||[]).forEach(entry=>{
+        const character=getLiveCharacter(entry.characterId);if(!character)return;
+        const abilities=[character.abilities,character.acquiredAbilities,character.habilidades,character.systemData?.abilities].find(Array.isArray)||[],hasOpportunity=abilities.some(item=>normalizeEnemyAbilityId(typeof item==="string"?item:item?.id||item?.abilityId||item?.name)==="ataque-de-oportunidade");
+        if(!hasOpportunity||triggers[character.id]?.usedAt&&Number(triggers[character.id].round)===round)return;
+        const attacks=getCharacterReadyAttacks(character)||[],eligible=attacks.map((attack,index)=>({attack,index,positions:Array.isArray(attack.targetPositions)&&attack.targetPositions.length?attack.targetPositions.map(Number):(String(attack.skill||attack.skillName||"").toLowerCase()==="pontaria"?[1,2,3,4,5,6]:[1,2])})).filter(item=>item.positions.includes(fromPosition)&&!item.positions.includes(toPosition));
+        if(!eligible.length)return;
+        triggers[character.id]={active:true,characterId:character.id,enemyId:enemy.enemyId||enemy.id,enemyName:enemy.name||"Ameaça",fromPosition,toPosition,attackIndexes:eligible.map(item=>item.index),round,createdAt:Date.now()};
+        currentTableCampaign.actionNotification={id:`opportunity_${Date.now()}_${Math.random().toString(36).slice(2,7)}`,kind:"Reação",icon:"↯",title:`Ataque de Oportunidade disponível para ${character.name}`,detail:`${enemy.name||"A ameaça"} saiu da posição ${fromPosition}. O ataque considera o alvo Desprevenido.`,createdAt:Date.now()};
+    });
 }
 
 /*==========================================================
@@ -9648,6 +9677,14 @@ function startAttackTargetSelection(
 
         attackSkill:message.attackSkill||getCharacterReadyAttacks(getLiveCharacter(message.characterId))[message.attackIndex]?.skill||null
 
+        ,targetPositions:Array.isArray(message.targetPositions)&&message.targetPositions.length
+            ? message.targetPositions.map(Number)
+            : [1,2,3,4,5,6]
+
+        ,forcedTargetEnemyId:message.opportunityTargetEnemyId||null
+
+        ,desprevenido:message.opportunityDesprevenido===true
+
     };
 
 
@@ -9681,11 +9718,9 @@ function markAttackTargets(){
             ".player-position.occupied, .enemy-position.occupied, .cinematic-slot.occupied"
         )
         .forEach(position => {
-
-            position.classList.add(
-                "attack-target-selectable"
-            );
-
+            const targetType=position.dataset.cinematicType||(position.classList.contains("enemy-position")?"enemy":"player"),targetPosition=Number(position.dataset.position),allowed=pendingAttackApplication?.targetPositions||[1,2,3,4,5,6],attackerIsPlayer=Boolean(pendingAttackApplication?.attackerCharacterId),correctSide=attackerIsPlayer?targetType==="enemy":targetType==="player";
+            if(correctSide&&allowed.includes(targetPosition))position.classList.add("attack-target-selectable");
+            else position.classList.add("attack-target-out-of-range");
         });
 
 }
@@ -9780,13 +9815,14 @@ function cancelAttackTargetSelection(){
 
     document
         .querySelectorAll(
-            ".attack-target-selectable"
+            ".attack-target-selectable, .attack-target-out-of-range"
         )
         .forEach(element => {
 
             element.classList.remove(
                 "attack-target-selectable"
             );
+            element.classList.remove("attack-target-out-of-range");
 
         });
 
@@ -9812,6 +9848,16 @@ function applyPendingAttackToTarget(
 
         return;
 
+    }
+
+    const targetPosition=Number(entity?.position)||0;
+    if(targetPosition&&!(pendingAttackApplication.targetPositions||[1,2,3,4,5,6]).includes(targetPosition)){
+        addLocalAttackNotice(`Alvo fora da distância de ${pendingAttackApplication.attackName}. Posições permitidas: ${(pendingAttackApplication.targetPositions||[]).join(", ")}.`);
+        return;
+    }
+    if(type==="enemy"&&pendingAttackApplication.forcedTargetEnemyId&&String(entity?.enemyId||entity?.id)!==String(pendingAttackApplication.forcedTargetEnemyId)){
+        addLocalAttackNotice("O Ataque de Oportunidade só pode atingir a ameaça que provocou a reação.");
+        return;
     }
 
     if(type==="enemy"){
@@ -9905,7 +9951,7 @@ function resolveAttackAgainstEnemy(enemy){
     if(enemyHasAbility(enemy,"espinhoso")&&pendingAttackApplication.attackerCharacterId){const attacker=getLiveCharacter(pendingAttackApplication.attackerCharacterId);if(attacker)damageCharacterFromAbility(attacker,Math.max(0,Number(enemy.corpo)||0),`Espinhoso de ${enemy.name||"Ameaça"}`);}
     if(enemyHasAbility(enemy,"toque-da-morte")&&normalizeEnemyAbilityId(pendingAttackApplication.attackSkill)==="luta"&&pendingAttackApplication.attackerCharacterId){const attacker=getLiveCharacter(pendingAttackApplication.attackerCharacterId);if(attacker){attacker.age=(Number(attacker.age)||0)+3;saveDamagedCharacter(attacker);addSystemChatMessage(`${attacker.name||"O atacante"} envelheceu 3 anos ao atacar ${enemy.name||"a ameaça"} com Luta.`);}}
     currentTableCampaign.combat=currentTableCampaign.combat||{};
-    currentTableCampaign.combat.pendingEnemyAttack={id:`enemy_attack_${Date.now()}_${Math.random().toString(36).slice(2,8)}`,active:true,resolved:false,messageId:pendingAttackApplication.messageId,attackName:pendingAttackApplication.attackName,attackResult:Math.max(0,Number(pendingAttackApplication.attackResult)||0),attackerCharacterId:pendingAttackApplication.attackerCharacterId||null,attackerName:pendingAttackApplication.attackerName||"Atacante",targetEnemyId:enemy.enemyId||enemy.id,targetName:enemy.name||"Ameaça",createdAt:Date.now()};
+    currentTableCampaign.combat.pendingEnemyAttack={id:`enemy_attack_${Date.now()}_${Math.random().toString(36).slice(2,8)}`,active:true,resolved:false,messageId:pendingAttackApplication.messageId,attackName:pendingAttackApplication.attackName,attackResult:Math.max(0,Number(pendingAttackApplication.attackResult)||0),attackerCharacterId:pendingAttackApplication.attackerCharacterId||null,attackerName:pendingAttackApplication.attackerName||"Atacante",targetEnemyId:enemy.enemyId||enemy.id,targetName:enemy.name||"Ameaça",desprevenido:pendingAttackApplication.desprevenido===true,createdAt:Date.now()};
     saveTableCampaign();cancelAttackTargetSelection();addSystemChatMessage(`${pendingAttackApplication?.attackerName||"O atacante"} atacou ${enemy.name||"a ameaça"}. Aguardando reação da criatura.`);checkPendingEnemyAttackReaction();
 }
 
@@ -9915,6 +9961,7 @@ function checkPendingEnemyAttackReaction(){
     if(!request||request.active!==true||request.resolved===true)return;
     const enemy=(currentTableCampaign.enemies||[]).find(item=>String(item.enemyId||item.id)===String(request.targetEnemyId));
     if(!enemy)return;
+    if(request.desprevenido===true){answerEnemyAttackReaction("surprised");return;}
     const pa=Math.max(0,Number(enemy.status?.paAtual??enemy.paAtual??enemy.pa)||0),state=enemyAbilityState(enemy),majorReady=state.esquivaMaiorArmed&&enemyHasAbility(enemy,"esquiva-maior");
     openTablePanel("REAÇÃO",enemy.name||"Ameaça",`<div class="table-panel-card"><h3>${escapeTableHTML(request.attackerName||"Atacante")} atacou</h3><p>Ataque: <strong>${Number(request.attackResult)||0}</strong></p><p>Defesa: <strong>${Number(enemy.defense)||0}</strong> • RD: <strong>${Number(enemy.rd)||0}</strong> • PA: <strong>${pa}</strong></p>${majorReady?'<p><strong>Esquiva Maior preparada:</strong> ao escolher Esquivar, a RD do próximo dano será dobrada.</p>':""}</div><div class="attack-reaction-grid"><button type="button" class="attack-reaction-button enemy-reaction-choice" data-reaction="dodge" ${pa<1?"disabled":""}><strong>Esquivar</strong><span>1 PA • Presteza na Defesa</span></button><button type="button" class="attack-reaction-button enemy-reaction-choice" data-reaction="block" ${pa<1?"disabled":""}><strong>Bloquear</strong><span>1 PA • RD + Corpo</span></button><button type="button" class="attack-reaction-button enemy-reaction-choice" data-reaction="counter" ${pa<1?"disabled":""}><strong>Contra-atacar</strong><span>1 PA • ataca se o golpe errar</span></button><button type="button" class="attack-reaction-button enemy-reaction-choice" data-reaction="guard"><strong>Guardar</strong><span>Sem custo</span></button></div>`);
     document.querySelectorAll(".enemy-reaction-choice").forEach(button=>button.addEventListener("click",()=>answerEnemyAttackReaction(button.dataset.reaction)));
@@ -9928,7 +9975,9 @@ function answerEnemyAttackReaction(reactionType){
     const pressure=Math.max(0,Number(enemy.combatPressure)||0),baseDefense=Math.max(0,(Number(enemy.defense)||0)-pressure),baseRD=Math.max(0,Number(enemy.rd)||0),currentPA=Math.max(0,Number(enemy.status.paAtual??enemy.paAtual??enemy.pa)||0),state=enemyAbilityState(enemy),round=enemyCombatRound();
     let cost=0,finalDefense=baseDefense,reactionRD=baseRD,reactionName="Guardar",dodgeResult=null,majorTriggered=false;
     if(["dodge","block","counter"].includes(reactionType)){cost=1;if(currentPA<1)return;}
-    if(reactionType==="dodge"){
+    if(reactionType==="surprised"){
+        reactionName="Desprevenido";finalDefense=Math.max(0,baseDefense-5);
+    }else if(reactionType==="dodge"){
         reactionName="Esquivar";
         dodgeResult=rollEnemyTrainedTest(enemy,"Presteza");finalDefense+=Math.max(0,Number(dodgeResult?.total)||0);
         if(state.esquivaMaiorArmed&&enemyHasAbility(enemy,"esquiva-maior")){majorTriggered=true;reactionRD=baseRD*2;state.esquivaMaiorArmed=false;state.esquivaMaiorUsedRound=round;state.esquivaMaiorSceneUses=Math.max(0,Number(state.esquivaMaiorSceneUses)||0)+1;}
@@ -12058,6 +12107,12 @@ function startDamageTargetSelection(
 
         isRitual:message.isRitual===true||message.rollKind==="ritual-damage"
 
+        ,attackIndex:message.attackIndex??null
+
+        ,targetPositions:Array.isArray(message.targetPositions)&&message.targetPositions.length
+            ? message.targetPositions.map(Number)
+            : [1,2,3,4,5,6]
+
     };
 
 
@@ -12099,11 +12154,9 @@ function markDamageTargets(){
             ".player-position.occupied, .enemy-position.occupied, .cinematic-slot.occupied"
         )
         .forEach(position => {
-
-            position.classList.add(
-                "damage-target-selectable"
-            );
-
+            const targetType=position.dataset.cinematicType||(position.classList.contains("enemy-position")?"enemy":"player"),targetPosition=Number(position.dataset.position),allowed=pendingDamageApplication?.targetPositions||[1,2,3,4,5,6],attackerIsPlayer=Boolean(pendingDamageApplication?.attackerCharacterId),correctSide=attackerIsPlayer?targetType==="enemy":targetType==="player";
+            if(correctSide&&allowed.includes(targetPosition))position.classList.add("damage-target-selectable");
+            else position.classList.add("damage-target-out-of-range");
         });
 
 }
@@ -12121,6 +12174,12 @@ function applyPendingDamageToTarget(
 
         return;
 
+    }
+
+    const targetPosition=Number(entity?.position)||0;
+    if(targetPosition&&!(pendingDamageApplication.targetPositions||[1,2,3,4,5,6]).includes(targetPosition)){
+        addLocalDamageNotice(`Alvo fora da distância de ${pendingDamageApplication.attackName}. Posições permitidas: ${(pendingDamageApplication.targetPositions||[]).join(", ")}.`);
+        return;
     }
 
     if(type==="enemy"){
@@ -12900,13 +12959,15 @@ function cancelDamageTargetSelection(){
 
     document
         .querySelectorAll(
-            ".damage-target-selectable"
+            ".damage-target-selectable, .damage-target-out-of-range"
         )
         .forEach(element => {
 
             element.classList.remove(
                 "damage-target-selectable"
             );
+
+            element.classList.remove("damage-target-out-of-range");
 
         });
 

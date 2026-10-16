@@ -247,6 +247,11 @@ function init(){
     tryApply();
 }
 
+const opportunityAbility=OFFICIAL_ABILITIES.find(item=>item.id==="ataque-de-oportunidade");
+if(opportunityAbility){
+    opportunityAbility.description="Tipo: Reação • Limite: 1 vez por rodada. Quando um inimigo sair voluntariamente do alcance de um ataque seu, o sistema avisa e permite atacar imediatamente. O alvo é considerado Desprevenido. Não funciona contra teleporte ou movimento forçado.";
+    opportunityAbility.rules={...opportunityAbility.rules,Efeito:"Quando um inimigo sair voluntariamente do alcance de um ataque seu, realize imediatamente um ataque contra ele.",Benefício:"O alvo é considerado Desprevenido (-5 Defesa e sem reação)."};
+}
 window.SYSTEM_BASE_V2_ABILITIES=OFFICIAL_ABILITIES.map(cloneAbility);
 window.getSystemBaseCriticalMargin=getCriticalMargin;
 window.getSystemBaseCriticalThreshold=getCriticalThreshold;
