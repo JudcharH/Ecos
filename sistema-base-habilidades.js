@@ -35,6 +35,7 @@ const ABILITY_REVISIONS={
     "escudo-vivo":{description:"Enquanto permanecer adjacente a um aliado, ele recebe +2 em Defesa."},
     "pele-dura":{description:"Reação. Gaste 1 PA para reduzir pela metade o dano recebido. Limite: 1 vez por rodada.",useCost:{type:"pa",value:1},abilityType:"reaction"},
     "segunda-respiracao":{description:"Recupera 8 PV. Limite de usos por cena igual ao atributo Corpo."},
+    "paramedico":{description:"Gaste 2 PM para curar 2d10 PV de um alvo. Para cada +3 PM gastos, a cura aumenta em +2d10.",useCost:{type:"pd",value:2},abilityType:"active"},
     "defesa-perfeita":{description:"Passiva. Ataques bem-sucedidos contra você não geram a penalidade cumulativa de -2 na Defesa."},
     "adaptacao-rapida":{description:"Após sofrer um tipo de dano, recebe RD 2 cumulativa contra esse tipo até o fim da cena."},
     "surto-de-adrenalina":{description:"Gaste 4 PM para receber +1 PA temporário nesta rodada.",useCost:{type:"pd",value:4}},

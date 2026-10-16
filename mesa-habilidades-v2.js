@@ -225,12 +225,28 @@ function openAbilitiesV2(character=null){
     `);
     document.querySelectorAll(".use-ability-v2").forEach(button=>button.addEventListener("click",()=>useAbilityV2(button.dataset.id)));
 }
-function removeAbilityV2(id){
-    const character=abilityPanelCharacter||currentTableCharacter;if(!character)return false;
+function removeAbilityV2(id,explicitCharacter=null){
+    const character=explicitCharacter||abilityPanelCharacter||currentTableCharacter;if(!character)return false;
     const keys=["abilities","acquiredAbilities","habilidades"],key=keys.find(name=>Array.isArray(character[name]))||"abilities",list=Array.isArray(character[key])?character[key]:[],index=list.findIndex(item=>abilityId(item)===id);if(index<0)return false;
     const removed=list[index],cost=Math.max(0,Number(removed?._ecoAcquisitionCostPM)||4);list.splice(index,1);character.status=character.status||{};character.status.pmMax=Math.max(0,Number(character.status.pmMax??character.status.pdMax)||0)+cost;character.status.pdMax=character.status.pmMax;
     saveDamagedCharacter(character);if(typeof window.openCinematicAbilities==="function")window.openCinematicAbilities(character);else openAbilitiesV2(character);return true;
 }
+function applyAbilityHealing(character,amount,label){
+    const value=Math.max(0,Number(amount)||0);if(!character||!value)return 0;
+    if(window.ECO_BLOOD_ASSIMILATION_AUTOMATION?.heal)return window.ECO_BLOOD_ASSIMILATION_AUTOMATION.heal(character,value,label);
+    character.status=character.status||{};const before=Math.max(0,Number(character.status.pvAtual)||0),maximum=Math.max(before,Number(character.status.pvMax)||0);character.status.pvAtual=Math.min(maximum,before+value);saveDamagedCharacter(character);return character.status.pvAtual-before;
+}
+function chooseAbilityHealingTarget(title,onChoose){
+    const entries=(currentTableCampaign?.players||[]).map(entry=>({entry,character:getLiveCharacter(entry.characterId)})).filter(item=>item.character);
+    if(currentTableCharacter&&!entries.some(item=>String(item.character.id)===String(currentTableCharacter.id)))entries.unshift({entry:null,character:currentTableCharacter});
+    openTablePanel("CURA",title,`<div class="table-panel-list">${entries.map(({entry,character})=>`<button type="button" class="table-panel-card ability-healing-target" data-id="${escapeTableHTML(character.id)}"><h3>${escapeTableHTML(character.name||"Alvo")}</h3><p>${entry?.position?`Posição ${entry.position}`:"Personagem"}</p></button>`).join("")||'<p>Nenhum alvo disponível.</p>'}</div>`);
+    document.querySelectorAll(".ability-healing-target").forEach(button=>button.onclick=()=>onChoose(getLiveCharacter(button.dataset.id)||entries.find(item=>String(item.character.id)===String(button.dataset.id))?.character));
+}
+function generalAbilitySkillBonus(character,skillName){
+    const id=slug(skillName),entry=currentTableCampaign?.combat?.abilityState?.skillBonuses?.[character?.id]?.[id],round=roundNumber();
+    return entry&&Number(entry.expiresRound)>=round?Number(entry.bonus)||0:0;
+}
+window.ECO_GENERAL_ABILITY_SKILL_BONUS=generalAbilitySkillBonus;
 
 function openAttackSpecial(ability){
     refreshCurrentTableCharacter();
@@ -321,10 +337,18 @@ function useAbilityV2(id){
         const limit=Math.max(1,Number(character.attributes?.corpo??character.attributes?.for)||1),scene=sceneId(),state=combatState();
         state.sceneUses=state.sceneUses||{};const key=`${id}:${character.id}:${scene}`,uses=Number(state.sceneUses[key])||0;
         if(uses>=limit){addSystemChatMessage(`Segunda Respiração atingiu o limite de ${limit} uso(s) nesta cena.`);return;}
-        character.status=character.status||{};const maximum=Math.max(0,Number(character.status.pvMax)||0),before=Math.max(0,Number(character.status.pvAtual)||0);
-        character.status.pvAtual=Math.min(maximum,before+8);state.sceneUses[key]=uses+1;saveDamagedCharacter(character);saveTableCampaign();
-        notify(`${character.name} utilizou Segunda Respiração`,`Recuperou ${character.status.pvAtual-before} PV. Uso ${uses+1}/${limit}.`,"💚");
-        openAbilitiesV2();return;
+        const restored=applyAbilityHealing(character,8,"Segunda Respiração");state.sceneUses[key]=uses+1;saveTableCampaign();
+        notify(`${character.name} utilizou Segunda Respiração`,`Gerou 8 PV de cura${character.lifeMode==="body"?" para distribuir entre os membros":` e recuperou ${restored}`}. Uso ${uses+1}/${limit}.`,"💚");
+        if(character.lifeMode!=="body")openAbilitiesV2();return;
+    }
+    if(id==="paramedico"){
+        const available=Math.max(0,Number(character.status?.pmAtual??character.status?.pdAtual)||0);if(available<2){addSystemChatMessage("PM insuficiente para Paramédico.");return;}
+        const costs=[];for(let value=2;value<=available;value+=3)costs.push(value);
+        openTablePanel("HABILIDADE","Paramédico",`<div class="table-panel-card"><p>2 PM curam 2d10. Cada +3 PM adiciona outros 2d10.</p></div><div class="table-panel-list">${costs.map(cost=>`<button class="table-panel-card paramedic-cost" data-cost="${cost}"><h3>${cost} PM</h3><p>${2+(Math.floor((cost-2)/3)*2)}d10 PV</p></button>`).join("")}</div>`);
+        document.querySelectorAll(".paramedic-cost").forEach(button=>button.onclick=()=>{const pm=Math.max(2,Number(button.dataset.cost)||2),dice=2+(Math.floor((pm-2)/3)*2);chooseAbilityHealingTarget(`Paramédico • ${dice}d10`,target=>{if(!target||!spend(character,"pm",pm))return;const result=rollDiceExpression(`${dice}d10`);applyAbilityHealing(target,result?.total||0,"Paramédico");addRollChatMessage(`Paramédico • ${character.name} → ${target.name}`,`${dice}d10`,result?.total||0,result?.detail||"",{rollKind:"healing",characterId:character.id,targetCharacterId:target.id});notify(`${character.name} utilizou Paramédico`,`${target.name} recebeu ${result?.total||0} pontos de cura.`,"💚");if(target.lifeMode!=="body")closeCurrentPanel();});});return;
+    }
+    if(id==="movimento-fantasma"){
+        if(!spend(character,"pm",3))return;const state=combatState();state.skillBonuses=state.skillBonuses||{};state.skillBonuses[character.id]=state.skillBonuses[character.id]||{};state.skillBonuses[character.id].discreto={bonus:5,source:"Movimento Fantasma",expiresRound:roundNumber()};saveTableCampaign();notify(`${character.name} utilizou Movimento Fantasma`,`+5 em Discreto até o fim da rodada e não provoca Ataques de Oportunidade.`,"👻");openAbilitiesV2();return;
     }
     const cost=parseCost(ability);
     if(cost.amount&&!spend(character,cost.resource,cost.amount)) return;
@@ -444,6 +468,7 @@ function install(){
     }
 
     window.openSystemBaseAbilitiesPanel=openAbilitiesV2;
+    window.removeAbilityV2=removeAbilityV2;
     window.applySystemBaseCriticalToLatestRoll=applyCriticalToLatestRoll;
 }
 

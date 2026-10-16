@@ -3240,7 +3240,10 @@ function rollQuickAttack(
         formula=skill==="pontaria"
             ? String(formula).replace(/\bCorpo\b/gi,"Foco")
             : String(formula).replace(/\bFoco\b/gi,"Corpo");
-        if(type==="attack")formula=includeQuickAttackTraining(formula,currentTableCharacter,attack);
+        if(type==="attack"){
+            formula=includeQuickAttackTraining(formula,currentTableCharacter,attack);
+            if(skill==="pontaria"&&characterHasCombatAbility(currentTableCharacter,"disparo-surpresa"))formula=`(${formula}) + 5`;
+        }
         if(type==="damage"&&skill==="luta"&&characterHasCombatAbility(currentTableCharacter,"golpe-pesado"))formula=stepQuickDamageDie(formula,1);
         if(type==="damage"&&skill==="pontaria"&&characterHasCombatAbility(currentTableCharacter,"tiro-certeiro")){
             const foco=Number(currentTableCharacter?.attributes?.foco??currentTableCharacter?.foco)||0;
@@ -8374,7 +8377,7 @@ function rollTableCharacterSkill(
 ){
     const skill=character.skills?.find(item=>String(item.id)===String(skillId));if(!skill)return;
     const assist=currentTableCampaign?.combat?.npcAssists?.[character.id],npcTestBonus=assist&&Number(assist.round)===enemyCombatRound()?Number(assist.testBonus)||0:0;
-    const attribute=skill.selectedAttribute||skill.attribute||enemySkillAttribute(skill.name),attributeValue=Number(character.attributes?.[attribute]??character[attribute])||0,bonus=Number(skill.bonus)||0,penalty=Math.abs(Number(skill.penalty??skill.penalidade)||0),conditionModifier=getTableSkillConditionModifier(character,skill),result=rollCharacterTrainedTest(skill.training||skill.treino||"0",attributeValue+bonus-penalty+conditionModifier+npcTestBonus);if(!result)return;
+    const attribute=skill.selectedAttribute||skill.attribute||enemySkillAttribute(skill.name),attributeValue=Number(character.attributes?.[attribute]??character[attribute])||0,bonus=Number(skill.bonus)||0,abilityBonus=Number(window.ECO_GENERAL_ABILITY_SKILL_BONUS?.(character,skill.name))||0,penalty=Math.abs(Number(skill.penalty??skill.penalidade)||0),conditionModifier=getTableSkillConditionModifier(character,skill),result=rollCharacterTrainedTest(skill.training||skill.treino||"0",attributeValue+bonus+abilityBonus-penalty+conditionModifier+npcTestBonus);if(!result)return;
     if(npcTestBonus){assist.testBonus=0;saveTableCampaign();}
     addRollChatMessage(`${skill.name||"Perícia"} • ${character.name||"Personagem"}${result.critical?" • CRÍTICO":""}`,result.formula,result.total,`${enemyRollDetail(result)}${result.critical?" • d12 principal = 12 • dado de treino adicional":""}`,{rollKind:"skill",playerCritical:result.critical});
 
