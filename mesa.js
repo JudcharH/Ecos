@@ -1434,6 +1434,8 @@ function openTablePanel(
 
     }
 
+    tablePanelOverlay.classList.remove("v3-panel-open");
+
     delete tablePanelContent.dataset.ecoPanelKind;
 
     tablePanelContent.innerHTML =
