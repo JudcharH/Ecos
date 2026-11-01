@@ -13,6 +13,7 @@
 .v3-grid>button:hover{border-color:#9d5cff;background:#221a31;transform:translateY(-1px)}
 .v3-grid>button b,.v3-grid>button small{display:block;margin-top:4px;color:#c5b8d3;font:500 11px/1.1 Inter,sans-serif}
 .v3-grid .v3-pv{background:linear-gradient(145deg,#10291d,#17482d);border-color:#2d9b5e;color:#d8ffe9}
+.v3-grid .v3-pv.temporary{background:linear-gradient(145deg,#392451,#6d43a0);border-color:#b78cff;color:#f4eaff;box-shadow:0 0 20px rgba(183,140,255,.22)}
 .v3-grid .v3-pv.danger{background:linear-gradient(145deg,#381316,#651d24);border-color:#e04450;color:#ffe1e3;animation:v3-heart-pulse 1.65s ease-in-out infinite}
 .v3-grid .v3-pm.full{background:linear-gradient(145deg,#10294a,#174f82);border-color:#378bd0;color:#e2f3ff}
 .v3-grid .v3-pm.normal{background:linear-gradient(145deg,#15283c,#28506d);border-color:#527f9f}.v3-grid .v3-pm.mid{background:linear-gradient(145deg,#202833,#344454);border-color:#687b8d}.v3-grid .v3-pm.low{background:linear-gradient(145deg,#25292f,#363c44);border-color:#646d77}.v3-grid .v3-pm.empty{background:#2d2d32;border-color:#505057;color:#aaa}
