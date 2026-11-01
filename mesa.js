@@ -1936,6 +1936,7 @@ function openCharacterPanel(){
 ==========================================================*/
 
 function ensureCharacterHeart(character){
+    if(window.ECO_SHEET_V3){window.ECO_SHEET_V3.migrate(character);window.ECO_SHEET_V3.syncVitals(character,false);return character.heart;}
     if(!character)return null;const level=Math.max(1,Number(character.level)||1),corpo=Math.max(0,Number(character.attributes?.corpo??character.attributes?.for)||0),classicMax=(9*level)+(corpo*2),legacyMax=(7*level)+corpo,bodyMax=Math.max(0,Number(character.bodyMaximums?.chest??character.body?.chestMax??((2*level)+corpo))||0);
     character.status=character.status&&typeof character.status==="object"?character.status:{};if(character.lifeMode!=="body"){const oldMax=Math.max(0,Number(character.status.pvMax)||0),oldCurrent=Math.max(0,Number(character.status.pvAtual)||0);if(!oldMax||oldMax===legacyMax){character.status.pvMax=classicMax;character.status.pvAtual=oldMax>0&&oldCurrent>=oldMax?classicMax:Math.min(classicMax,oldCurrent);}else character.status.pvMax=oldMax;}const heartMax=character.lifeMode==="body"?Math.max(1,bodyMax||Math.ceil(classicMax/4)):Math.ceil(Math.max(0,Number(character.status.pvMax)||classicMax)/4);
     character.heart=character.heart&&typeof character.heart==="object"?character.heart:{};const existingMax=Math.max(0,Number(character.heart.max)||0),existingCurrent=Number(character.heart.current);character.heart.max=heartMax;character.heart.current=Number.isFinite(existingCurrent)?Math.min(heartMax,Math.max(0,existingCurrent)):(existingMax?Math.min(heartMax,existingMax):heartMax);return character.heart;
@@ -4867,6 +4868,14 @@ function passCurrentCombatTurn(){
     const currentParticipant =
         getCurrentTurnParticipant();
 
+    if(currentParticipant?.type==="player"&&window.ECO_SHEET_V3){
+        const bleedingCharacter=getLiveCharacter(currentParticipant.characterId);
+        if(bleedingCharacter&&(bleedingCharacter.conditions||[]).some(condition=>normalizeEnemyAbilityId(typeof condition==="string"?condition:condition.id||condition.name)==="morrendo")){
+            const lost=window.ECO_SHEET_V3.applyBleeding(bleedingCharacter,1);
+            if(lost>0)addSystemChatMessage(`${bleedingCharacter.name} sofreu ${lost} de dano de Sangramento no Coração.`);
+        }
+    }
+
 
     const nextIndex =
         Number(
@@ -6141,6 +6150,18 @@ function triggerEnemyMetamorphosis(enemy){if(!enemy||!enemyHasAbility(enemy,"met
 function triggerEnemyLastBreath(enemy){if(!enemy||!enemyHasAbility(enemy,"ultimo-suspiro"))return false;const state=enemyAbilityState(enemy);if(state.ultimoSuspiroUsed)return false;state.ultimoSuspiroUsed=true;state.ultimoSuspiroReady=true;enemy.status=enemy.status||{};enemy.status.paAtual=Math.max(1,Number(enemy.status.paAtual)||0);enemy.paAtual=enemy.status.paAtual;saveTableCampaign();addSystemChatMessage(`${enemy.name} ativou Último Suspiro e recebeu 1 PA para realizar sua última ação.`);return true;}
 function damageCharacterFromAbility(character,amount,source){
     if(!character)return 0;const value=Math.max(0,Number(amount)||0);if(!value)return 0;
+    if(window.ECO_SHEET_V3&&Number(character.ecoV3?.version)>=3){
+        window.ECO_SHEET_V3.migrate(character);character.status=character.status||{};character.body=character.body||{};character.heart=character.heart||{};
+        const vitalityBefore=Math.max(0,Number(character.status.pvAtual)||0);
+        if(vitalityBefore<=0){const heartBefore=Math.max(0,Number(character.heart.current)||0),heartDamage=Math.min(heartBefore,value);character.heart.current=heartBefore-heartDamage;window.ECO_SHEET_V3.afterDamage(character);addSystemChatMessage(`${source} causou ${heartDamage} de dano no Coração de ${character.name}.`);return heartDamage;}
+        let applied=value;
+        if(character.lifeMode==="body"){
+            const parts=bodyDamageParts(character,"player").filter(part=>part.current>0).sort((a,b)=>b.current-a.current),part=parts[0];
+            if(part){applied=Math.min(value,part.current);if(part.state.type==="prosthetic")part.state.currentPV=part.current-applied;else character.body[part.id]=part.current-applied;const weighted=["leftArm","rightArm","leftLeg","rightLeg"].includes(part.id)?Math.ceil(applied*.75):applied;character.status.pvAtual=Math.max(0,vitalityBefore-weighted);character.body.chest=character.status.pvAtual;}
+        }else character.status.pvAtual=Math.max(0,vitalityBefore-value);
+        const overflow=Math.max(0,value-vitalityBefore),heartBefore=Math.max(0,Number(character.heart.current)||0),heartDamage=Math.min(heartBefore,overflow);if(heartDamage)character.heart.current=heartBefore-heartDamage;
+        window.ECO_SHEET_V3.afterDamage(character);addSystemChatMessage(`${source} causou ${applied} de dano em ${character.name}${heartDamage?` e ${heartDamage} no Coração`:""}.`);return applied+heartDamage;
+    }
     if(character.lifeMode==="body"){
         ensureCharacterHeart(character);if(Math.max(0,Number(character.body?.chest)||0)<=0){const before=Math.max(0,Number(character.heart.current)||0),dealt=Math.min(before,value);character.heart.current=Math.max(0,before-dealt);if(character.heart.current<=0&&dealt>0)markCharacterDead(character);saveDamagedCharacter(character);addSystemChatMessage(`${source} causou ${dealt} de dano no Coração de ${character.name}.`);return dealt;}
         const parts=bodyDamageParts(character,"player").filter(part=>part.current>0).sort((a,b)=>b.current-a.current),part=parts[0];if(!part)return 0;const dealt=Math.min(value,part.current);if(part.state.type==="prosthetic")part.state.currentPV=part.current-dealt;else character.body[part.id]=part.current-dealt;let heartDamage=0;if(part.id==="chest"&&part.current-dealt<=0){if(!trySoMaisUmPasso(character)&&value>dealt){const before=Math.max(0,Number(character.heart.current)||0);heartDamage=Math.min(before,value-dealt);character.heart.current=Math.max(0,before-heartDamage);if(character.heart.current<=0&&heartDamage>0)markCharacterDead(character);}}saveDamagedCharacter(character);addSystemChatMessage(`${source} causou ${dealt} de dano em ${BODY_PART_LABELS[part.id]} de ${character.name}${heartDamage?` e ${heartDamage} no Coração`:""}.`);return dealt+heartDamage;
@@ -8238,7 +8259,7 @@ function resolveCharacterFormula(
     character
 ){
 
-    const attributes = character.attributes || {},effective=window.ECO_BLOOD_ASSIMILATION_AUTOMATION?.effectiveAttribute,attributeValue=name=>effective?effective(character,name):Number(attributes[name])||0;
+    const attributes = character.attributes || {},v3Effective=window.ECO_SHEET_V3?.effectiveAttribute,effective=v3Effective||window.ECO_BLOOD_ASSIMILATION_AUTOMATION?.effectiveAttribute,attributeValue=name=>effective?effective(character,name):Number(attributes[name])||0;
 
 
     return String(
@@ -12399,7 +12420,7 @@ function finishBodyDamageDistribution(){
     const state=pendingBodyDamageApplication,target=getPendingBodyDamageTarget();if(!state||!target)return;
     bodyDamageParts(target,state.type).forEach(part=>{const amount=Number(state.allocations[part.id])||0;if(!amount)return;if(part.state.type==="prosthetic")part.state.currentPV=Math.max(0,part.current-amount);else target.body[part.id]=Math.max(0,part.current-amount);});
     if(state.type==="player"&&state.torsoSurvived)target.body.chest=1;
-    if(state.type==="player"){target.status=target.status||{};target.body.temporaryPV=Math.max(0,state.temporaryBefore-state.temporaryAbsorbed);target.status.pvTemp=target.body.temporaryPV;saveDamagedCharacter(target);const sourceMessage=(currentTableCampaign.chatMessages||[]).find(item=>item.id===state.messageId);applyApplicatorCondition(target,sourceMessage?.enemyInstanceId);}else{const remainingBodyPV=bodyDamageParts(target,"enemy").reduce((sum,part)=>sum+Math.max(0,Number(part.current)||0),0);if(remainingBodyPV<=0)triggerEnemyLastBreath(target);saveTableCampaign();}
+    if(state.type==="player"){target.status=target.status||{};target.body.temporaryPV=Math.max(0,state.temporaryBefore-state.temporaryAbsorbed);target.status.pvTemp=target.body.temporaryPV;if(window.ECO_SHEET_V3){const vitalLoss=Object.entries(state.allocations).reduce((sum,[part,amount])=>sum+(["leftArm","rightArm","leftLeg","rightLeg"].includes(part)?Math.ceil((Number(amount)||0)*.75):(Number(amount)||0)),0);target.status.pvAtual=Math.max(0,(Number(target.status.pvAtual)||0)-vitalLoss);target.body.chest=target.status.pvAtual;window.ECO_SHEET_V3.afterDamage(target)}else saveDamagedCharacter(target);const sourceMessage=(currentTableCampaign.chatMessages||[]).find(item=>item.id===state.messageId);applyApplicatorCondition(target,sourceMessage?.enemyInstanceId);}else{const remainingBodyPV=bodyDamageParts(target,"enemy").reduce((sum,part)=>sum+Math.max(0,Number(part.current)||0),0);if(remainingBodyPV<=0)triggerEnemyLastBreath(target);saveTableCampaign();}
     const context=currentTableCampaign.combat?.damageContext,wideRequestId=context?.wideAttack===true?context.attackRequestId:null;if(context?.active===true){context.active=false;context.consumed=true;context.consumedAt=Date.now();}
     const message=(currentTableCampaign.chatMessages||[]).find(item=>item.id===state.messageId),appliedDamage=state.reducedDamage-state.remaining;
     if(message){message.applied=true;message.appliedAt=Date.now();message.appliedTarget={type:state.type,characterId:state.type==="player"?target.id:null,enemyId:state.type==="enemy"?(target.enemyId||target.id):null,name:target.name||"Alvo"};message.damageApplication={originalDamage:state.originalDamage,damageReduction:state.damageReduction,finalDamage:appliedDamage,bodyDamage:true,allocations:{...state.allocations},unallocatedDamage:state.remaining};}
@@ -12565,6 +12586,7 @@ const damageReduction = normalDamageReduction;
     const survivedTorso=currentPVBefore>0&&character.status.pvAtual<=0&&trySoMaisUmPasso(character),appliedHeartDamage=survivedTorso?0:heartDamage;
     character.heart.current=Math.max(0,heartBefore-appliedHeartDamage);
     if(character.heart.current<=0&&appliedHeartDamage>0)markCharacterDead(character);
+    if(window.ECO_SHEET_V3)window.ECO_SHEET_V3.updateLifeConditions(character);
 
 
     const application =
@@ -12651,6 +12673,10 @@ function saveDamagedCharacter(
 
         return false;
 
+    }
+
+    if(window.ECO_SHEET_V3&&Number(updatedCharacter.ecoV3?.version)>=3){
+        window.ECO_SHEET_V3.syncVitals(updatedCharacter,false);
     }
 
 

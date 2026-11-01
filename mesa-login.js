@@ -105,6 +105,11 @@ const closeCharacterPanel =
         "closeCharacterPanel"
     );
 
+const createCharacterInTable =
+    document.getElementById(
+        "createCharacterInTable"
+    );
+
 
 /*==========================================================
 =                  INICIALIZAÇÃO
@@ -159,6 +164,11 @@ function bindEvents(){
 
     );
 
+    createCharacterInTable?.addEventListener(
+        "click",
+        createDraftCharacterInTable
+    );
+
     confirmMasterLogin?.addEventListener(
 
         "click",
@@ -182,6 +192,51 @@ function bindEvents(){
         }
 
     );
+
+}
+
+function createDraftCharacterInTable(){
+
+    const maxPlayers = Number(currentCampaign?.maxPlayers) || 4;
+
+    if(!Array.isArray(currentCampaign.players)){
+        currentCampaign.players = [];
+    }
+
+    if(currentCampaign.players.length >= maxPlayers){
+        showLoginMessage(
+            "Campanha cheia",
+            "O limite de jogadores desta campanha já foi atingido."
+        );
+        return;
+    }
+
+    const id = `character_${Date.now()}_${Math.random().toString(36).slice(2,8)}`;
+    const character = {
+        id,
+        campaignId:currentCampaign.id,
+        name:"Novo personagem",
+        level:1,
+        attributes:{corpo:1,foco:1,nexo:1},
+        status:{pvAtual:12,pvMax:12,pmAtual:10,pmMax:10,pdAtual:10,pdMax:10,paAtual:4,paMax:4,pvTemp:0},
+        lifeMode:"classic",
+        conditions:[],
+        skills:[],
+        attacks:[],
+        inventory:[],
+        abilities:[],
+        assimilations:[],
+        ecoV3:{version:0,createdInTable:true,openCreationOnEntry:true},
+        createdAt:Date.now(),
+        updatedAt:Date.now()
+    };
+
+    characters.push(character);
+    localStorage.setItem(CHARACTER_STORAGE,JSON.stringify(characters));
+    connectCharacterToCurrentCampaign(character);
+
+    localStorage.setItem("eco_open_character_creation",character.id);
+    enterMesaAsPlayer(character);
 
 }
 
