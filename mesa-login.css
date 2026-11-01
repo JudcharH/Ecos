@@ -615,6 +615,22 @@ gap:14px;
 
 }
 
+.create-character-in-table{
+
+width:100%;
+
+margin-top:18px;
+
+min-height:50px;
+
+font-family:'Orbitron',sans-serif;
+
+font-size:13px;
+
+letter-spacing:.4px;
+
+}
+
 .character-choice-card{
 
 display:grid;

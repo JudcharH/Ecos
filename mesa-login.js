@@ -561,8 +561,8 @@ function renderAvailableCharacters(){
             <div class="characters-empty">
 
                 Nenhuma ficha disponível.
-                Crie uma ficha antes de entrar
-                como jogador.
+                Você pode criar uma nova ficha
+                diretamente nesta mesa.
 
             </div>
 
