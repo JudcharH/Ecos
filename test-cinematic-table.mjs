@@ -12,8 +12,9 @@ const tableLogin=fs.readFileSync("mesa-login.js","utf8");
 const tableCore=fs.readFileSync("mesa.js","utf8");
 
 assert.match(html,/id="cinematicInitiative"/);
-assert.match(html,/id="cinematicResult"/);
-assert.match(html,/id="cinematicPreviousResult"/);
+assert.doesNotMatch(html,/id="cinematicResult"/);
+assert.match(js,/cinematic-entity-result/);
+assert.doesNotMatch(html,/id="cinematicPreviousResult"/);
 assert.match(html,/id="cinematicHud"/);
 assert.match(html,/id="cinematicFormation"/);
 assert.match(html,/id="narrativeStage"/);
