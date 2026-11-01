@@ -538,6 +538,7 @@ document.addEventListener("DOMContentLoaded",()=>{
     if(typeof originalSaveCampaign==="function")window.saveTableCampaign=function(){const value=originalSaveCampaign.apply(this,arguments);scheduleResultRender(false);return value};
     try{saveTableCampaign=window.saveTableCampaign}catch(error){}
     document.addEventListener("eco:campaign-render",()=>{refreshCurrentTableCampaign?.();refresh()});
+    document.addEventListener("eco:v3-render",()=>{refreshCurrentTableCampaign?.();refreshCurrentTableCharacter?.();refresh()});
     document.addEventListener("eco:roll-render",()=>{refreshCurrentTableCampaign?.();decorateTokens();scheduleResultRender(false)});
     requestAnimationFrame(refresh);
     window.setInterval(renderInitiative,800);
