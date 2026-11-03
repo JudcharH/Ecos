@@ -3271,6 +3271,7 @@ function rollQuickAttack(
             const targetId=currentTableCampaign?.combat?.damageContext?.targetEnemyId,target=(currentTableCampaign?.enemies||[]).find(enemy=>String(enemy.enemyId||enemy.id)===String(targetId)),isWounded=(target?.conditions||[]).some(condition=>normalizeEnemyAbilityId(typeof condition==="string"?condition:condition.id||condition.name)==="machucado");
             if(isWounded)formula=addEnemyDamageDice(formula,1);
         }
+        if(type==="damage"&&characterHasCombatAbility(currentTableCharacter,"brutal")&&["light_two","heavy_two"].includes(attack.weaponType))formula=`(${formula}) + 2`;
     }
 
 
