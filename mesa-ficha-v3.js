@@ -121,6 +121,27 @@ const DEFAULT_POWERS=[
  ,{id:"vinculo-mental",name:"Vínculo Mental",category:"Assimilação",activation:"Ativação",element:"Conhecimento",description:"Gaste 2 PM e escolha um aliado. Vocês podem se comunicar mentalmente durante a cena."}
  ,{id:"antecipacao",name:"Antecipação",category:"Assimilação",activation:"Passiva",element:"Conhecimento",description:"Depois de usar Previsão, recebe +2 de Defesa contra o próximo ataque da ameaça analisada."}
  ,{id:"arquivo-vivo",name:"Arquivo Vivo",category:"Assimilação",activation:"Passiva",element:"Conhecimento",description:"Na primeira vez que encontrar uma ameaça, o mestre informa seu elemento e uma perícia treinada."}
+ ,{id:"demolidor",name:"Demolidor",category:"Habilidade",activation:"Passiva",description:"Ataques com armas de duas mãos ignoram 3 de RD."}
+ ,{id:"medico",name:"Médico",category:"Habilidade",activation:"Ativação",description:"Gaste 2 PM para repetir um teste de Medicina."}
+ ,{id:"estrategista",name:"Estrategista",category:"Habilidade",activation:"Passiva",description:"Aliados reposicionados por você recebem +2 de Defesa até o próximo turno."}
+ ,{id:"atirador",name:"Atirador",category:"Habilidade",activation:"Passiva",description:"Recebe +2 no ataque contra alvos nas posições 4, 5 ou 6."}
+ ,{id:"desafiador",name:"Desafiador",category:"Habilidade",activation:"Ativação",description:"Gaste 3 PM para obrigar uma ameaça a escolher você como próximo alvo, se possível."}
+ ,{id:"executor",name:"Executor",category:"Habilidade",activation:"Passiva",description:"Seus ataques críticos causam +1 dado principal de dano adicional."}
+ ,{id:"retirada",name:"Retirada",category:"Habilidade",activation:"Ativação",description:"Gaste 2 PM depois de sofrer dano para recuar uma posição."}
+ ,{id:"ossatura",name:"Ossatura",category:"Assimilação",activation:"Passiva",element:"Sangue",description:"Recebe +3 de RD enquanto não estiver Machucado."}
+ ,{id:"cicatriz",name:"Cicatriz",category:"Assimilação",activation:"Passiva",element:"Sangue",description:"Depois de receber 10 ou mais de dano, recebe 1d4 PV temporários."}
+ ,{id:"sacrificio",name:"Sacrifício",category:"Assimilação",activation:"Ativação",element:"Sangue",description:"Sofra 1d10 de dano para recuperar 3 PM."}
+ ,{id:"voraz",name:"Voraz",category:"Assimilação",activation:"Passiva",element:"Sangue",description:"Ao causar dano em uma ameaça Machucada, recebe 2d4 PV temporários. Uma vez por rodada."}
+ ,{id:"debito",name:"Débito",category:"Assimilação",activation:"Ativação",element:"Morte",description:"Gaste 3 PM para realizar uma ação sem pagar PA; no início da próxima rodada perde 2 PA."}
+ ,{id:"acao-emergencia",name:"Ação de Emergência",category:"Assimilação",activation:"Passiva",element:"Morte",description:"Uma vez por cena, ao adquirir Machucado, recebe imediatamente um turno extra com 1 PA."}
+ ,{id:"combo",name:"Combo",category:"Assimilação",activation:"Passiva",element:"Energia",description:"Repetir o mesmo ataque em rodadas consecutivas concede +1 cumulativo no acerto, limitado a +3."}
+ ,{id:"polaridade",name:"Polaridade",category:"Assimilação",activation:"Ativação",element:"Energia",description:"Gaste 2 PM para empurrar ou atrair uma ameaça em uma posição."}
+ ,{id:"centelha",name:"Centelha",category:"Assimilação",activation:"Passiva",element:"Energia",description:"Quando recuperar PM, o próximo dano recebe bônus igual ao PM recuperado, limitado a +5."}
+ ,{id:"pane",name:"Pane",category:"Assimilação",activation:"Ativação",element:"Energia",description:"Gaste 5 PM para desativar uma habilidade ativa de ameaça até o próximo turno."}
+ ,{id:"diagnostico",name:"Diagnóstico",category:"Assimilação",activation:"Ativação",element:"Conhecimento",description:"Gaste 4 PM para descobrir a RD e a Defesa atuais de uma ameaça."}
+ ,{id:"comando",name:"Comando",category:"Assimilação",activation:"Ativação",element:"Conhecimento",description:"Gaste 3 PM para permitir que um aliado utilize imediatamente uma habilidade ativa."}
+ ,{id:"hipotese",name:"Hipótese",category:"Assimilação",activation:"Passiva",element:"Conhecimento",description:"A primeira falha em Dedução ou Informação por cena pode ser repetida gratuitamente."}
+ ,{id:"marca",name:"Marca",category:"Assimilação",activation:"Ativação",element:"Conhecimento",description:"Gaste 4 PM para marcar uma ameaça; aliados recebem +2 para acertá-la até o fim da rodada."}
 ];
 
 function esc(value){return String(value??"").replace(/[&<>'"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}[c]))}
