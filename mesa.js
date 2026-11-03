@@ -3267,6 +3267,10 @@ function rollQuickAttack(
             const foco=Number(currentTableCharacter?.attributes?.foco??currentTableCharacter?.foco)||0;
             if(foco)formula=`(${formula}) + ${foco}`;
         }
+        if(type==="damage"&&characterHasCombatAbility(currentTableCharacter,"carrasco")){
+            const targetId=currentTableCampaign?.combat?.damageContext?.targetEnemyId,target=(currentTableCampaign?.enemies||[]).find(enemy=>String(enemy.enemyId||enemy.id)===String(targetId)),isWounded=(target?.conditions||[]).some(condition=>normalizeEnemyAbilityId(typeof condition==="string"?condition:condition.id||condition.name)==="machucado");
+            if(isWounded)formula=addEnemyDamageDice(formula,1);
+        }
     }
 
 
