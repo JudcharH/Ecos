@@ -109,6 +109,18 @@ const DEFAULT_POWERS=[
  ,{id:"dica-sigilosa",name:"Dica Sigilosa",category:"Assimilação",activation:"Ativação",element:"Conhecimento",description:"Receba do mestre uma dica sobre uma investigação ou enigma."}
  ,{id:"verdade-oculta",name:"Verdade Oculta",category:"Assimilação",activation:"Passiva",element:"Conhecimento",description:"Permanece sob o efeito de Detectar em si mesmo, identificando o paranormal ao redor."}
  ,{id:"consciencia",name:"Consciência",category:"Assimilação",activation:"Passiva",element:"Conhecimento",description:"Uma vez por cena, ignore uma condição mental recebida."}
+ ,{id:"retrocesso",name:"Retrocesso",category:"Assimilação",activation:"Ativação",element:"Morte",description:"Gaste 5 PM para retornar o PV ao valor do início da rodada. Não recupera Coração. Uma vez por cena."}
+ ,{id:"deteriorar",name:"Deteriorar",category:"Assimilação",activation:"Ativação",element:"Morte",description:"Gaste 3 PM para reduzir em 3 a RD de uma ameaça por 2 rodadas."}
+ ,{id:"inevitavel",name:"Inevitável",category:"Assimilação",activation:"Ativação",element:"Morte",description:"Gaste 5 PM para garantir o acerto do próximo ataque."}
+ ,{id:"suspensao",name:"Suspensão",category:"Assimilação",activation:"Ativação",element:"Morte",description:"Gaste 3 PM para suspender os efeitos de uma condição até o final da rodada, sem interromper sua duração."}
+ ,{id:"sorte-grande",name:"Sorte Grande",category:"Assimilação",activation:"Passiva",element:"Energia",description:"Quando o dado principal e o dado de treino mostrarem o mesmo valor, recupera 2 PM."}
+ ,{id:"rebote",name:"Rebote",category:"Assimilação",activation:"Ativação",element:"Energia",description:"Gaste 3 PM quando uma ameaça errar você para causar imediatamente 1d8 de Energia nela."}
+ ,{id:"clonagem",name:"Clonagem",category:"Assimilação",activation:"Ativação",element:"Energia",description:"Uma vez por cena, crie um clone em uma posição. Pode trocar de posição com ele; ao sofrer dano, o clone desaparece."}
+ ,{id:"sentenca",name:"Sentença",category:"Assimilação",activation:"Ativação",element:"Conhecimento",description:"Gaste 4 PM contra uma ameaça analisada por Leitura para receber +3 nos ataques contra ela até o fim da cena."}
+ ,{id:"contradicao",name:"Contradição",category:"Assimilação",activation:"Ativação",element:"Conhecimento",description:"Gaste 3 PM para obrigar uma ameaça a repetir um teste bem-sucedido."}
+ ,{id:"vinculo-mental",name:"Vínculo Mental",category:"Assimilação",activation:"Ativação",element:"Conhecimento",description:"Gaste 2 PM e escolha um aliado. Vocês podem se comunicar mentalmente durante a cena."}
+ ,{id:"antecipacao",name:"Antecipação",category:"Assimilação",activation:"Passiva",element:"Conhecimento",description:"Depois de usar Previsão, recebe +2 de Defesa contra o próximo ataque da ameaça analisada."}
+ ,{id:"arquivo-vivo",name:"Arquivo Vivo",category:"Assimilação",activation:"Passiva",element:"Conhecimento",description:"Na primeira vez que encontrar uma ameaça, o mestre informa seu elemento e uma perícia treinada."}
 ];
 
 function esc(value){return String(value??"").replace(/[&<>'"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}[c]))}
