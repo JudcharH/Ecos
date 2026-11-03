@@ -31,6 +31,9 @@ assert.equal(character.abilities.length,0);
 assert.equal(character.assimilations.length,0);
 assert(character.ecoV3.powerCatalog.some(power=>power.id==="redencao"&&power.activation==="Passiva"));
 assert(character.ecoV3.powerCatalog.some(power=>power.id==="avidez"&&power.activation==="Ativação"));
+assert(character.ecoV3.powerCatalog.some(power=>power.id==="predador"&&power.activation==="Passiva"));
+assert(character.ecoV3.powerCatalog.some(power=>power.id==="recuperar-folego"&&power.category==="Assimilação"));
+assert(character.ecoV3.powerCatalog.some(power=>power.id==="aproveitador"&&power.activation==="Ativação"));
 assert(!character.ecoV3.powerCatalog.some(power=>["mutacao-reativa","prontidao"].includes(power.id)));
 
 character.ecoV3.powers.push({...character.ecoV3.powerCatalog.find(power=>power.id==="tensao")});

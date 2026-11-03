@@ -57,7 +57,12 @@ const DEFAULT_POWERS=[
  {id:"tanque",name:"Tanque",category:"Habilidade",activation:"Passiva",description:"Recebe +2 de RD geral."},
  {id:"paramedico",name:"Paramédico",category:"Habilidade",activation:"Passiva",description:"Cria um ataque especial de cura: Medicina contra DT 12; cura 2d6 + Nexo em um aliado e consome 1 PA."},
  {id:"conhecimento-medico",name:"Conhecimento Médico",category:"Habilidade",activation:"Passiva",description:"Adiciona +3 a todos os efeitos de cura."},
- {id:"reposicionamento",name:"Reposicionamento",category:"Habilidade",activation:"Ativação",description:"Gaste 3 PM para mover um aliado fora da sua rodada."}
+ {id:"reposicionamento",name:"Reposicionamento",category:"Habilidade",activation:"Ativação",description:"Gaste 3 PM para mover um aliado fora da sua rodada."},
+ {id:"predador",name:"Predador",category:"Habilidade",activation:"Passiva",description:"Recebe +2 para acertar ameaças sob a condição Machucado."},
+ {id:"escudeiro",name:"Escudeiro",category:"Habilidade",activation:"Ativação",description:"Escolha um aliado adjacente. Você recebe o próximo dano que seria causado a ele."},
+ {id:"recuperar-folego",name:"Recuperar Fôlego",category:"Assimilação",activation:"Ativação",description:"Gaste 2 PM para receber 1d8 PV temporários. Usos por cena iguais a Corpo."},
+ {id:"furtivo",name:"Furtivo",category:"Habilidade",activation:"Ativação",description:"Gaste 2 PM para mover 1 posição sem provocar Oportunista."},
+ {id:"aproveitador",name:"Aproveitador",category:"Habilidade",activation:"Ativação",description:"Quando um aliado acertar um ataque, gaste 3 PM para atacar o mesmo alvo fora da sua rodada sem consumir PA."}
 ];
 
 function esc(value){return String(value??"").replace(/[&<>'"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}[c]))}
