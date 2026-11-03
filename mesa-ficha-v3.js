@@ -88,6 +88,27 @@ const DEFAULT_POWERS=[
  ,{id:"decadencia",name:"Decadência",category:"Assimilação",activation:"Passiva",element:"Morte",description:"Ataques contra alvos Machucados ignoram 5 de RD."}
  ,{id:"lembranca",name:"Lembrança",category:"Assimilação",activation:"Ativação",element:"Morte",description:"Gaste 3 PM para reutilizar um resultado obtido na rodada anterior."}
  ,{id:"estagnacao",name:"Estagnação",category:"Assimilação",activation:"Ativação",element:"Morte",description:"Gaste 3 PM para impedir uma ameaça de se mover até o próximo turno dela."}
+ ,{id:"voltagem",name:"Voltagem",category:"Assimilação",activation:"Passiva",element:"Energia",description:"O primeiro ataque acertado por rodada causa +1d6 de Energia."}
+ ,{id:"sobrecarga",name:"Sobrecarga",category:"Assimilação",activation:"Ativação",element:"Energia",description:"Gaste 5 PM para receber 2 PA temporários. Uma vez por cena."}
+ ,{id:"condutor",name:"Condutor",category:"Assimilação",activation:"Ativação",element:"Energia",description:"Gaste 3 PM e escolha um aliado. Os ataques dele causam +1d6 de Energia por 3 rodadas."}
+ ,{id:"impulsivo",name:"Impulsivo",category:"Assimilação",activation:"Passiva",element:"Energia",description:"Recebe +2 em Presteza."}
+ ,{id:"descarga",name:"Descarga",category:"Assimilação",activation:"Ativação",element:"Energia",description:"Gaste 3 PM para causar 2d6 de Energia em uma ameaça adjacente, sem teste de ataque."}
+ ,{id:"interferencia",name:"Interferência",category:"Assimilação",activation:"Ativação",element:"Energia",description:"Gaste 3 PM para impedir uma ameaça de Contra-atacar até o próximo turno."}
+ ,{id:"acelerado",name:"Acelerado",category:"Assimilação",activation:"Ativação",element:"Energia",description:"Uma vez depois de sua rodada, mova-se fora dela sem gastar PA."}
+ ,{id:"campo-eletrico",name:"Campo Elétrico",category:"Assimilação",activation:"Passiva",element:"Energia",description:"Quem causar dano corporal contra você sofre dano de Energia igual ao seu Foco."}
+ ,{id:"salto-caotico",name:"Salto Caótico",category:"Assimilação",activation:"Ativação",element:"Energia",description:"Gaste 3 PM para trocar de posição com qualquer aliado."}
+ ,{id:"recarga",name:"Recarga",category:"Assimilação",activation:"Passiva",element:"Energia",description:"Ao obter um crítico em um teste, recupera 1d6 PM. Limite igual a Foco por cena."}
+ ,{id:"ruido",name:"Ruído",category:"Assimilação",activation:"Ativação",element:"Energia",description:"Gaste 2 PM para aplicar Surdo em uma ameaça até o próximo turno."}
+ ,{id:"analitico",name:"Analítico",category:"Assimilação",activation:"Passiva",element:"Conhecimento",description:"Depois de errar um ataque, recebe +2 na próxima tentativa contra o mesmo alvo."}
+ ,{id:"previsao",name:"Previsão",category:"Assimilação",activation:"Ativação",element:"Conhecimento",description:"Gaste 3 PM dentro ou fora da rodada para descobrir quem será o próximo alvo de uma ameaça."}
+ ,{id:"leitura",name:"Leitura",category:"Assimilação",activation:"Ativação",element:"Conhecimento",description:"Uma vez por cena, descubra um atributo ou uma perícia de uma ameaça."}
+ ,{id:"ponto-fraco",name:"Ponto Fraco",category:"Assimilação",activation:"Ativação",element:"Conhecimento",description:"Gaste 4 PM para aplicar Vulnerável em uma ameaça."}
+ ,{id:"memoria-perfeita",name:"Memória Perfeita",category:"Assimilação",activation:"Passiva",element:"Conhecimento",description:"Recebe +2 em Informação e Dedução."}
+ ,{id:"palavra-certa",name:"Palavra Certa",category:"Assimilação",activation:"Ativação",element:"Conhecimento",description:"Gaste 2 PM para receber +4 no próximo teste de Interação."}
+ ,{id:"observador",name:"Observador",category:"Assimilação",activation:"Passiva",element:"Conhecimento",description:"Recebe +2 em Percepção e não pode ficar Desprevenido na primeira rodada."}
+ ,{id:"dica-sigilosa",name:"Dica Sigilosa",category:"Assimilação",activation:"Ativação",element:"Conhecimento",description:"Receba do mestre uma dica sobre uma investigação ou enigma."}
+ ,{id:"verdade-oculta",name:"Verdade Oculta",category:"Assimilação",activation:"Passiva",element:"Conhecimento",description:"Permanece sob o efeito de Detectar em si mesmo, identificando o paranormal ao redor."}
+ ,{id:"consciencia",name:"Consciência",category:"Assimilação",activation:"Passiva",element:"Conhecimento",description:"Uma vez por cena, ignore uma condição mental recebida."}
 ];
 
 function esc(value){return String(value??"").replace(/[&<>'"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}[c]))}
@@ -113,7 +134,7 @@ function itemStack(item){return Math.max(1,Number(item?.stack)||1)}
 function itemSpaces(item){if(!item)return 0;if(item.type==="spacious")return 0;return Math.max(0,Number(item.spaces)||0)*itemStack(item)}
 function powerHas(character,id){return(character?.ecoV3?.powers||[]).some(power=>norm(power.id||power.name)===norm(id))}
 function wounded(character){return hasCondition(character,"machucado")||Math.max(0,Number(character?.status?.pvAtual)||0)<=Math.max(1,maxPV(character))/2}
-function powerSkillBonus(character,skillName){const id=norm(skillName);let bonus=0;if(id==="luta"&&powerHas(character,"combatador"))bonus+=2;if(id==="manobra"&&powerHas(character,"tensao"))bonus+=2;if(["fortitude","vontade"].includes(id)&&powerHas(character,"sangue-de-guerra")&&wounded(character))bonus+=2;return bonus}
+function powerSkillBonus(character,skillName){const id=norm(skillName);let bonus=0;if(id==="luta"&&powerHas(character,"combatador"))bonus+=2;if(id==="manobra"&&powerHas(character,"tensao"))bonus+=2;if(id==="presteza"&&powerHas(character,"impulsivo"))bonus+=2;if(["informacao","deducao"].includes(id)&&powerHas(character,"memoria-perfeita"))bonus+=2;if(id==="percepcao"&&powerHas(character,"observador"))bonus+=2;if(id==="interacao"&&Number(character?.ecoV3?.powerBonuses?.interaction)>0)bonus+=Number(character.ecoV3.powerBonuses.interaction);if(["fortitude","vontade"].includes(id)&&powerHas(character,"sangue-de-guerra")&&wounded(character))bonus+=2;return bonus}
 function syncPowerAttacks(character){character.attacks=Array.isArray(character.attacks)?character.attacks:[];const index=character.attacks.findIndex(attack=>attack.sourcePower==="paramedico");if(powerHas(character,"paramedico")&&index<0)character.attacks.push({id:`healing_paramedico_${character.id}`,name:"Paramédico",sourcePower:"paramedico",isHealing:true,skill:"Medicina",skillName:"Medicina",roll:"1d12 + nexo",healing:"2d6 + nexo",damage:"2d6 + nexo",targetPositions:[1,2,3,4,5,6],spaces:0});if(!powerHas(character,"paramedico")&&index>=0)character.attacks.splice(index,1);character.quickAttacks=character.ataquesRapidos=character.attacks}
 function effectiveAttribute(character,key){const base=Math.max(0,Number(character?.attributes?.[key])||0),bonus=(character?.ecoV3?.activeAmplifiers||[]).filter(item=>item.attribute===key).reduce((sum,item)=>sum+(Number(item.value)||0),0),tension=key==="corpo"&&powerHas(character,"tensao")?1:0,metamorphosis=["corpo","foco"].includes(key)&&powerHas(character,"metamorfose")&&wounded(character)?1:0;return base+bonus+tension+metamorphosis}
 function itemSkillBonus(character,skillName){return(character?.inventory||[]).filter(item=>item.type==="foundation"&&item.equipped!==false&&norm(item.skill)===norm(skillName)).length*2+powerSkillBonus(character,skillName)}
