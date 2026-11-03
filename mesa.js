@@ -3186,8 +3186,9 @@ function previewCombatFormulaModifiers(character,index,kind){
     return activeCombatFormulaModifiers(slot,kind).reduce((summary,modifier)=>{summary.dice+=Math.max(0,Number(modifier.extraDice)||0);summary.bonus+=Number(modifier.flat)||0;if(modifier.formula)summary.formulas.push(String(modifier.formula));return summary},{dice:0,bonus:0,formulas:[]});
 }
 function characterHasCombatAbility(character,id){
-    const wanted=normalizeEnemyAbilityId(id),lists=[character?.abilities,character?.acquiredAbilities,character?.habilidades,character?.systemData?.abilities],list=lists.find(Array.isArray)||[];
-    return list.some(item=>normalizeEnemyAbilityId(typeof item==="string"?item:item?.id||item?.abilityId||item?.name)===wanted);
+    const aliases={"golpe-pesado":"golpeador","tiro-certeiro":"certeiro","ataque-de-oportunidade":"oportunista","rompedor-de-defesas":"rompedor"};
+    const wanted=normalizeEnemyAbilityId(id),accepted=new Set([wanted,aliases[wanted]].filter(Boolean)),lists=[character?.abilities,character?.acquiredAbilities,character?.habilidades,character?.systemData?.abilities,character?.ecoV3?.powers];
+    return lists.filter(Array.isArray).some(list=>list.some(item=>accepted.has(normalizeEnemyAbilityId(typeof item==="string"?item:item?.id||item?.abilityId||item?.name))));
 }
 function quickAttackTrainingDie(character,attack){
     const wanted=normalizeEnemyAbilityId(attack?.skill||attack?.skillName||"Luta"),skills=Array.isArray(character?.skills)?character.skills:[],skill=skills.find(item=>normalizeEnemyAbilityId(item?.id||item?.name)===wanted),training=String(skill?.training||skill?.treino||"0");
@@ -3258,6 +3259,7 @@ function rollQuickAttack(
             : String(formula).replace(/\bFoco\b/gi,"Corpo");
         if(type==="attack"){
             formula=includeQuickAttackTraining(formula,currentTableCharacter,attack);
+            if(skill==="luta"&&characterHasCombatAbility(currentTableCharacter,"combatador"))formula=`(${formula}) + 2`;
             if(skill==="pontaria"&&characterHasCombatAbility(currentTableCharacter,"disparo-surpresa"))formula=`(${formula}) + 5`;
         }
         if(type==="damage"&&skill==="luta"&&characterHasCombatAbility(currentTableCharacter,"golpe-pesado"))formula=stepQuickDamageDie(formula,1);
@@ -4563,10 +4565,15 @@ function triggerPlayerAttackOpportunities(enemy,fromPosition,toPosition){
     const abilityState=currentTableCampaign.combat.abilityState||(currentTableCampaign.combat.abilityState={}),triggers=abilityState.attackOpportunityTriggers||(abilityState.attackOpportunityTriggers={}),round=Math.max(0,Number(currentTableCampaign.combat.round)||0);
     (currentTableCampaign.players||[]).forEach(entry=>{
         const character=getLiveCharacter(entry.characterId);if(!character)return;
-        const abilities=[character.abilities,character.acquiredAbilities,character.habilidades,character.systemData?.abilities].find(Array.isArray)||[],hasOpportunity=abilities.some(item=>normalizeEnemyAbilityId(typeof item==="string"?item:item?.id||item?.abilityId||item?.name)==="ataque-de-oportunidade"),hasCacada=abilities.some(item=>normalizeEnemyAbilityId(typeof item==="string"?item:item?.id||item?.abilityId||item?.name)==="cacada"),prepared=abilityState.attackOpportunity;
+        const abilities=[character.abilities,character.acquiredAbilities,character.habilidades,character.systemData?.abilities].find(Array.isArray)||[],powerState=currentTableCampaign.combat.ecoV3Powers?.characters?.[character.id],hasNewOpportunity=characterHasCombatAbility(character,"oportunista")&&powerState?.oportunistaArmado,hasOpportunity=hasNewOpportunity||abilities.some(item=>normalizeEnemyAbilityId(typeof item==="string"?item:item?.id||item?.abilityId||item?.name)==="ataque-de-oportunidade"),hasCacada=abilities.some(item=>normalizeEnemyAbilityId(typeof item==="string"?item:item?.id||item?.abilityId||item?.name)==="cacada"),prepared=abilityState.attackOpportunity;
         const attacks=getCharacterReadyAttacks(character)||[],eligible=attacks.map((attack,index)=>({attack,index,positions:Array.isArray(attack.targetPositions)&&attack.targetPositions.length?attack.targetPositions.map(Number):(String(attack.skill||attack.skillName||"").toLowerCase()==="pontaria"?[1,2,3,4,5,6]:[1,2])})).filter(item=>item.positions.includes(fromPosition)&&!item.positions.includes(toPosition));
         if(hasCacada&&eligible.length){abilityState.cacadaTargets=abilityState.cacadaTargets||{};abilityState.cacadaTargets[String(enemy.enemyId||enemy.id)]={characterId:character.id,enemyId:enemy.enemyId||enemy.id,round,active:true,createdAt:Date.now()};addSystemChatMessage(`${character.name} marcou ${enemy.name||"a ameaça"} com Caçada. O próximo dano causado por ele também aplicará Vulnerável.`);}
         if(!hasOpportunity||!eligible.length||triggers[character.id]?.usedAt&&Number(triggers[character.id].round)===round)return;
+        if(hasNewOpportunity){
+            const currentPM=Math.max(0,Number(character.status?.pmAtual??character.status?.pdAtual)||0);
+            if(currentPM<2){powerState.oportunistaArmado=false;addSystemChatMessage(`${character.name} não possui 2 PM para ativar Oportunista.`);return;}
+            character.status.pmAtual=currentPM-2;character.status.pdAtual=character.status.pmAtual;powerState.oportunistaArmado=false;saveDamagedCharacter(character);
+        }
         triggers[character.id]={active:true,characterId:character.id,enemyId:enemy.enemyId||enemy.id,enemyName:enemy.name||"Ameaça",fromPosition,toPosition,attackIndexes:eligible.map(item=>item.index),round,createdAt:Date.now()};
         currentTableCampaign.actionNotification={id:`opportunity_${Date.now()}_${Math.random().toString(36).slice(2,7)}`,kind:"Reação",icon:"↯",title:`Ataque de Oportunidade disponível para ${character.name}`,detail:`${enemy.name||"A ameaça"} saiu da posição ${fromPosition}. O ataque considera o alvo Desprevenido.`,createdAt:Date.now()};
     });

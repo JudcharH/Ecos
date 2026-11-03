@@ -29,6 +29,19 @@ assert.equal(character.attacks.length,1);
 assert.equal(character.attacks[0].name,"Desarmado");
 assert.equal(character.abilities.length,0);
 assert.equal(character.assimilations.length,0);
+assert(character.ecoV3.powerCatalog.some(power=>power.id==="redencao"&&power.activation==="Passiva"));
+assert(character.ecoV3.powerCatalog.some(power=>power.id==="avidez"&&power.activation==="Ativação"));
+assert(!character.ecoV3.powerCatalog.some(power=>["mutacao-reativa","prontidao"].includes(power.id)));
+
+character.ecoV3.powers.push({...character.ecoV3.powerCatalog.find(power=>power.id==="tensao")});
+character.ecoV3.powers.push({...character.ecoV3.powerCatalog.find(power=>power.id==="combatador")});
+character.ecoV3.powers.push({...character.ecoV3.powerCatalog.find(power=>power.id==="tanque")});
+character.ecoV3.powers.push({...character.ecoV3.powerCatalog.find(power=>power.id==="paramedico")});
+api.migrate(character);
+assert.equal(api.effectiveAttribute(character,"corpo"),6);
+assert.equal(api.itemSkillBonus(character,"Luta"),2);
+assert.equal(character.damageReduction.total,2);
+assert(character.attacks.some(attack=>attack.sourcePower==="paramedico"&&attack.healing==="2d6 + nexo"));
 
 character.level=10;
 api.syncVitals(character,true);
