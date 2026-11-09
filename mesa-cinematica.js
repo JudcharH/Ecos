@@ -74,9 +74,10 @@ function decorateTokens(){
         if(found.type==="player")model=liveCharacter(model.characterId)||model;
         const wounded=(model.conditions||[]).some(condition=>String(typeof condition==="string"?condition:condition.id||condition.name||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase()==="machucado");
         const media=model.combatMedia||{},enemySize=found.type==="enemy"?Math.max(1,Number(found.entity.size)||1):1,displayMedia={...media,scale:Number(media.scale)||100},source=(wounded&&(media.woundedIdle||model.woundedPhoto))||media.idle||model.photo||model.image||"",portrait=false;
-        const latestRoll=latestEntityRoll(found.entity,found.type),sourceSignature=`${source}:${portrait}:${displayMedia.scale}:${displayMedia.offsetX||0}:${displayMedia.offsetY||0}:${Boolean(displayMedia.flip)}:${latestRoll?.id||""}:${latestRoll?.total??""}`;
+        const latestRoll=latestEntityRoll(found.entity,found.type),vitalSignature=found.type==="player"?`${Number(model.status?.pvAtual)||0}:${Number(model.status?.pvMax)||0}:${Number(model.status?.pvTemp??model.body?.temporaryPV)||0}:${wounded}`:"",sourceSignature=`${source}:${portrait}:${displayMedia.scale}:${displayMedia.offsetX||0}:${displayMedia.offsetY||0}:${Boolean(displayMedia.flip)}:${latestRoll?.id||""}:${latestRoll?.total??""}:${vitalSignature}`;
         if(slot.dataset.cinematicSource!==sourceSignature||slot.dataset.cinematicEntity!==String(model.id||model.enemyId||model.npcId||found.entity.characterId||"")){
-            slot.innerHTML=`<button type="button" class="cinematic-token" aria-label="${esc(model.name||"Entidade")}">${entityResultHtml(found.entity,found.type)}${mediaNode(source,model.name,displayMedia,portrait)}<span class="cinematic-token-name">${esc(model.name||"Sem nome")}</span></button>`;
+            const temporary=found.type==="player"?Math.max(0,Number(model.status?.pvTemp)||0,Number(model.body?.temporaryPV)||0):0,currentPV=found.type==="player"?Math.max(0,Number(model.status?.pvAtual??model.pv)||0):0,maximumPV=found.type==="player"?Math.max(1,Number(model.status?.pvMax)||currentPV||1):1,vital=found.type==="player"?`<span class="cinematic-player-vital ${temporary>0?"temporary":wounded?"wounded":""}"><i style="--pv-ratio:${Math.max(0,Math.min(1,currentPV/maximumPV))}"></i><b>${temporary>0?`TEMP ${temporary}`:`${currentPV}/${maximumPV}`}</b></span>`:"";
+            slot.innerHTML=`<button type="button" class="cinematic-token" aria-label="${esc(model.name||"Entidade")}">${entityResultHtml(found.entity,found.type)}${mediaNode(source,model.name,displayMedia,portrait)}<span class="cinematic-token-name">${esc(model.name||"Sem nome")}</span>${vital}</button>`;
             slot.dataset.cinematicSource=sourceSignature;slot.dataset.cinematicEntity=String(model.id||model.enemyId||model.npcId||found.entity.characterId||"");
         }
         slot.classList.add("occupied");
@@ -520,6 +521,10 @@ window.openCinematicAbilities=openCinematicAbilities;
 window.ECO_CINEMATIC_SHEET={version:2,bodyMaximumsFor,repairCharacterTorso,changeCharacterLevel,openQuickAttackEditor,openCinematicSkills,openCinematicInventory,acquireAssimilation,removeAssimilation:removeCinematicAssimilation,clearResults:clearCinematicResults,persist:persistCinematicCharacter,splitQuickFormula:splitLegacyQuickFormula,ensureQuickFormulaParts,composeQuickFormula,quickFormulaBreakdown};
 
 document.addEventListener("DOMContentLoaded",()=>{
+    const hiddenKey=()=>`eco_sheet_hidden_${currentTableCampaign?.id||currentTableCampaign?.code||"table"}_${currentTableCharacter?.id||"player"}`;
+    const restoreSheetPreference=()=>document.body.classList.toggle("eco-sheet-hidden",currentTableRole==="player"&&localStorage.getItem(hiddenKey())==="1");
+    restoreSheetPreference();
+    document.querySelector(".table-play-area")?.addEventListener("contextmenu",event=>{if(currentTableRole!=="player"||event.target.closest("input,textarea,select,.table-panel-overlay,.table-side-panel"))return;event.preventDefault();const hidden=!document.body.classList.contains("eco-sheet-hidden");document.body.classList.toggle("eco-sheet-hidden",hidden);localStorage.setItem(hiddenKey(),hidden?"1":"0");renderHud()});
     window.openEnemyControlSheet=redirectLegacyEnemySheet;
     try{openEnemyControlSheet=redirectLegacyEnemySheet}catch(error){}
     const original=window.renderCombatPositions;
