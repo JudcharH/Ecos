@@ -362,6 +362,9 @@
         if(!notice?.id || notice.id === lastNoticeId) return;
 
         lastNoticeId = notice.id;
+        const quietKinds = new Set(["habilidade","ataque"]);
+        const kind = slug(notice.kind || "");
+        if(quietKinds.has(kind)) return;
         ensureNoticeStyle();
         closeNotice();
 
