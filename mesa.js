@@ -10072,6 +10072,7 @@ function checkPendingEnemyAttackReaction(){
     if(!request||request.active!==true||request.resolved===true)return;
     const enemy=(currentTableCampaign.enemies||[]).find(item=>String(item.enemyId||item.id)===String(request.targetEnemyId));
     if(!enemy)return;
+    if(window.ECO_THREAT_AI?.enabled(enemy))return;
     if(request.desprevenido===true){answerEnemyAttackReaction("surprised");return;}
     const pa=Math.max(0,Number(enemy.status?.paAtual??enemy.paAtual??enemy.pa)||0),state=enemyAbilityState(enemy),majorReady=state.esquivaMaiorArmed&&enemyHasAbility(enemy,"esquiva-maior");
     openTablePanel("REAÇÃO",enemy.name||"Ameaça",`<div class="table-panel-card"><h3>${escapeTableHTML(request.attackerName||"Atacante")} atacou</h3><p>Ataque: <strong>${Number(request.attackResult)||0}</strong></p><p>Defesa: <strong>${Number(enemy.defense)||0}</strong> • RD: <strong>${Number(enemy.rd)||0}</strong> • PA: <strong>${pa}</strong></p>${majorReady?'<p><strong>Esquiva Maior preparada:</strong> ao escolher Esquivar, a RD do próximo dano será dobrada.</p>':""}</div><div class="attack-reaction-grid"><button type="button" class="attack-reaction-button enemy-reaction-choice" data-reaction="dodge" ${pa<1?"disabled":""}><strong>Esquivar</strong><span>1 PA • Presteza na Defesa</span></button><button type="button" class="attack-reaction-button enemy-reaction-choice" data-reaction="block" ${pa<1?"disabled":""}><strong>Bloquear</strong><span>1 PA • RD + Corpo</span></button><button type="button" class="attack-reaction-button enemy-reaction-choice" data-reaction="counter" ${pa<1?"disabled":""}><strong>Contra-atacar</strong><span>1 PA • ataca se o golpe errar</span></button><button type="button" class="attack-reaction-button enemy-reaction-choice" data-reaction="guard"><strong>Guardar</strong><span>Sem custo</span></button></div>`);
@@ -10102,7 +10103,8 @@ function answerEnemyAttackReaction(reactionType){
     currentTableCampaign.combat.damageContext=hit?{id:`damage_${Date.now()}`,active:true,attackRequestId:request.id,wideAttack:request.wideAttack===true,targetEnemyId:enemy.enemyId||enemy.id,targetName:enemy.name||"Ameaça",reaction:majorTriggered?"esquiva-maior":reactionType,damageReduction:reactionRD,consumed:false,createdAt:Date.now()}:null;
     if(request.desprevenido===true)enemy.conditions=(enemy.conditions||[]).filter(condition=>!(normalizeEnemyAbilityId(typeof condition==="string"?condition:condition.id||condition.name)==="desprevenido"&&condition.source==="ataque-de-oportunidade"));
     saveTableCampaign();closeCurrentPanel();renderPublicChat();if(dodgeResult)addRollChatMessage(`Esquiva • ${enemy.name}`,dodgeResult.formula||"Presteza",dodgeResult.total,enemyRollDetail(dodgeResult));addSystemChatMessage(`${enemy.name} escolheu ${majorTriggered?"Esquiva Maior":reactionName}. Ataque ${Number(request.attackResult)||0} contra Defesa ${finalDefense}: ${hit?"acertou":"errou"}.${hit?` RD para o próximo dano: ${reactionRD}.`:""}`);
-    if(reactionType==="counter"&&!hit)rollEnemySkill(enemy,"Luta",{label:`Contra-ataque • ${enemy.name}`,rollKind:"attack",attackName:"Contra-ataque",enemyInstanceId:enemy.enemyId||enemy.id,attackVariant:"counter",applied:false});
+    if(reactionType==="counter"&&!hit&&window.ECO_THREAT_AI?.enabled(enemy))window.ECO_THREAT_AI.queueCounter(enemy);
+    else if(reactionType==="counter"&&!hit)rollEnemySkill(enemy,"Luta",{label:`Contra-ataque • ${enemy.name}`,rollKind:"attack",attackName:"Contra-ataque",enemyInstanceId:enemy.enemyId||enemy.id,attackVariant:"counter",applied:false});
     if(request.wideAttack===true&&!hit)setTimeout(()=>window.ECO_CONTINUE_WIDE_ATTACK?.(request.id),0);
 }
 
@@ -11615,7 +11617,7 @@ const attacks =
                 </h3>
 
                 <p>
-                    Escolha um ataque. A rolagem será marcada como Contra-ataque.
+                    Escolha um ataque ou dispense o contra-ataque para continuar.
                 </p>
 
             </div>
@@ -11667,10 +11669,19 @@ const attacks =
                 }
 
             </div>
+            <button type="button" id="skipCombatCounter" class="secondary-button">Dispensar contra-ataque</button>
 
         `
     );
 
+    document.getElementById("skipCombatCounter")?.addEventListener("click",()=>{
+        refreshCurrentTableCampaign();
+        const live=currentTableCampaign?.combat?.counterAttackOpportunity;
+        if(live?.id!==opportunity.id||live.characterId!==currentTableCharacter?.id)return;
+        live.active=false;
+        saveTableCampaign();
+        closeCurrentPanel();
+    });
 
     document
         .querySelectorAll(
