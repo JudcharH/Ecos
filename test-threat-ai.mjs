@@ -17,10 +17,15 @@ const context={
     getCurrentTurnParticipant:()=>participant,refreshCurrentTableCampaign:()=>{},saveTableCampaign:()=>{},
     passCurrentCombatTurn:()=>calls.push("pass"),
     answerEnemyAttackReaction:type=>calls.push(type),
+    enemyHasAbility:(e,ability)=>e?.abilities?.includes(ability)??false,
+    enemyAbilityState:()=>({}),
+    enemyAbilityAvailability:()=>({enabled:true}),
+    useEnemyAbility:(_enemy,ability)=>calls.push(ability),
 };
 vm.runInNewContext(fs.readFileSync(new URL("./mesa-eco-ameacas.js",import.meta.url),"utf8"),context);
 const ai=context.window.ECO_THREAT_AI;
 assert.deepEqual([0,3,4,6,7,10].map(ai.tier),["low","low","medium","medium","strategist","strategist"]);
+assert.deepEqual([0,3,4,6,7,10].map(nexo=>ai.reserveFor({nexo})),[1,1,1,1,2,2]);
 assert.equal(ai.selectAction(enemy,players,fight,[]).player.characterId,"tank");
 enemy.nexo=5;
 characters.medic.conditions=["caido"];
@@ -38,9 +43,13 @@ assert.equal(ai.reaction(enemy,{attackResult:30,noBlock:true}),"dodge");
 assert.equal(ai.reaction(enemy,{attackResult:7,attackerCharacterId:"tank"}),"counter");
 assert.equal(ai.reaction(enemy,{desprevenido:true}),"surprised");
 
+let nextRequest=0;
 const roll=(e,k,kind,p)=>{
     calls.push(kind);
-    if(kind==="attack")fight.pendingAttack={id:"a",active:true,attackerEnemyId:e.id,targetCharacterId:p.characterId};
+    if(kind==="attack"){
+        --e.status.paAtual;
+        fight.pendingAttack={id:"a"+(++nextRequest),active:true,attackerEnemyId:e.id,targetCharacterId:p.characterId};
+    }
     else fight.damageContext.consumed=true;
 };
 participant={type:"player",characterId:"tank"};
@@ -51,16 +60,25 @@ enemy.ecoIntelligence=false;
 ai.tick(roll);
 assert.deepEqual(calls,[]);
 enemy.ecoIntelligence=true;
+enemy.nexo=6;
 ai.tick(roll);
 ai.tick(roll);
 assert.deepEqual(calls,["attack"]);
-assert.equal(fight.ecoPendingAction.requestId,"a");
+assert.equal(fight.ecoPendingAction.requestId,"a1");
 Object.assign(fight.pendingAttack,{active:false,resolved:true,hit:true});
-fight.damageContext={active:true,attackRequestId:"a"};
+context.document.hidden=true;
 ai.tick(roll);
 assert.deepEqual(calls,["attack","damage"]);
+ai.tick(roll);
+assert.deepEqual(calls,["attack","damage","attack"]);
+Object.assign(fight.pendingAttack,{active:false,resolved:true,hit:true});
+ai.tick(roll);
+ai.tick(roll);
+assert.deepEqual(calls,["attack","damage","attack","damage","pass"]);
+assert.equal(enemy.status.paAtual,1);
 fight.pendingEnemyAttack={id:"incoming",active:true,attackResult:15,targetEnemyId:"wolf"};
 participant={type:"player",characterId:"tank"};
+enemy.abilities=["esquiva-maior"];
 ai.tick(roll);
-assert.deepEqual(calls,["attack","damage","dodge"]);
+assert.deepEqual(calls.slice(-2),["esquiva-maior","dodge"]);
 console.log("Eco: faixas NEX, alvo, alcance, reações e fluxo de turno verificados.");
