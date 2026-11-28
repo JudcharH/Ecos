@@ -1310,7 +1310,7 @@ function bindTableEvents(){
     // mesmo quando o token grande ultrapassa visualmente o slot âncora.
     document.addEventListener("click",event=>{
         const token=event.target.closest?.(".combat-token[data-enemy-instance-id]");
-        if(!token || currentTableRole!=="master") return;
+        if(!token || token.closest?.(".cinematic-formation") || currentTableRole!=="master") return;
         if(pendingAttackApplication || pendingDamageApplication) return;
         const id=token.dataset.enemyInstanceId;
         const enemies=Array.isArray(currentTableCampaign?.enemies)?currentTableCampaign.enemies:[];

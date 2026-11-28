@@ -30,6 +30,18 @@ function entityForSlot(slot){
     const entity=(list||[]).find(item=>Number(item.position)===position);
     return entity?{entity,type,position}:null;
 }
+function selectMasterPlayer(selection){
+    const entry=selection.entity,character=liveCharacter(entry.characterId);
+    closeCurrentPanel();
+    if(!character){
+        cinematicSelection=null;
+        renderHud();
+        openTablePanel("JOGADOR",entry.name||"Personagem",'<p>A ficha completa deste jogador não está disponível neste navegador.</p>');
+        return;
+    }
+    cinematicSelection=selection;
+    renderHud();
+}
 function latestEntityRoll(model,type){
     const id=String(type==="player"?(model.characterId||model.id):(model.enemyId||model.id));
     return [...visibleCinematicRolls()].reverse().find(message=>(type==="player"?String(message.characterId||"")===id:String(message.enemyInstanceId||"")===id))||null;
@@ -79,13 +91,13 @@ function decorateTokens(){
         const latestRoll=latestEntityRoll(found.entity,found.type),vitalSignature=found.type==="player"?`${Number(model.status?.pvAtual)||0}:${Number(model.status?.pvMax)||0}:${Number(model.status?.pvTemp??model.body?.temporaryPV)||0}:${wounded}`:"",sourceSignature=`${source}:${portrait}:${displayMedia.scale}:${displayMedia.offsetX||0}:${displayMedia.offsetY||0}:${Boolean(displayMedia.flip)}:${latestRoll?.id||""}:${latestRoll?.total??""}:${vitalSignature}`;
         if(slot.dataset.cinematicSource!==sourceSignature||slot.dataset.cinematicEntity!==String(model.id||model.enemyId||model.npcId||found.entity.characterId||"")){
             const temporary=found.type==="player"?Math.max(0,Number(model.status?.pvTemp)||0,Number(model.body?.temporaryPV)||0):0,currentPV=found.type==="player"?Math.max(0,Number(model.status?.pvAtual??model.pv)||0):0,maximumPV=found.type==="player"?Math.max(1,Number(model.status?.pvMax)||currentPV||1):1,vital=found.type==="player"?`<span class="cinematic-player-vital ${temporary>0?"temporary":wounded?"wounded":""}"><i style="--pv-ratio:${Math.max(0,Math.min(1,currentPV/maximumPV))}"></i><b>${temporary>0?`TEMP ${temporary}`:`${currentPV}/${maximumPV}`}</b></span>`:"";
-            slot.innerHTML=`<button type="button" class="cinematic-token" aria-label="${esc(model.name||"Entidade")}">${entityResultHtml(found.entity,found.type)}${mediaNode(source,model.name,displayMedia,portrait)}<span class="cinematic-token-name">${esc(model.name||"Sem nome")}</span>${vital}</button>`;
+            slot.innerHTML=`<button type="button" class="cinematic-token" data-token-side="${found.type}" aria-label="${esc(model.name||"Entidade")}">${entityResultHtml(found.entity,found.type)}${mediaNode(source,model.name,displayMedia,portrait)}<span class="cinematic-token-name">${esc(model.name||"Sem nome")}</span>${vital}</button>`;
             slot.dataset.cinematicSource=sourceSignature;slot.dataset.cinematicEntity=String(model.id||model.enemyId||model.npcId||found.entity.characterId||"");
         }
         slot.classList.add("occupied");
         if(typeof isEntityCurrentTurn==="function"&&isEntityCurrentTurn(found.entity,found.type))slot.classList.add("current-turn");
         slot.style.setProperty("--entity-size",enemySize);
-        slot.onclick=event=>{event.preventDefault();event.stopPropagation();const current=entityForSlot(slot);if(!current)return;const playArea=document.querySelector(".table-play-area");if(pendingEnemyAbilityTarget){resolveEnemyAbilityTargetRouter(current.type,current.entity);return}if(playArea?.classList.contains("selecting-damage-target")&&pendingDamageApplication){applyPendingDamageToTarget(current.type,current.entity);return}if(playArea?.classList.contains("selecting-attack-target")&&pendingAttackApplication){applyPendingAttackToTarget(current.type,current.entity);return}if(pendingDamageApplication){applyPendingDamageToTarget(current.type,current.entity);return}if(pendingAttackApplication){applyPendingAttackToTarget(current.type,current.entity);return}if(currentTableRole==="master"){if(current.type==="enemy"){const enemies=currentTableCampaign?.enemies||[],index=enemies.findIndex(enemy=>String(enemy.enemyId||enemy.id)===String(current.entity.enemyId||current.entity.id));if(index>=0)masterPreviewIndex=index;masterControlledEnemyId=current.entity.enemyId||current.entity.id;cinematicSelection=null;renderHud()}else{cinematicSelection=current;renderHud()}return}};
+        slot.onclick=event=>{event.preventDefault();event.stopPropagation();const current=entityForSlot(slot);if(!current)return;const playArea=document.querySelector(".table-play-area");if(pendingEnemyAbilityTarget){resolveEnemyAbilityTargetRouter(current.type,current.entity);return}if(playArea?.classList.contains("selecting-damage-target")&&pendingDamageApplication){applyPendingDamageToTarget(current.type,current.entity);return}if(playArea?.classList.contains("selecting-attack-target")&&pendingAttackApplication){applyPendingAttackToTarget(current.type,current.entity);return}if(pendingDamageApplication){applyPendingDamageToTarget(current.type,current.entity);return}if(pendingAttackApplication){applyPendingAttackToTarget(current.type,current.entity);return}if(currentTableRole==="master"){if(current.type==="enemy"){const enemies=currentTableCampaign?.enemies||[],index=enemies.findIndex(enemy=>String(enemy.enemyId||enemy.id)===String(current.entity.enemyId||current.entity.id));if(index>=0)masterPreviewIndex=index;masterControlledEnemyId=current.entity.enemyId||current.entity.id;cinematicSelection=null;renderHud()}else if(current.type==="player"){selectMasterPlayer(current)}return}};
     });
     (currentTableCampaign?.enemies||[]).forEach(enemy=>{const anchor=Number(enemy.position),size=Math.max(1,Number(enemy.size)||1);for(let offset=1;offset<size;offset++)document.querySelector(`.cinematic-slot[data-cinematic-type="enemy"][data-position="${anchor-offset}"]`)?.classList.add("covered")});
 }
