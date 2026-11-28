@@ -69,3 +69,10 @@
 .master-sheet-nav .master-next-round{grid-column:auto}
 .master-sheet-nav .eco-intelligence-button{display:flex;align-items:center;justify-content:center;min-height:42px;font-size:.875rem}
 .master-sheet-nav .eco-intelligence-button[aria-pressed=true],.master-scene-dock .eco-intelligence-button[aria-pressed=true]{background:#293e36;color:#d8ffea;border-color:#69b58f}
+.table-header-info{min-width:0}
+.table-header-info h1{overflow-wrap:anywhere}
+.table-header-actions{min-width:0;flex-shrink:1}
+.table-online-status:not([hidden]){min-width:0;max-width:24ch;color:#c4b5fd;font:500 .75rem/1.25 Inter,sans-serif;overflow-wrap:anywhere}
+.eco-sheet-hidden .cinematic-hud.hud-layout-player,.eco-master-sheet-hidden .cinematic-hud.hud-layout-master:has(.master-sheet){bottom:max(14px,env(safe-area-inset-bottom))}
+.eco-sheet-hidden .cinematic-hud.hud-layout-player .v3-scene-dock,.eco-master-sheet-hidden .cinematic-hud.hud-layout-master .master-scene-dock{align-items:center}
+@media(max-width:520px){.table-online-status:not([hidden]){max-width:12ch}}

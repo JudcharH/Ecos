@@ -16,7 +16,8 @@ function project(c){
 let scope,timer,applying=false;
 function status(message){
     let label=document.getElementById("ecoOnlineStatus");
-    if(!label){label=document.createElement("div");label.id="ecoOnlineStatus";label.setAttribute("role","status");document.querySelector("main")?.prepend(label);}
+    if(!label)return;
+    label.hidden=false;
     label.textContent=message;
 }
 function sync(){
