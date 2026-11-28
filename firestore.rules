@@ -42,6 +42,41 @@ service cloud.firestore {
           && request.resource.data.board.size() <= 16000;
       }
 
+      match /session/scene {
+        allow get: if ownsCampaign() || isMember();
+        allow create, update: if ownsCampaign()
+          && request.resource.data.keys().hasOnly(['mode','image'])
+          && request.resource.data.mode in ['combat','dialogue','rest']
+          && request.resource.data.image is string
+          && request.resource.data.image.size() <= 560000;
+      }
+
+      match /session/combatView {
+        allow get: if ownsCampaign() || isMember();
+        allow create, update: if ownsCampaign()
+          && request.resource.data.keys().hasOnly(['view'])
+          && request.resource.data.view is string
+          && request.resource.data.view.size() <= 22000;
+      }
+
+      match /combatInputs/{uid} {
+        allow get, list: if ownsCampaign();
+        allow create, update: if isMember() && request.auth.uid == uid
+          && request.resource.data.key is string && request.resource.data.key.size() <= 100
+          && request.resource.data.value is int
+          && ((request.resource.data.keys().hasOnly(['kind','key','value'])
+               && ((request.resource.data.kind == 'initiative'
+                && request.resource.data.value >= -500 && request.resource.data.value <= 500)
+              || (request.resource.data.kind in ['pass','ack'] && request.resource.data.value == 0)
+              || (request.resource.data.kind == 'reaction'
+                && request.resource.data.value >= 0 && request.resource.data.value <= 32)))
+              || (request.resource.data.kind == 'strike'
+                && request.resource.data.keys().hasOnly(['kind','key','value','target','nonce'])
+                && request.resource.data.value >= 0 && request.resource.data.value < 30
+                && request.resource.data.target is string && request.resource.data.target.size() <= 100
+                && request.resource.data.nonce is string && request.resource.data.nonce.matches('[a-f0-9-]{36}')));
+      }
+
       match /sheets/{uid} {
         allow list: if ownsCampaign();
         allow get: if ownsCampaign() || (isMember() && request.auth.uid == uid);

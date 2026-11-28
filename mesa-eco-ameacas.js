@@ -23,7 +23,7 @@ function selectAction(enemy,players,combat,messages,reserve=0){
     const lastHit=combat.pendingEnemyAttack;
     const options=[];
     for(const player of players){
-        const position=Number(player.position),character=getLiveCharacter(player.characterId);
+        const position=Number(player.position),character=getLiveCharacter(player.characterId)||(player.onlinePresence?window.ECO_ONLINE_TABLE?.targetModel(player.characterId):null);
         if(!character||!Number.isInteger(position)||position<1||position>6||isDeadAbilityTarget(character))continue;
         if(lock?.active&&Number(lock.round)===Number(combat.round)&&String(lock.characterId)!==String(player.characterId))continue;
         const status=conditions(character);
@@ -157,6 +157,7 @@ function tick(roll){
         return;
     }
     const request=combat.pendingAttack;
+    if(window.ECO_ONLINE_TABLE?.isWaiting(combat))return;
     if(waiting(request)||combat.counterAttackOpportunity?.active&&combat.counterAttackOpportunity.originalAttackId===request?.id&&combat.ecoPendingAction?.requestId===request?.id)return;
     const action=request?.ecoAction||combat.ecoPendingAction;
     if(action){
@@ -171,7 +172,7 @@ function tick(roll){
             saveTableCampaign();
             roll(enemy,action.kind,"damage",player,action.counter===true);
             const live=(currentTableCampaign.enemies||[]).find(item=>id(item)===action.enemyId);
-            if(enabled(live)&&action.kind==="strong"&&hasReady(live,"mordida-feroz"))useEnemyAbility(live,"mordida-feroz",live.position);
+            if(!player.onlinePresence&&enabled(live)&&action.kind==="strong"&&hasReady(live,"mordida-feroz"))useEnemyAbility(live,"mordida-feroz",live.position);
         }else if(enemy&&request?.id===requestId&&request.resolved&&!request.hit){
             const state=enemyAbilityState(enemy);
             state.criticalDamageDice=0;
@@ -189,8 +190,9 @@ function tick(roll){
         saveTableCampaign();
         const enemy=(currentTableCampaign.enemies||[]).find(item=>id(item)===counter.enemyId);
         const player=(currentTableCampaign.players||[]).find(item=>String(item.characterId)===counter.targetId);
-        if(enabled(enemy)&&player&&targetPositions(enemy,"basic").includes(Number(player.position))&&!isDeadAbilityTarget(getLiveCharacter(player.characterId))){
-            const protectedTarget=conditions(getLiveCharacter(player.characterId)).includes("protegido");
+        const model=player&&(getLiveCharacter(player.characterId)||(player.onlinePresence?window.ECO_ONLINE_TABLE?.targetModel(player.characterId):null));
+        if(enabled(enemy)&&player&&model&&targetPositions(enemy,"basic").includes(Number(player.position))&&!isDeadAbilityTarget(model)){
+            const protectedTarget=conditions(model).includes("protegido");
             if(!protectedTarget||enemyCurrentActionPoints(enemy)>0){
                 roll(enemy,"basic","attack",player,true);
                 queueDamage(enemy,player,"basic",request?.id,true);
@@ -215,7 +217,7 @@ function tick(roll){
     if(enemy.ecoAbilityTurn!==abilityTurn){
         enemy.ecoAbilityTurn=abilityTurn;
         saveTableCampaign();
-        if(useTacticalAbility(enemy,choice,combat))return;
+        if(!choice.player.onlinePresence&&useTacticalAbility(enemy,choice,combat))return;
     }
     const before=request?.id;
     roll(enemy,choice.kind,"attack",choice.player);

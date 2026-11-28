@@ -915,6 +915,7 @@ function openInitiativeControlPanel(){
 ==========================================================*/
 
 function requestInitiativeRolls(){
+    if(window.ECO_ONLINE_TABLE?.blocksMasterAdvance(currentTableCampaign?.combat))return;
 
     if(
         currentTableRole !== "master"
@@ -1044,6 +1045,7 @@ function requestInitiativeRolls(){
             expectedParticipants
 
     };
+    currentTableCampaign.combat.onlineEncounterId=crypto.randomUUID();
 
 
     currentTableCampaign.combat.updatedAt =
@@ -1503,7 +1505,7 @@ const ATTACK_REACTION_ABILITY_IDS = [
 
 let activeSceneObjectURL="";
 function activeTableSceneMode(){const mode=String(currentTableCampaign?.sceneMode||"combat");return["combat","dialogue","rest"].includes(mode)?mode:"combat"}
-function tableSceneForMode(mode=activeTableSceneMode()){const scenes=currentTableCampaign?.sceneBackgrounds||{};return scenes[mode]||(mode==="combat"?(currentTableCampaign?.scene||currentTableCampaign?.background||""):"")}
+function tableSceneForMode(mode=activeTableSceneMode()){const online=window.ECO_ONLINE_TABLE?.getScene(mode);if(online!==undefined)return online;const scenes=currentTableCampaign?.sceneBackgrounds||{};return scenes[mode]||(mode==="combat"?(currentTableCampaign?.scene||currentTableCampaign?.background||""):"")}
 function setTableSceneForMode(mode,value){currentTableCampaign.sceneBackgrounds=currentTableCampaign.sceneBackgrounds||{};currentTableCampaign.sceneBackgrounds[mode]=value;if(mode==="combat")currentTableCampaign.scene=value}
 
 const CHARACTER_RD_TYPES=["mundana","balistico","perfuracao","corte","impacto","fogo","sangue","energia","morte","conhecimento","medo"];
@@ -4851,6 +4853,11 @@ function canPassCurrentTurn(){
 function passCurrentCombatTurn(){
 
     refreshCurrentTableCampaign();
+    if(currentTableRole==="master"&&window.ECO_ONLINE_TABLE?.blocksMasterAdvance(currentTableCampaign?.combat))return;
+    if(currentTableRole==="player"&&currentTableCampaign?.sharedGuest){
+        if(canPassCurrentTurn())window.ECO_ONLINE_TABLE?.guestCommand("pass");
+        return;
+    }
 
 
     const combat =
@@ -7808,6 +7815,11 @@ function rollPlayerInitiative(
     const principalRoll=initiativeRoll.principalRoll;
     const trainingValue=initiativeRoll.trainingTotal;
     const total=initiativeRoll.total;
+    if(currentTableCampaign.sharedGuest){
+        window.ECO_ONLINE_TABLE?.guestCommand("initiative",total);
+        closeCurrentPanel();
+        return;
+    }
 
 
     participant.rolled =
@@ -8710,6 +8722,7 @@ function saveTableCharacters(){
 ==========================================================*/
 
 function passTableRound(){
+    if(window.ECO_ONLINE_TABLE?.blocksMasterAdvance(currentTableCampaign?.combat))return;
 
     if(
         currentTableRole !== "master"
@@ -9988,7 +10001,8 @@ function applyPendingAttackToTarget(
     const targetCharacter =
         getLiveCharacter(
             entity.characterId
-        );
+        ) || (currentTableRole==="master"&&entity.onlinePresence&&pendingAttackApplication.attackerEnemyId
+            ?window.ECO_ONLINE_TABLE?.targetModel(entity.characterId):null);
 
 
     if(!targetCharacter){
@@ -9999,6 +10013,10 @@ function applyPendingAttackToTarget(
 
         return;
 
+    }
+    if(entity.onlinePresence&&(currentTableCampaign.combat?.pendingAttack?.active||window.ECO_ONLINE_TABLE?.isWaiting(currentTableCampaign.combat)||currentTableCampaign.combat?.damageContext?.active)){
+        addLocalAttackNotice("Conclua o ataque online anterior primeiro.");
+        return;
     }
 
     if(pendingAttackApplication.attackerEnemyId){
@@ -10066,7 +10084,7 @@ function resolveAttackAgainstEnemy(enemy){
     if(enemyHasAbility(enemy,"espinhoso")&&pendingAttackApplication.attackerCharacterId){const attacker=getLiveCharacter(pendingAttackApplication.attackerCharacterId);if(attacker)damageCharacterFromAbility(attacker,Math.max(0,Number(enemy.corpo)||0),`Espinhoso de ${enemy.name||"Ameaça"}`);}
     if(enemyHasAbility(enemy,"toque-da-morte")&&normalizeEnemyAbilityId(pendingAttackApplication.attackSkill)==="luta"&&pendingAttackApplication.attackerCharacterId){const attacker=getLiveCharacter(pendingAttackApplication.attackerCharacterId);if(attacker){attacker.age=(Number(attacker.age)||0)+3;saveDamagedCharacter(attacker);addSystemChatMessage(`${attacker.name||"O atacante"} envelheceu 3 anos ao atacar ${enemy.name||"a ameaça"} com Luta.`);}}
     currentTableCampaign.combat=currentTableCampaign.combat||{};
-    currentTableCampaign.combat.pendingEnemyAttack={id:`enemy_attack_${Date.now()}_${Math.random().toString(36).slice(2,8)}`,active:true,resolved:false,messageId:pendingAttackApplication.messageId,attackName:pendingAttackApplication.attackName,attackResult:Math.max(0,Number(pendingAttackApplication.attackResult)||0),attackerCharacterId:pendingAttackApplication.attackerCharacterId||null,attackerName:pendingAttackApplication.attackerName||"Atacante",targetEnemyId:enemy.enemyId||enemy.id,targetName:enemy.name||"Ameaça",desprevenido:pendingAttackApplication.desprevenido===true,noBlock:pendingAttackApplication.noBlock===true,createdAt:Date.now()};
+    currentTableCampaign.combat.pendingEnemyAttack={id:`enemy_attack_${Date.now()}_${Math.random().toString(36).slice(2,8)}`,active:true,resolved:false,messageId:pendingAttackApplication.messageId,attackName:pendingAttackApplication.attackName,attackResult:Math.max(0,Number(pendingAttackApplication.attackResult)||0),attackerCharacterId:pendingAttackApplication.attackerCharacterId||null,attackerName:pendingAttackApplication.attackerName||"Atacante",targetEnemyId:enemy.enemyId||enemy.id,targetName:enemy.name||"Ameaça",desprevenido:pendingAttackApplication.desprevenido===true,noBlock:pendingAttackApplication.noBlock===true,onlineStrike:pendingAttackApplication.onlineStrike||null,createdAt:Date.now()};
     saveTableCampaign();cancelAttackTargetSelection();addSystemChatMessage(`${pendingAttackApplication?.attackerName||"O atacante"} atacou ${enemy.name||"a ameaça"}. Aguardando reação da criatura.`);checkPendingEnemyAttackReaction();
 }
 
@@ -10107,6 +10125,7 @@ function answerEnemyAttackReaction(reactionType){
     currentTableCampaign.combat.damageContext=hit?{id:`damage_${Date.now()}`,active:true,attackRequestId:request.id,wideAttack:request.wideAttack===true,targetEnemyId:enemy.enemyId||enemy.id,targetName:enemy.name||"Ameaça",reaction:majorTriggered?"esquiva-maior":reactionType,damageReduction:reactionRD,consumed:false,createdAt:Date.now()}:null;
     if(request.desprevenido===true)enemy.conditions=(enemy.conditions||[]).filter(condition=>!(normalizeEnemyAbilityId(typeof condition==="string"?condition:condition.id||condition.name)==="desprevenido"&&condition.source==="ataque-de-oportunidade"));
     saveTableCampaign();closeCurrentPanel();renderPublicChat();if(dodgeResult)addRollChatMessage(`Esquiva • ${enemy.name}`,dodgeResult.formula||"Presteza",dodgeResult.total,enemyRollDetail(dodgeResult));addSystemChatMessage(`${enemy.name} escolheu ${majorTriggered?"Esquiva Maior":reactionName}. Ataque ${Number(request.attackResult)||0} contra Defesa ${finalDefense}: ${hit?"acertou":"errou"}.${hit?` RD para o próximo dano: ${reactionRD}.`:""}`);
+    if(request.onlineStrike)window.ECO_ONLINE_TABLE?.finishStrike(request);
     if(reactionType==="counter"&&!hit&&window.ECO_THREAT_AI?.enabled(enemy))window.ECO_THREAT_AI.queueCounter(enemy);
     else if(reactionType==="counter"&&!hit)rollEnemySkill(enemy,"Luta",{label:`Contra-ataque • ${enemy.name}`,rollKind:"attack",attackName:"Contra-ataque",enemyInstanceId:enemy.enemyId||enemy.id,attackVariant:"counter",applied:false});
     if(request.wideAttack===true&&!hit)setTimeout(()=>window.ECO_CONTINUE_WIDE_ATTACK?.(request.id),0);
@@ -10188,6 +10207,9 @@ function createAttackReactionRequest(
 
             targetCharacterId:
                 targetCharacter.id,
+
+            onlineTarget:
+                Boolean(currentTableRole==="master"&&currentTableCampaign.players?.some(player=>player.onlinePresence&&player.characterId===targetCharacter.id)),
 
             targetName:
                 targetCharacter.name ||
@@ -12305,6 +12327,18 @@ function applyPendingDamageToTarget(
 
         return;
 
+    }
+
+    if(type==="player"&&entity?.onlinePresence&&currentTableRole==="master"){
+        if(!window.ECO_ONLINE_TABLE?.queueDamage(entity,pendingDamageApplication)){
+            addLocalDamageNotice("Resolva primeiro o acerto online contra este jogador.");
+            return;
+        }
+        const message=currentTableCampaign.chatMessages?.find(item=>item.id===pendingDamageApplication.messageId);
+        if(message)message.applied=true;
+        saveTableCampaign();
+        cancelDamageTargetSelection();
+        return;
     }
 
     const targetPosition=Number(entity?.position)||0;

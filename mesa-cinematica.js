@@ -33,31 +33,14 @@ function entityForSlot(slot){
 function selectMasterPlayer(selection){
     const entry=selection.entity,character=liveCharacter(entry.characterId);
     closeCurrentPanel();
-    if(!character){
+    if(!character&&!entry.onlinePresence){
         cinematicSelection=null;
         renderHud();
-        if(entry.onlinePresence)openRemotePlayerSheet(entry);
-        else openTablePanel("JOGADOR",entry.name||"Personagem",'<p>A ficha completa deste jogador não está disponível neste navegador.</p>');
+        openTablePanel("JOGADOR",entry.name||"Personagem",'<p>A ficha completa deste jogador não está disponível neste navegador.</p>');
         return;
     }
     cinematicSelection=selection;
     renderHud();
-}
-function openRemotePlayerSheet(entry){
-    openTablePanel("FICHA ONLINE",entry.name||"Personagem",'<div id="ecoRemoteSheetView" class="table-panel-list"></div>');
-    const view=document.getElementById("ecoRemoteSheetView");
-    if(!view)return;
-    const paint=()=>{
-        const sheet=window.ECO_ONLINE_TABLE?.getSheet(entry.characterId);
-        if(!sheet){view.innerHTML="<p>Aguardando a ficha. O jogador precisa abrir a mesa com esta personagem.</p>";return;}
-        const stats=sheet.status;
-        const section=(name,values)=>values.length?`<section class="table-panel-card"><h3>${name}</h3><ul>${values.map(value=>`<li>${esc(value)}</li>`).join("")}</ul></section>`:"";
-        view.innerHTML=`<p>Leitura ao vivo • alterações e recursos do combate não são enviados pelo mestre.</p>${section("Personagem",[
-            `Nível ${sheet.level}`,`PV ${stats.pvAtual}/${stats.pvMax}`,`PM ${stats.pmAtual}/${stats.pmMax}`,`PA ${stats.paAtual}/${stats.paMax}`
-        ])}${section("Atributos",Object.entries(sheet.attributes).map(([key,value])=>`${key}: ${value}`))}${section("Condições",sheet.conditions)}${section("Perícias",sheet.skills.map(v=>[v.name,v.training].filter(Boolean).join(" • ")))}${section("Ataques",sheet.attacks.map(v=>[v.name,v.attack,v.damage].filter(Boolean).join(" • "))) }`;
-    };
-    view.addEventListener("eco:sheet",paint);
-    paint();
 }
 function latestEntityRoll(model,type){
     const id=String(type==="player"?(model.characterId||model.id):(model.enemyId||model.id));
@@ -490,6 +473,17 @@ function redirectLegacyEnemySheet(enemy,position){
 function renderHud(){
     const root=document.getElementById("cinematicHud");if(!root||!currentTableCampaign)return;
     root.className="cinematic-hud";
+    if(sceneMode()==="combat"&&currentTableRole==="master"&&cinematicSelection?.type==="player"&&cinematicSelection.entity.onlinePresence&&!liveCharacter(cinematicSelection.entity.characterId)){
+        const {characterId,name}=cinematicSelection.entity,sheet=window.ECO_ONLINE_TABLE?.getSheet(characterId);
+        root.classList.add("hud-layout-player","eco-remote-player-hud");
+        root.innerHTML=sheet&&window.ECO_SHEET_V3
+            ?window.ECO_SHEET_V3.playerHud({...sheet,id:characterId},true,true)
+            :`<div class="hud-identity"><strong>${esc(name)}</strong><p>Aguardando a ficha do jogador.</p><button data-master-reset>Controles do mestre</button></div>`;
+        root.querySelectorAll("button:not([data-master-reset])").forEach(button=>button.disabled=true);
+        root.querySelector("[data-v3-art]")?.removeAttribute("title");
+        root.querySelector("[data-master-reset]").onclick=()=>{cinematicSelection=null;renderHud();};
+        return;
+    }
     if(sceneMode()!=="combat"){root.classList.add("hud-layout-master","hud-layout-narrative");root.innerHTML=narrativeHud()}
     else if(currentTableRole==="player"){root.classList.add("hud-layout-player");root.innerHTML=playerHud(currentTableCharacter||{})}
     else if(currentTableRole!=="master"&&cinematicSelection?.type==="enemy"){const enemy=liveEnemyFromSelection();if(enemy)cinematicSelection.entity=enemy;root.classList.add("hud-layout-enemy");root.innerHTML=enemyHud(enemy||cinematicSelection.entity)}
@@ -569,6 +563,7 @@ document.addEventListener("DOMContentLoaded",()=>{
     if(typeof original==="function")window.renderCombatPositions=function(){const value=original.apply(this,arguments);requestAnimationFrame(refresh);return value};
     const originalQuick=window.rollQuickAttack;
     if(typeof originalQuick==="function")window.rollQuickAttack=function(index,type){
+        if(window.ECO_ONLINE_TABLE?.chooseStrike(index,type))return;
         originalQuick.apply(this,arguments);
         refreshCurrentTableCampaign();
         const messages=currentTableCampaign?.chatMessages||[],message=[...messages].reverse().find(item=>item.type==="roll"&&item.rollKind===type&&Number(item.attackIndex)===Number(index)&&item.applied!==true);
@@ -581,6 +576,7 @@ document.addEventListener("DOMContentLoaded",()=>{
     if(typeof originalSaveCampaign==="function")window.saveTableCampaign=function(){const value=originalSaveCampaign.apply(this,arguments);scheduleResultRender(false);return value};
     try{saveTableCampaign=window.saveTableCampaign}catch(error){}
     document.addEventListener("eco:campaign-render",()=>{refreshCurrentTableCampaign?.();refresh()});
+    document.addEventListener("eco:sheet",()=>{if(cinematicSelection?.entity?.onlinePresence)renderHud();});
     document.addEventListener("eco:v3-render",()=>{refreshCurrentTableCampaign?.();refreshCurrentTableCharacter?.();refresh()});
     document.addEventListener("eco:roll-render",()=>{refreshCurrentTableCampaign?.();decorateTokens();scheduleResultRender(false)});
     requestAnimationFrame(refresh);
