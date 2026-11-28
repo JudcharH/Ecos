@@ -196,6 +196,15 @@ function usedSpaces(character){const attacks=(character.attacks||[]).reduce((sum
 
 function migrate(character){
  if(!character||!character.id)return character;
+ const record=value=>value&&typeof value==="object"&&!Array.isArray(value)?value:{};
+ const list=value=>Array.isArray(value)?value.filter(item=>item!=null):[];
+ for(const key of ["attributes","status","ecoV3","body","bodyMaximums","heart","defense","damageReduction"])character[key]=record(character[key]);
+ if(!Array.isArray(character.attacks))character.attacks=[character.quickAttacks,character.ataquesRapidos].find(Array.isArray)||[];
+ for(const key of ["conditions","skills","inventory","attacks"])character[key]=list(character[key]).filter(item=>typeof item==="object"&&!Array.isArray(item)||key==="conditions"&&typeof item==="string");
+ const v3=character.ecoV3;
+ v3.learnedWords=record(v3.learnedWords);
+ for(const key of ["actions","enhancements","elements"])v3.learnedWords[key]=list(v3.learnedWords[key]);
+ for(const key of ["powers","powerCatalog","rituals","activeAmplifiers"])v3[key]=list(v3[key]).filter(item=>typeof item==="object");
  character.attributes=character.attributes||{corpo:1,foco:1,nexo:1};["corpo","foco","nexo"].forEach(key=>character.attributes[key]=Math.max(0,Number(character.attributes[key])||0));
  character.level=Math.max(1,Number(character.level)||1);character.status=character.status||{};character.ecoV3=character.ecoV3||{};
  if(Number(character.ecoV3.version||0)<VERSION){

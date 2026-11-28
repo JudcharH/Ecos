@@ -39,6 +39,7 @@ function selectMasterPlayer(selection){
         openTablePanel("JOGADOR",entry.name||"Personagem",'<p>A ficha completa deste jogador não está disponível neste navegador.</p>');
         return;
     }
+    document.body.classList.remove("eco-sheet-hidden");
     cinematicSelection=selection;
     renderHud();
 }
@@ -487,7 +488,17 @@ function renderHud(){
     if(sceneMode()!=="combat"){root.classList.add("hud-layout-master","hud-layout-narrative");root.innerHTML=narrativeHud()}
     else if(currentTableRole==="player"){root.classList.add("hud-layout-player");root.innerHTML=playerHud(currentTableCharacter||{})}
     else if(currentTableRole!=="master"&&cinematicSelection?.type==="enemy"){const enemy=liveEnemyFromSelection();if(enemy)cinematicSelection.entity=enemy;root.classList.add("hud-layout-enemy");root.innerHTML=enemyHud(enemy||cinematicSelection.entity)}
-    else if(cinematicSelection?.type==="player"){root.classList.add("hud-layout-player");const character=liveCharacter(cinematicSelection.entity.characterId)||cinematicSelection.entity;root.innerHTML=playerHud(character,true)}
+    else if(cinematicSelection?.type==="player"){
+        root.classList.add("hud-layout-player");
+        const character=liveCharacter(cinematicSelection.entity.characterId);
+        try{if(!character)throw new Error("Ficha indisponível");root.innerHTML=playerHud(character,true);}
+        catch(error){
+            console.error("Não foi possível abrir a ficha selecionada",error);
+            root.innerHTML=`<div class="hud-identity"><strong>${esc(cinematicSelection.entity.name||"Personagem")}</strong><p>Não foi possível carregar os dados desta ficha.</p><button data-master-reset>Controles do mestre</button></div>`;
+            root.querySelector("[data-master-reset]").onclick=()=>{cinematicSelection=null;renderHud();};
+            return;
+        }
+    }
     else{root.classList.add("hud-layout-master");root.innerHTML=masterHud();window.ECO_THREAT_AI?.mount(root,masterControlledEnemy(),renderHud)}
     if(sceneMode()==="combat"&&(currentTableRole==="player"||cinematicSelection?.type==="enemy")){
         const actions=root.querySelector(".hud-actions");
