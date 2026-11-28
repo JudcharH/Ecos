@@ -330,6 +330,10 @@ function discoverCampaign(){
     }
 
     fillCampaign();
+    if(currentCampaign.sharedGuest&&enterMaster){
+        enterMaster.disabled=true;
+        enterMaster.textContent="Acesso de mestre reservado ao dono";
+    }
 
 }
 
@@ -429,6 +433,7 @@ function closeMasterPanel(){
 ==========================================================*/
 
 function validateMasterLogin(){
+    if(!currentCampaign||currentCampaign.sharedGuest)return;
 
     const password =
         masterPasswordInput?.value || "";

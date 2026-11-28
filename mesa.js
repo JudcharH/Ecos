@@ -322,8 +322,10 @@ function discoverTableSession(){
     }
 
     if(
-        currentTableRole !== "player" &&
+        (currentTableCampaign.sharedGuest&&currentTableRole==="master") ||
+        (currentTableRole !== "player" &&
         currentTableRole !== "master"
+        )
     ){
 
         window.location.href =

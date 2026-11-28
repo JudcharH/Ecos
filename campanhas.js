@@ -57,6 +57,11 @@ function initCampaigns(){
     renderCampaigns();
 
     bindCampaignEvents();
+    const invite=new URLSearchParams(location.search).get("convite");
+    if(invite){
+        openJoinCampaignModal();
+        document.getElementById("inviteCodeInput").value=invite.slice(0,24);
+    }
 
 }
 
@@ -580,9 +585,15 @@ function createCampaignCard(campaign){
 
     buttons.append(
         enterButton,
-        editButton,
+        ...(campaign.sharedGuest?[]:[editButton]),
         deleteButton
     );
+    if(campaign.sharedGuest){
+        deleteButton.textContent="Remover deste navegador";
+        const notice=document.createElement("p");
+        notice.textContent="Convite aceito • combate entre navegadores ainda não sincronizado.";
+        info.append(notice);
+    }
 
     card.append(
         cover,
@@ -892,25 +903,22 @@ async function copyInviteCode(id){
 
     }
 
-    try{
-
-        await navigator.clipboard.writeText(
-            campaign.inviteCode
-        );
-
-        alert(
-            `Código copiado: ${campaign.inviteCode}`
-        );
-
-    }
-    catch(error){
-
-        prompt(
-            "Copie o código da campanha:",
-            campaign.inviteCode
-        );
-
-    }
+    let invite;
+    try{invite=await window.ECO_CAMPAIGN_INVITES.publish(campaign);}
+    catch(error){alert(window.ECO_CAMPAIGN_INVITES.errorText(error));return;}
+    // The clipboard may require a fresh click after the network request.
+    const dialog=document.createElement("dialog");
+    const title=document.createElement("h2");title.textContent="Convite de jogador";
+    const code=document.createElement("p");code.textContent="Código: "+invite.code;
+    const link=document.createElement("input");link.readOnly=true;link.value=invite.url;link.setAttribute("aria-label","Link do convite");
+    const copy=document.createElement("button");copy.textContent="Copiar link";
+    const close=document.createElement("button");close.textContent="Fechar";
+    dialog.append(title,code,link,copy,close);
+    document.body.append(dialog);
+    close.onclick=()=>dialog.close();
+    copy.onclick=async()=>{try{await navigator.clipboard.writeText(invite.url);copy.textContent="Link copiado";}catch{link.select();}};
+    dialog.addEventListener("close",()=>dialog.remove(),{once:true});
+    dialog.showModal();
 
 }
 
@@ -932,7 +940,7 @@ createCampaignCard = function(campaign){
             ".campaign-buttons"
         );
 
-    if(buttons){
+    if(buttons&&!campaign.sharedGuest){
 
         const inviteButton =
             document.createElement("button");
@@ -1271,7 +1279,7 @@ function openJoinCampaignModal(){
             <input
                 type="text"
                 id="inviteCodeInput"
-                maxlength="8"
+                maxlength="24"
                 autocomplete="off"
                 placeholder="XXXXXXXX">
 
@@ -1378,7 +1386,7 @@ function openJoinCampaignModal(){
 =          TENTAR ENTRAR
 ==========================================================*/
 
-function tryJoinCampaign(code){
+async function tryJoinCampaign(code){
 
     const normalized =
         code
@@ -1403,17 +1411,32 @@ function tryJoinCampaign(code){
 
     }
 
-    const campaign =
-        getCampaignByInviteCode(
-            normalized
-        );
+    if(window.ECO_CAMPAIGN_INVITES.validCode(normalized)){
+        const button=document.getElementById("confirmJoinCampaign");
+        if(button?.disabled)return;
+        if(button)button.disabled=true;
+        if(error)error.textContent="Consultando convite…";
+        try{
+            const shared=await window.ECO_CAMPAIGN_INVITES.accept(normalized);
+            loadCampaigns();
+            const existing=campaigns.find(item=>item.id===shared.id);
+            if(existing)Object.assign(existing,{...shared,players:existing.players||[]});
+            else campaigns.push(shared);
+            saveCampaigns();
+            enterCampaign(shared.id);
+        }catch(cause){
+            if(error)error.textContent=window.ECO_CAMPAIGN_INVITES.errorText(cause);
+        }finally{if(button)button.disabled=false;}
+        return;
+    }
+    const campaign=getCampaignByInviteCode(normalized);
 
     if(!campaign){
 
         if(error){
 
             error.textContent =
-                "Código de campanha inválido.";
+                "Este código não foi encontrado neste navegador. Peça ao mestre um link de convite online.";
 
         }
 
@@ -1421,15 +1444,7 @@ function tryJoinCampaign(code){
 
     }
 
-    localStorage.setItem(
-        "ordem_current_campaign",
-        campaign.id
-    );
-
-    window.location.href =
-        `mesa.html?campaign=${encodeURIComponent(
-            campaign.id
-        )}`;
+    enterCampaign(campaign.id);
 
 }
 

@@ -1,0 +1,57 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function campaign(id) { return /databases/$(database)/documents/ecoCampaigns/$(id); }
+    function invite(code) { return /databases/$(database)/documents/ecoInvites/$(code); }
+
+    match /users/{uid} {
+      allow read, write: if signedIn() && request.auth.uid == uid;
+    }
+
+    match /ecoCampaigns/{id} {
+      function owner() { return signedIn() && resource.data.ownerUid == request.auth.uid; }
+      function valid() {
+        let d = request.resource.data;
+        return signedIn() && d.ownerUid == request.auth.uid
+          && id.matches(request.auth.uid + '_[a-zA-Z0-9_-]{1,80}')
+          && d.keys().hasOnly(['name','description','systemId','maxPlayers','ownerUid','inviteCode'])
+          && d.name is string && d.name.size() <= 120
+          && d.description is string && d.description.size() <= 800
+          && d.systemId is string && d.systemId.size() <= 80
+          && d.maxPlayers is int && d.maxPlayers >= 1 && d.maxPlayers <= 12
+          && d.inviteCode is string && d.inviteCode.matches('[0-9A-F]{24}')
+          && getAfter(invite(d.inviteCode)).data.campaignId == id
+          && getAfter(invite(d.inviteCode)).data.ownerUid == request.auth.uid;
+      }
+      allow get: if signedIn() && (id.matches(request.auth.uid + '_[a-zA-Z0-9_-]{1,80}') || owner() || exists(/databases/$(database)/documents/ecoCampaigns/$(id)/members/$(request.auth.uid)));
+      allow create: if valid();
+      allow update: if owner() && valid() && request.resource.data.inviteCode == resource.data.inviteCode;
+
+      match /members/{uid} {
+        allow get: if signedIn() && request.auth.uid == uid;
+        allow create: if signedIn() && request.auth.uid == uid
+          && request.resource.data.keys().hasOnly(['inviteCode'])
+          && request.resource.data.inviteCode is string
+          && request.resource.data.inviteCode.matches('[0-9A-F]{24}')
+          && get(invite(request.resource.data.inviteCode)).data.campaignId == id
+          && get(campaign(id)).data.inviteCode == request.resource.data.inviteCode;
+      }
+    }
+
+    match /ecoInvites/{code} {
+      function valid() {
+        let d = request.resource.data;
+        return signedIn() && code.matches('[0-9A-F]{24}')
+          && d.keys().hasOnly(['ownerUid','campaignId'])
+          && d.ownerUid == request.auth.uid && d.campaignId is string
+          && getAfter(campaign(d.campaignId)).data.ownerUid == request.auth.uid
+          && getAfter(campaign(d.campaignId)).data.inviteCode == code;
+      }
+      allow get: if signedIn();
+      allow create: if valid();
+      allow update: if signedIn() && resource.data.ownerUid == request.auth.uid
+        && request.resource.data == resource.data && valid();
+    }
+  }
+}

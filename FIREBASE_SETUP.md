@@ -32,3 +32,17 @@ service cloud.firestore {
 ```
 
 Adicione também o domínio publicado do ECO em **Authentication > Settings > Authorized domains**.
+
+## Convites online
+
+Este repositório inclui `firestore.rules`, que mantém a regra de `/users/{uid}`
+e adiciona permissões específicas para convites, metadados de campanha e
+participantes. Antes de publicar, compare o arquivo com as regras atuais e
+preserve eventuais regras adicionais. Não use modo de teste.
+
+Com as regras publicadas, o mestre deve entrar na conta do ECO, abrir a
+campanha no navegador de origem e clicar em **Convidar**. O link e o novo
+código podem ser usados por outra conta autenticada. Códigos locais antigos
+não são migrados automaticamente. O convite não envia a senha de mestre,
+personagens, chat nem estado do combate: esta etapa compartilha o cadastro da
+campanha, não sincroniza a sessão em tempo real.
