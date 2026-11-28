@@ -42,6 +42,15 @@ service cloud.firestore {
           && request.resource.data.board.size() <= 16000;
       }
 
+      match /sheets/{uid} {
+        allow list: if ownsCampaign();
+        allow get: if ownsCampaign() || (isMember() && request.auth.uid == uid);
+        allow create, update: if isMember() && request.auth.uid == uid
+          && request.resource.data.keys().hasOnly(['sheet'])
+          && request.resource.data.sheet is string
+          && request.resource.data.sheet.size() <= 22000;
+      }
+
       match /presence/{uid} {
         allow get, list: if ownsCampaign() || isMember();
         allow create, update: if isMember() && request.auth.uid == uid

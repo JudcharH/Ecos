@@ -12781,6 +12781,7 @@ function saveDamagedCharacter(
 
         currentTableCharacter =
             updatedCharacter;
+        window.ECO_ONLINE_TABLE?.sync();
 
     }
 

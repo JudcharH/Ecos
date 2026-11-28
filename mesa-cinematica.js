@@ -36,11 +36,28 @@ function selectMasterPlayer(selection){
     if(!character){
         cinematicSelection=null;
         renderHud();
-        openTablePanel("JOGADOR",entry.name||"Personagem",'<p>A ficha completa deste jogador não está disponível neste navegador.</p>');
+        if(entry.onlinePresence)openRemotePlayerSheet(entry);
+        else openTablePanel("JOGADOR",entry.name||"Personagem",'<p>A ficha completa deste jogador não está disponível neste navegador.</p>');
         return;
     }
     cinematicSelection=selection;
     renderHud();
+}
+function openRemotePlayerSheet(entry){
+    openTablePanel("FICHA ONLINE",entry.name||"Personagem",'<div id="ecoRemoteSheetView" class="table-panel-list"></div>');
+    const view=document.getElementById("ecoRemoteSheetView");
+    if(!view)return;
+    const paint=()=>{
+        const sheet=window.ECO_ONLINE_TABLE?.getSheet(entry.characterId);
+        if(!sheet){view.innerHTML="<p>Aguardando a ficha. O jogador precisa abrir a mesa com esta personagem.</p>";return;}
+        const stats=sheet.status;
+        const section=(name,values)=>values.length?`<section class="table-panel-card"><h3>${name}</h3><ul>${values.map(value=>`<li>${esc(value)}</li>`).join("")}</ul></section>`:"";
+        view.innerHTML=`<p>Leitura ao vivo • alterações e recursos do combate não são enviados pelo mestre.</p>${section("Personagem",[
+            `Nível ${sheet.level}`,`PV ${stats.pvAtual}/${stats.pvMax}`,`PM ${stats.pmAtual}/${stats.pmMax}`,`PA ${stats.paAtual}/${stats.paMax}`
+        ])}${section("Atributos",Object.entries(sheet.attributes).map(([key,value])=>`${key}: ${value}`))}${section("Condições",sheet.conditions)}${section("Perícias",sheet.skills.map(v=>[v.name,v.training].filter(Boolean).join(" • ")))}${section("Ataques",sheet.attacks.map(v=>[v.name,v.attack,v.damage].filter(Boolean).join(" • "))) }`;
+    };
+    view.addEventListener("eco:sheet",paint);
+    paint();
 }
 function latestEntityRoll(model,type){
     const id=String(type==="player"?(model.characterId||model.id):(model.enemyId||model.id));
