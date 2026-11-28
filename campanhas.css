@@ -416,6 +416,30 @@ grid-template-columns:1fr;
 
 }
 
+.campaign-invite-dialog {
+  box-sizing: border-box;
+  width: min(32rem, calc(100% - 2rem));
+  max-height: calc(100% - 2rem);
+  margin: auto;
+  padding: clamp(1rem, 5vw, 2rem);
+  color: var(--text, #f2efff);
+  background: var(--card, #16151f);
+  border: 1px solid var(--border, #393049);
+  border-radius: 1.1rem;
+  box-shadow: 0 1.5rem 5rem #0009;
+}
+.campaign-invite-dialog::backdrop { background: #070510bd; backdrop-filter: blur(4px); }
+.campaign-invite-dialog h2 { margin: .35rem 0 .6rem; font-family: Orbitron, sans-serif; font-size: clamp(1.2rem, 4vw, 1.65rem); }
+.campaign-invite-dialog p { margin: 0 0 1rem; color: var(--text2, #bdb6cf); }
+.campaign-invite-label { color: var(--primaryLight, #b796ff); font-weight: 700; font-size: .875rem; text-transform: uppercase; letter-spacing: .12em; }
+.campaign-invite-dialog .campaign-invite-code { padding: .7rem .85rem; border: 1px solid var(--border, #393049); border-radius: .65rem; color: var(--primaryLight, #b796ff); background: #7950c019; overflow-wrap: anywhere; font: 700 1rem monospace; letter-spacing: .08em; }
+.campaign-invite-dialog input { box-sizing: border-box; width: 100%; min-width: 0; }
+.campaign-invite-actions { display: flex; flex-wrap: wrap; gap: .6rem; justify-content: flex-end; margin-top: 1rem; }
+.campaign-invite-actions button { padding: .65rem 1.05rem; border: 1px solid var(--border, #393049); border-radius: .65rem; color: inherit; background: transparent; cursor: pointer; font: inherit; }
+.campaign-invite-actions .campaign-invite-primary { color: #fff; background: var(--primary, #6d3cce); }
+.campaign-invite-actions button:focus-visible { outline: 2px solid var(--primaryLight, #b796ff); outline-offset: 2px; }
+.campaign-invite-status { display: block; min-height: 1.3em; margin-top: .5rem; color: var(--text2, #bdb6cf); font-size: .875rem; }
+
 @media(max-width:760px){
 
 .campaign-actions{

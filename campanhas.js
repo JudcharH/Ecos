@@ -908,15 +908,22 @@ async function copyInviteCode(id){
     catch(error){alert(window.ECO_CAMPAIGN_INVITES.errorText(error));return;}
     // The clipboard may require a fresh click after the network request.
     const dialog=document.createElement("dialog");
-    const title=document.createElement("h2");title.textContent="Convite de jogador";
-    const code=document.createElement("p");code.textContent="Código: "+invite.code;
+    dialog.className="campaign-invite-dialog";
+    dialog.setAttribute("aria-labelledby","campaignInviteTitle");
+    const eyebrow=document.createElement("span");eyebrow.className="campaign-invite-label";eyebrow.textContent="Convite";
+    const title=document.createElement("h2");title.id="campaignInviteTitle";title.textContent="Convite de jogador";
+    const description=document.createElement("p");description.textContent="Compartilhe o link ou o código para convidar alguém para "+campaign.name+".";
+    const code=document.createElement("p");code.className="campaign-invite-code";code.textContent=invite.code;code.setAttribute("aria-label","Código do convite");
     const link=document.createElement("input");link.readOnly=true;link.value=invite.url;link.setAttribute("aria-label","Link do convite");
-    const copy=document.createElement("button");copy.textContent="Copiar link";
+    const actions=document.createElement("div");actions.className="campaign-invite-actions";
+    const copy=document.createElement("button");copy.className="campaign-invite-primary";copy.textContent="Copiar link";
     const close=document.createElement("button");close.textContent="Fechar";
-    dialog.append(title,code,link,copy,close);
+    const status=document.createElement("span");status.className="campaign-invite-status";status.setAttribute("role","status");
+    actions.append(close,copy);
+    dialog.append(eyebrow,title,description,code,link,actions,status);
     document.body.append(dialog);
     close.onclick=()=>dialog.close();
-    copy.onclick=async()=>{try{await navigator.clipboard.writeText(invite.url);copy.textContent="Link copiado";}catch{link.select();}};
+    copy.onclick=async()=>{try{await navigator.clipboard.writeText(invite.url);status.textContent="Link copiado."; }catch{link.select();status.textContent="Link selecionado. Copie para compartilhar."; }};
     dialog.addEventListener("close",()=>dialog.remove(),{once:true});
     dialog.showModal();
 
