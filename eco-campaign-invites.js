@@ -40,7 +40,7 @@ async function publish(campaign){
     });
     const url=new URL("campanhas.html",location.href);
     url.searchParams.set("convite",code);
-    return {code,url:url.href};
+    return {code,url:url.href,sharedId};
 }
 async function accept(input){
     const code=normalize(input);
@@ -63,5 +63,5 @@ function errorText(error){
     if(error?.code==="unavailable")return "Não consegui conectar ao Firestore. Tente novamente.";
     return error?.message||"Não foi possível acessar o convite.";
 }
-window.ECO_CAMPAIGN_INVITES={publish,accept,errorText,normalize,validCode,preview};
+window.ECO_CAMPAIGN_INVITES={connect,publish,accept,errorText,normalize,validCode,preview};
 })();

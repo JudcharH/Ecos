@@ -212,6 +212,7 @@ function initTable(){
     checkPendingAttackReaction();
 
     checkPendingEnemyAttackReaction();
+    window.ECO_ONLINE_TABLE?.start();
 
 }
 
@@ -4618,6 +4619,7 @@ function saveTableCampaign(){
                 tableCampaigns
             )
         );
+        window.ECO_ONLINE_TABLE?.sync();
         return true;
     }catch(error){
         console.error("Falha ao salvar campanha",error);

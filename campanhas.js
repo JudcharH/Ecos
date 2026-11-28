@@ -906,6 +906,9 @@ async function copyInviteCode(id){
     let invite;
     try{invite=await window.ECO_CAMPAIGN_INVITES.publish(campaign);}
     catch(error){alert(window.ECO_CAMPAIGN_INVITES.errorText(error));return;}
+    loadCampaigns();
+    const savedCampaign=campaigns.find(item=>item.id===id);
+    if(savedCampaign){savedCampaign.sharedCampaignId=invite.sharedId;saveCampaigns();}
     // The clipboard may require a fresh click after the network request.
     const dialog=document.createElement("dialog");
     dialog.className="campaign-invite-dialog";
